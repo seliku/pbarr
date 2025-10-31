@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from xml.etree import ElementTree as ET
@@ -12,8 +12,12 @@ from app.models.episode import Episode
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["search"])
 
-def build_newznab_rss(episodes: list, tvdb_id: str) -> str:
+def build_newznab_rss(episodes: list, tvdb_id: str, request: Request) -> str:
     """Baut Newznab/RSS XML für Sonarr"""
+    
+    # Hole base URL aus Request
+    base_url = request.base_url.rstrip('/')
+    
     rss = ET.Element("rss")
     rss.set("version", "2.0")
     rss.set("xmlns:atom", "http://www.w3.org/2005/Atom")
@@ -21,7 +25,7 @@ def build_newznab_rss(episodes: list, tvdb_id: str) -> str:
 
     channel = ET.SubElement(rss, "channel")
     ET.SubElement(channel, "title").text = "PBArr - Newznab Feed"
-    ET.SubElement(channel, "link").text = "http://localhost:8000"
+    ET.SubElement(channel, "link").text = base_url
     ET.SubElement(channel, "description").text = "Public Broadcasting Archive Indexer"
     ET.SubElement(channel, "language").text = "de"
 
@@ -65,6 +69,7 @@ async def newznab_search(
     tvdbid: str = Query(None, description="TVDB ID"),
     season: int = Query(None),
     ep: int = Query(None),
+    request: Request = None,
     db: Session = Depends(get_db)
 ):
     """Newznab API für Sonarr Integration"""
@@ -103,7 +108,7 @@ async def newznab_search(
     logger.info(f"Found {len(episodes)} episodes")
 
     # Build RSS
-    rss_content = build_newznab_rss(episodes, tvdbid)
+    rss_content = build_newznab_rss(episodes, tvdbid, request)
 
     return Response(content=rss_content, media_type="application/rss+xml")
 
