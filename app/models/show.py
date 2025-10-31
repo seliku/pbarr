@@ -1,22 +1,20 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-
-Base = declarative_base()
+from app.database import Base
 
 class Show(Base):
     __tablename__ = "shows"
     
     id = Column(Integer, primary_key=True)
-    tvdb_id = Column(String, unique=True, nullable=False)  # TVDB ID für Matching
-    source_id = Column(String)  # ARD/ZDF interne ID
-    source = Column(String)  # "ard", "zdf", "3sat"
+    tvdb_id = Column(String, unique=True, nullable=False)
+    source_id = Column(String)
+    source = Column(String)
     
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     language = Column(String, default="de")
     
-    genres = Column(String, nullable=True)  # JSON oder comma-separated
+    genres = Column(String, nullable=True)
     rating = Column(String, nullable=True)
     
     last_indexed = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

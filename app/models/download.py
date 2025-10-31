@@ -1,22 +1,20 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, Float
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-
-Base = declarative_base()
+from app.database import Base
 
 class Download(Base):
     __tablename__ = "downloads"
     
     id = Column(Integer, primary_key=True)
-    episode_id = Column(String, nullable=False)  # Referenz zu Episode
+    episode_id = Column(String, nullable=False)
     
-    status = Column(String, default="queued")  # queued, downloading, completed, failed
+    status = Column(String, default="queued")
     
     source_url = Column(String, nullable=False)
     file_path = Column(String, nullable=True)
     filename = Column(String, nullable=True)
     
-    progress = Column(Float, default=0.0)  # 0-100%
+    progress = Column(Float, default=0.0)
     error_message = Column(Text, nullable=True)
     
     started_at = Column(DateTime, nullable=True)

@@ -3,14 +3,16 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 import aiohttp
 from packaging import version
+import logging
 
 from app.database import get_db
-from app.models import AppVersion, UpdateCheck, Config
+from app.models.version import AppVersion, UpdateCheck
 
 router = APIRouter(prefix="/api/system", tags=["system"])
+logger = logging.getLogger(__name__)
 
 CURRENT_VERSION = "0.1.0"
-GITHUB_REPO = "YOUR_USERNAME/pbarr"  # Später via Config
+GITHUB_REPO = "seliku/pbarr"  # Angepasst!
 GITHUB_API = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
 @router.get("/version")
@@ -94,8 +96,9 @@ async def fetch_releases(db: Session):
                     )
                     
                     db.commit()
+                    logger.info(f"✓ Update check completed. Latest: {latest_stable}")
     except Exception as e:
-        print(f"Update check failed: {e}")
+        logger.error(f"✗ Update check failed: {e}")
 
 @router.get("/versions")
 async def get_all_versions(db: Session = Depends(get_db)):

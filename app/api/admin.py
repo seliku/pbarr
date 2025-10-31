@@ -5,7 +5,8 @@ from typing import List, Optional
 from datetime import datetime
 
 from app.database import get_db
-from app.models import Config, ModuleState
+from app.models.config import Config
+from app.models.module_state import ModuleState
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 

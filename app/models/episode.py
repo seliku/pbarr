@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-
-Base = declarative_base()
+from app.database import Base
 
 class Episode(Base):
     __tablename__ = "episodes"
@@ -18,11 +16,11 @@ class Episode(Base):
     description = Column(Text, nullable=True)
     air_date = Column(DateTime, nullable=True)
     
-    source_url = Column(String, nullable=True)  # Mediathek URL
-    source = Column(String)  # "ard", "zdf", "3sat"
+    source_url = Column(String, nullable=True)
+    source = Column(String)
     
-    media_url = Column(String, nullable=True)  # Nach Download gespeichert
-    file_path = Column(String, nullable=True)  # Lokales Pfad
+    media_url = Column(String, nullable=True)
+    file_path = Column(String, nullable=True)
     
     quality = Column(String, default="1080p")
     language = Column(String, default="de")

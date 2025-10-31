@@ -1,14 +1,12 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-
-Base = declarative_base()
+from app.database import Base
 
 class AppVersion(Base):
     __tablename__ = "app_versions"
     
     id = Column(Integer, primary_key=True)
-    version = Column(String, unique=True, nullable=False)  # "1.0.0"
+    version = Column(String, unique=True, nullable=False)
     release_date = Column(DateTime, default=datetime.utcnow)
     changelog = Column(Text, nullable=True)
     is_stable = Column(Boolean, default=True)
@@ -23,8 +21,8 @@ class UpdateCheck(Base):
     
     id = Column(Integer, primary_key=True)
     last_check = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    latest_available = Column(String, nullable=True)  # "1.2.0"
-    current_installed = Column(String)  # "1.0.0"
+    latest_available = Column(String, nullable=True)
+    current_installed = Column(String)
     update_available = Column(Boolean, default=False)
     auto_update_enabled = Column(Boolean, default=False)
     

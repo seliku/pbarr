@@ -5,7 +5,8 @@ from xml.etree import ElementTree as ET
 from datetime import datetime
 
 from app.database import get_db
-from app.models import Show, Episode
+from app.models.show import Show
+from app.models.episode import Episode
 
 router = APIRouter(prefix="/api", tags=["search"])
 
@@ -22,13 +23,13 @@ def build_newznab_rss(episodes: list) -> str:
     for episode in episodes:
         item = ET.SubElement(channel, "item")
         ET.SubElement(item, "title").text = f"{episode.title} S{episode.season:02d}E{episode.episode_number:02d}"
-        ET.SubElement(item, "link").text = episode.media_url or episode.source_url
+        ET.SubElement(item, "link").text = episode.media_url or episode.source_url or ""
         ET.SubElement(item, "description").text = episode.description or ""
         ET.SubElement(item, "pubDate").text = episode.air_date.isoformat() if episode.air_date else ""
         
         # Newznab Extensions
         enclosure = ET.SubElement(item, "enclosure")
-        enclosure.set("url", episode.media_url or episode.source_url)
+        enclosure.set("url", episode.media_url or episode.source_url or "")
         enclosure.set("type", "application/x-nzb")
     
     return ET.tostring(rss, encoding="unicode")
