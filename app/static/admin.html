@@ -19,7 +19,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
@@ -63,12 +63,16 @@
         }
         
         .config-item {
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
         }
         
-        .config-item:last-child {
-            border-bottom: none;
+        .config-item.editing {
+            background: #fff9e6;
+            border-left-color: #ffc107;
         }
         
         .config-key {
@@ -77,24 +81,50 @@
             margin-bottom: 5px;
         }
         
-        .config-value {
-            background: #f5f5f5;
+        .config-description {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 5px;
+        }
+        
+        .config-value-display {
+            background: #f0f0f0;
             padding: 8px 12px;
             border-radius: 4px;
             font-family: monospace;
             font-size: 13px;
             color: #666;
             word-break: break-all;
+            margin-bottom: 5px;
         }
         
-        .config-module {
+        .config-value-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        
+        .config-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
             display: inline-block;
             background: #667eea;
             color: white;
             padding: 2px 8px;
             border-radius: 12px;
             font-size: 12px;
-            margin-top: 5px;
+        }
+        
+        .tag.secret {
+            background: #e74c3c;
         }
         
         .module-item {
@@ -127,6 +157,7 @@
             border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
+            cursor: pointer;
         }
         
         .status-enabled {
@@ -147,7 +178,8 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
-            margin-top: 10px;
+            margin-top: 5px;
+            margin-right: 5px;
         }
         
         .btn:hover {
@@ -160,6 +192,28 @@
         
         .btn-secondary:hover {
             background: #5a6268;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+            margin: 0 2px;
         }
         
         .loading {
@@ -211,6 +265,63 @@
             opacity: 0.9;
             margin-top: 5px;
         }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
     </style>
 </head>
 <body>
@@ -243,11 +354,12 @@
                 <div id="config-loading" class="loading">Loading configs...</div>
                 <div id="config-list"></div>
                 <button class="btn btn-secondary" onclick="refreshConfigs()">🔄 Refresh</button>
+                <button class="btn" onclick="openAddConfigModal()">➕ Add Config</button>
             </div>
             
             <!-- Modules -->
             <div class="card">
-                <h2>�� Modules</h2>
+                <h2>🔌 Modules</h2>
                 <div id="modules-loading" class="loading">Loading modules...</div>
                 <div id="modules-list"></div>
                 <button class="btn btn-secondary" onclick="refreshModules()">🔄 Refresh</button>
@@ -263,12 +375,57 @@
         </div>
     </div>
     
+    <!-- Add Config Modal -->
+    <div id="addConfigModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Add New Configuration</div>
+            <form onsubmit="saveNewConfig(event)">
+                <div class="form-group">
+                    <label>Key:</label>
+                    <input type="text" id="newConfigKey" required>
+                </div>
+                <div class="form-group">
+                    <label>Value:</label>
+                    <textarea id="newConfigValue" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Module:</label>
+                    <input type="text" id="newConfigModule" value="core">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="newConfigSecret">
+                        Is Secret?
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addConfigModal')">Cancel</button>
+            </form>
+        </div>
+    </div>
+    
     <script>
         const API_URL = window.location.origin;
         
         async function fetchJSON(url) {
             try {
                 const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+        
+        async function fetchWithMethod(url, method, body = null) {
+            try {
+                const options = { method };
+                if (body) {
+                    options.headers = { 'Content-Type': 'application/json' };
+                    options.body = JSON.stringify(body);
+                }
+                const response = await fetch(url, options);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return await response.json();
             } catch (error) {
@@ -306,16 +463,66 @@
                 loading.style.display = 'none';
                 
                 container.innerHTML = configs.map(config => `
-                    <div class="config-item">
+                    <div class="config-item" id="config-${config.id}">
                         <div class="config-key">${config.key}</div>
-                        <div class="config-value">${config.value || '(empty)'}</div>
-                        <span class="config-module">${config.module}</span>
-                        ${config.secret ? '<span class="config-module" style="background: #e74c3c; margin-left: 5px;">�� Secret</span>' : ''}
+                        <div class="config-description">${config.description || ''}</div>
+                        <div class="config-value-display" id="display-${config.id}">${config.value || '(empty)'}</div>
+                        <div class="config-tags">
+                            <span class="tag">${config.module}</span>
+                            ${config.secret ? '<span class="tag secret">🔒 Secret</span>' : ''}
+                            <span class="tag" style="background: #999;">${config.data_type}</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-small" onclick="editConfig(${config.id}, '${config.key}')">✎ Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteConfig('${config.key}')">🗑 Delete</button>
+                        </div>
+                        <input type="text" class="config-value-input" id="input-${config.id}" style="display:none;" value="${config.value || ''}">
+                        <div class="action-buttons" id="edit-buttons-${config.id}" style="display:none;">
+                            <button class="btn btn-small btn-success" onclick="saveConfig(${config.id}, '${config.key}')">✓ Save</button>
+                            <button class="btn btn-small btn-secondary" onclick="cancelEdit(${config.id})">✗ Cancel</button>
+                        </div>
                     </div>
                 `).join('');
             } catch (error) {
                 container.innerHTML = `<div class="error">Failed to load configs: ${error.message}</div>`;
                 loading.style.display = 'none';
+            }
+        }
+        
+        function editConfig(id, key) {
+            document.getElementById(`display-${id}`).style.display = 'none';
+            document.getElementById(`input-${id}`).style.display = 'block';
+            document.getElementById(`edit-buttons-${id}`).style.display = 'flex';
+            document.getElementById(`config-${id}`).classList.add('editing');
+        }
+        
+        function cancelEdit(id) {
+            document.getElementById(`display-${id}`).style.display = 'block';
+            document.getElementById(`input-${id}`).style.display = 'none';
+            document.getElementById(`edit-buttons-${id}`).style.display = 'none';
+            document.getElementById(`config-${id}`).classList.remove('editing');
+        }
+        
+        async function saveConfig(id, key) {
+            const newValue = document.getElementById(`input-${id}`).value;
+            try {
+                await fetchWithMethod(`${API_URL}/admin/config/${key}`, 'PUT', { value: newValue });
+                document.getElementById(`display-${id}`).textContent = newValue || '(empty)';
+                cancelEdit(id);
+                showSuccess(`Config '${key}' updated!`);
+            } catch (error) {
+                showError(`Failed to save: ${error.message}`);
+            }
+        }
+        
+        async function deleteConfig(key) {
+            if (!confirm(`Delete config '${key}'?`)) return;
+            try {
+                await fetchWithMethod(`${API_URL}/admin/config/${key}`, 'DELETE');
+                showSuccess(`Config '${key}' deleted!`);
+                loadConfigs();
+            } catch (error) {
+                showError(`Failed to delete: ${error.message}`);
             }
         }
         
@@ -333,7 +540,7 @@
                             <div class="module-name">${module.module_name}</div>
                             <div class="module-type">${module.module_type} • v${module.version}</div>
                         </div>
-                        <span class="module-status ${module.enabled ? 'status-enabled' : 'status-disabled'}">
+                        <span class="module-status ${module.enabled ? 'status-enabled' : 'status-disabled'}" onclick="toggleModule('${module.module_name}', ${!module.enabled})">
                             ${module.enabled ? '✓ Enabled' : '✗ Disabled'}
                         </span>
                     </div>
@@ -341,6 +548,16 @@
             } catch (error) {
                 container.innerHTML = `<div class="error">Failed to load modules: ${error.message}</div>`;
                 loading.style.display = 'none';
+            }
+        }
+        
+        async function toggleModule(name, enabled) {
+            try {
+                await fetchWithMethod(`${API_URL}/admin/modules/${name}/toggle?enabled=${enabled}`, 'PUT');
+                showSuccess(`Module '${name}' ${enabled ? 'enabled' : 'disabled'}!`);
+                loadModules();
+            } catch (error) {
+                showError(`Failed to toggle module: ${error.message}`);
             }
         }
         
@@ -384,6 +601,53 @@
             refreshModules();
         }
         
+        function openAddConfigModal() {
+            document.getElementById('addConfigModal').style.display = 'block';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        async function saveNewConfig(event) {
+            event.preventDefault();
+            const key = document.getElementById('newConfigKey').value;
+            const value = document.getElementById('newConfigValue').value;
+            const module = document.getElementById('newConfigModule').value;
+            const secret = document.getElementById('newConfigSecret').checked;
+            
+            try {
+                await fetchWithMethod(`${API_URL}/admin/config`, 'POST', {
+                    key, value, module, secret,
+                    data_type: 'string',
+                    description: ''
+                });
+                showSuccess(`Config '${key}' created!`);
+                closeModal('addConfigModal');
+                refreshConfigs();
+                // Reset form
+                document.querySelector('#addConfigModal form').reset();
+            } catch (error) {
+                showError(`Failed to create config: ${error.message}`);
+            }
+        }
+        
+        function showSuccess(msg) {
+            const div = document.createElement('div');
+            div.className = 'success';
+            div.textContent = msg;
+            document.body.insertBefore(div, document.body.firstChild);
+            setTimeout(() => div.remove(), 3000);
+        }
+        
+        function showError(msg) {
+            const div = document.createElement('div');
+            div.className = 'error';
+            div.textContent = msg;
+            document.body.insertBefore(div, document.body.firstChild);
+            setTimeout(() => div.remove(), 5000);
+        }
+        
         // Load on init
         document.addEventListener('DOMContentLoaded', () => {
             loadDashboard();
@@ -393,6 +657,14 @@
             
             // Auto-refresh every 30 seconds
             setInterval(loadDashboard, 30000);
+            
+            // Close modal when clicking outside
+            window.onclick = (event) => {
+                const modal = document.getElementById('addConfigModal');
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            };
         });
     </script>
 </body>

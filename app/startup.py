@@ -15,14 +15,24 @@ def init_configs():
     try:
         # Basis Configs
         configs = [
+            # API Keys
             Config(
                 key="tvdb_api_key",
                 value="",
                 module="tvdb",
                 secret=True,
                 data_type="string",
-                description="TVDB API Key für Show/Episode Matching"
+                description="TVDB API Key für Show/Episode Matching (https://www.thetvdb.com/api-information)"
             ),
+            Config(
+                key="ard_mediathek_enabled",
+                value="true",
+                module="ard",
+                secret=False,
+                data_type="bool",
+                description="ARD Mediathek Scraping aktivieren"
+            ),
+            # Download Settings
             Config(
                 key="download_path",
                 value="/app/downloads",
@@ -31,6 +41,23 @@ def init_configs():
                 data_type="string",
                 description="Pfad wo Downloads gespeichert werden"
             ),
+            Config(
+                key="max_concurrent_downloads",
+                value="2",
+                module="downloader",
+                secret=False,
+                data_type="int",
+                description="Maximale gleichzeitige Downloads"
+            ),
+            Config(
+                key="download_retry_count",
+                value="3",
+                module="downloader",
+                secret=False,
+                data_type="int",
+                description="Anzahl der Wiederholungen bei fehlgeschlagenen Downloads"
+            ),
+            # Scheduler Settings
             Config(
                 key="log_level",
                 value="INFO",
@@ -54,6 +81,15 @@ def init_configs():
                 secret=False,
                 data_type="int",
                 description="Stunde (0-23) für tägliche Update-Checks"
+            ),
+            # Optional Proxy
+            Config(
+                key="socks5_proxy",
+                value="",
+                module="proxy",
+                secret=False,
+                data_type="string",
+                description="Optional: SOCKS5 Proxy (socks5://host:port)"
             ),
         ]
         

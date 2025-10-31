@@ -22,6 +22,9 @@ class ConfigCreate(BaseModel):
     data_type: str = "string"
     description: Optional[str] = None
 
+class ConfigUpdate(BaseModel):
+    value: str
+
 class ConfigResponse(BaseModel):
     id: int
     key: str
@@ -29,6 +32,7 @@ class ConfigResponse(BaseModel):
     module: str
     secret: bool
     data_type: str
+    description: Optional[str]
     updated_at: datetime
     
     class Config:
@@ -58,7 +62,7 @@ async def admin_panel():
 @router.get("/config", response_model=List[ConfigResponse])
 async def get_all_config(db: Session = Depends(get_db)):
     """Alle Konfigurationen abrufen"""
-    configs = db.query(Config).all()
+    configs = db.query(Config).order_by(Config.module, Config.key).all()
     return configs
 
 @router.get("/config/{key}", response_model=ConfigResponse)
@@ -83,18 +87,18 @@ async def create_config(config: ConfigCreate, db: Session = Depends(get_db)):
     return new_config
 
 @router.put("/config/{key}", response_model=ConfigResponse)
-async def update_config(key: str, config: ConfigCreate, db: Session = Depends(get_db)):
-    """Konfiguration aktualisieren"""
-    existing = db.query(Config).filter(Config.key == key).first()
-    if not existing:
+async def update_config(key: str, update: ConfigUpdate, db: Session = Depends(get_db)):
+    """Konfiguration aktualisieren (Value only)"""
+    config = db.query(Config).filter(Config.key == key).first()
+    if not config:
         raise HTTPException(status_code=404, detail=f"Config key '{key}' not found")
     
-    for field, value in config.dict().items():
-        setattr(existing, field, value)
+    config.value = update.value
+    config.updated_at = datetime.utcnow()
     
     db.commit()
-    db.refresh(existing)
-    return existing
+    db.refresh(config)
+    return config
 
 @router.delete("/config/{key}")
 async def delete_config(key: str, db: Session = Depends(get_db)):
