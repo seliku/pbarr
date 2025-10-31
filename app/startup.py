@@ -27,12 +27,12 @@ def init_configs():
                 description="TVDB API Key für Show/Episode Matching (https://www.thetvdb.com/api-information)"
             ),
             Config(
-                key="ard_mediathek_enabled",
+                key="mediathekviewweb_enabled",
                 value="true",
-                module="ard",
+                module="mediathekviewweb",
                 secret=False,
                 data_type="bool",
-                description="ARD Mediathek Scraping aktivieren"
+                description="MediathekViewWeb Suche aktivieren (ARD, ZDF, 3Sat)"
             ),
             # Download Settings
             Config(
@@ -84,15 +84,6 @@ def init_configs():
                 data_type="int",
                 description="Stunde (0-23) für tägliche Update-Checks"
             ),
-            # Optional Proxy
-            Config(
-                key="socks5_proxy",
-                value="",
-                module="proxy",
-                secret=False,
-                data_type="string",
-                description="Optional: SOCKS5 Proxy (socks5://host:port)"
-            ),
         ]
         
         for config in configs:
@@ -104,7 +95,7 @@ def init_configs():
         # Module States
         modules = [
             ModuleState(
-                module_name="ard",
+                module_name="mediathekviewweb",
                 module_type="source",
                 enabled=True,
                 version="0.1.0"
@@ -123,17 +114,12 @@ def init_configs():
                 db.add(module)
                 logger.info(f"✓ Added module: {module.module_name}")
         
-        # Default Matcher Configs
+        # Default Matcher Configs (aktualisiert für verschiedene Formate)
         default_matchers = [
             MatcherConfig(
-                name="ard_default",
-                source="ard",
-                **MatcherTemplates.ARD_SIMPLE
-            ),
-            MatcherConfig(
-                name="zdf_default",
-                source="zdf",
-                **MatcherTemplates.ZDF_STANDARD
+                name="mediathekviewweb_default",
+                source="mediathekviewweb",
+                **MatcherTemplates.GENERIC_STANDARD
             ),
         ]
         

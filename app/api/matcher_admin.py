@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
@@ -14,14 +14,14 @@ class MatcherConfigCreate(BaseModel):
     name: str
     source: str
     strategy: str = "regex"
-    title_pattern: Optional[str]
-    season_pattern: Optional[str]
-    episode_pattern: Optional[str]
+    title_pattern: Optional[str] = None
+    season_pattern: Optional[str] = None
+    episode_pattern: Optional[str] = None
     title_group: int = 1
     season_group: int = 1
     episode_group: int = 1
     default_season: int = 1
-    test_string: Optional[str]
+    test_string: Optional[str] = None
 
 class MatcherConfigResponse(BaseModel):
     id: int
@@ -96,16 +96,19 @@ async def delete_config(config_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Config deleted"}
 
-@router.post("/test/{config_id}")
-async def test_matcher(config_id: int, test_string: str, db: Session = Depends(get_db)):
+@router.get("/test/{config_id}")
+async def test_matcher(config_id: int, test_string: str = Query(...), db: Session = Depends(get_db)):
     """Test Matcher gegen String"""
     config = db.query(MatcherConfig).filter_by(id=config_id).first()
     if not config:
         raise HTTPException(status_code=404, detail="Config not found")
     
-    matcher = PatternMatcher(config)
-    result = matcher.test(test_string)
-    return result
+    try:
+        matcher = PatternMatcher(config)
+        result = matcher.test(test_string)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Matcher error: {str(e)}")
 
 @router.get("/templates")
 async def list_templates():
@@ -129,7 +132,7 @@ async def list_templates():
     }
 
 @router.post("/apply-template")
-async def apply_template(template_name: str, name: str, source: str, db: Session = Depends(get_db)):
+async def apply_template(template_name: str = Query(...), name: str = Query(...), source: str = Query(...), db: Session = Depends(get_db)):
     """Wende vordefiniertes Template an"""
     templates = {
         "ard_simple": MatcherTemplates.ARD_SIMPLE,

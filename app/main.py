@@ -11,7 +11,7 @@ from app.services.scheduler import start_scheduler
 from app.startup import init_configs
 
 # API Routes
-from app.api import admin, search, system, downloads, matcher, matcher_admin
+from app.api import admin, search, system, downloads, matcher, matcher_admin, integration
 
 # Logging
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -56,6 +56,7 @@ app.include_router(system.router)
 app.include_router(downloads.router)
 app.include_router(matcher.router)
 app.include_router(matcher_admin.router)
+app.include_router(integration.router)
 
 # Static Files (Optional)
 try:

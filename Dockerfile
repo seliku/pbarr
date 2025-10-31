@@ -2,12 +2,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# System dependencies
+# System dependencies (including ffmpeg für yt-dlp)
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     git \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+# yt-dlp installieren (wichtig!)
+RUN pip install --no-cache-dir yt-dlp
 
 # Python dependencies
 COPY requirements.txt .
