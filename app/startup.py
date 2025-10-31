@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""Startup script - runs before FastAPI starts"""
+import logging
+from app.database import SessionLocal, init_db
+from app.models.config import Config
+from app.models.module_state import ModuleState
+
+logger = logging.getLogger(__name__)
+
+def init_configs():
+    """Initialize base configs if they don't exist"""
+    init_db()
+    db = SessionLocal()
+    
+    try:
+        # Basis Configs
+        configs = [
+            Config(
+                key="tvdb_api_key",
+                value="",
+                module="tvdb",
+                secret=True,
+                data_type="string",
+                description="TVDB API Key für Show/Episode Matching"
+            ),
+            Config(
+                key="download_path",
+                value="/app/downloads",
+                module="core",
+                secret=False,
+                data_type="string",
+                description="Pfad wo Downloads gespeichert werden"
+            ),
+            Config(
+                key="log_level",
+                value="INFO",
+                module="core",
+                secret=False,
+                data_type="string",
+                description="Logging Level (DEBUG, INFO, WARNING, ERROR)"
+            ),
+            Config(
+                key="scheduler_enabled",
+                value="true",
+                module="core",
+                secret=False,
+                data_type="bool",
+                description="Scheduler für regelmäßige Updates aktivieren"
+            ),
+            Config(
+                key="update_check_interval",
+                value="3",
+                module="core",
+                secret=False,
+                data_type="int",
+                description="Stunde (0-23) für tägliche Update-Checks"
+            ),
+        ]
+        
+        for config in configs:
+            existing = db.query(Config).filter_by(key=config.key).first()
+            if not existing:
+                db.add(config)
+                logger.info(f"✓ Added config: {config.key}")
+        
+        # Module States
+        modules = [
+            ModuleState(
+                module_name="ard",
+                module_type="source",
+                enabled=True,
+                version="0.1.0"
+            ),
+            ModuleState(
+                module_name="tvdb",
+                module_type="matcher",
+                enabled=True,
+                version="1.0.0"
+            ),
+        ]
+        
+        for module in modules:
+            existing = db.query(ModuleState).filter_by(module_name=module.module_name).first()
+            if not existing:
+                db.add(module)
+                logger.info(f"✓ Added module: {module.module_name}")
+        
+        db.commit()
+        logger.info("✅ Base config initialized")
+    
+    except Exception as e:
+        logger.error(f"✗ Config init failed: {e}")
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    init_configs()

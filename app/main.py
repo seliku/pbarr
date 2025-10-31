@@ -8,6 +8,7 @@ import os
 # Services
 from app.database import init_db, get_db
 from app.services.scheduler import start_scheduler
+from app.startup import init_configs
 
 # API Routes
 from app.api import admin, search, system
@@ -25,6 +26,11 @@ async def lifespan(app: FastAPI):
         logger.info("✓ Database initialized")
     except Exception as e:
         logger.error(f"✗ Database init failed: {e}")
+    
+    try:
+        init_configs()
+    except Exception as e:
+        logger.error(f"✗ Config init failed: {e}")
     
     try:
         # Scheduler später aktivieren
