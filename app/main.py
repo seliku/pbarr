@@ -5,16 +5,18 @@ from contextlib import asynccontextmanager
 import logging
 import os
 
+# ✅ Setup Logging FIRST
+from app.utils.logger import setup_logging
+setup_logging(log_level=os.getenv("LOG_LEVEL", "INFO"))
+
 # Services
 from app.database import init_db, get_db
-from app.services.scheduler import start_scheduler
+from app.services.download_worker import worker
 from app.startup import init_configs
 
 # API Routes
 from app.api import admin, search, system, downloads, matcher, matcher_admin, integration
 
-# Logging
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
@@ -26,21 +28,22 @@ async def lifespan(app: FastAPI):
         logger.info("✓ Database initialized")
     except Exception as e:
         logger.error(f"✗ Database init failed: {e}")
-    
+
     try:
         init_configs()
     except Exception as e:
         logger.error(f"✗ Config init failed: {e}")
-    
+
     try:
-        logger.info("✓ Scheduler ready")
+        worker.start()
     except Exception as e:
-        logger.error(f"✗ Scheduler init failed: {e}")
-    
+        logger.error(f"✗ Download worker init failed: {e}")
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down PBArr...")
+    worker.stop()
 
 app = FastAPI(
     title="PBArr - Public Broadcasting Archive Indexer",

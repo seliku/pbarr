@@ -26,7 +26,8 @@ services:
       - "8000:8000"
     volumes:
       - ./app:/app/app
-      - /data/pbarr/downloads:/app/downloads
+      - /mnt/main-share/Downloads/Series/incomplete:/app/downloads/incomplete
+      - /mnt/main-share/Downloads/Series/completed:/app/downloads/completed
       - /data/pbarr/logs:/app/logs
     depends_on:
       postgres:
