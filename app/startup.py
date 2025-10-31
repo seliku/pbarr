@@ -2,9 +2,11 @@ import logging
 from app.database import SessionLocal
 from app.models.config import Config
 
+
 logger = logging.getLogger(__name__)
 
-def init_configs():
+
+def init_config():
     """Initialize default configs"""
     db = SessionLocal()
     
@@ -45,39 +47,50 @@ def init_configs():
             logger.info(f"✓ Added config: {key}")
     
     # Module States
-    from app.models.module_state import ModuleState
-    
-    modules = [
-        ("mediathekviewweb", "source", "1.0.0"),
-        ("tvdb", "metadata", "1.0.0"),
-    ]
-    
-    for name, mod_type, version in modules:
-        existing = db.query(ModuleState).filter_by(module_name=name).first()
-        if not existing:
-            module_state = ModuleState(
-                module_name=name,
-                module_type=mod_type,
-                version=version,
-                enabled=True
-            )
-            db.add(module_state)
-            logger.info(f"✓ Added module: {name}")
+    try:
+        from app.models.module_state import ModuleState
+        
+        modules = [
+            ("mediathekviewweb", "source", "1.0.0"),
+            ("tvdb", "metadata", "1.0.0"),
+        ]
+        
+        for name, mod_type, version in modules:
+            existing = db.query(ModuleState).filter_by(module_name=name).first()
+            if not existing:
+                module_state = ModuleState(
+                    module_name=name,
+                    module_type=mod_type,
+                    version=version,
+                    enabled=True
+                )
+                db.add(module_state)
+                logger.info(f"✓ Added module: {name}")
+    except Exception as e:
+        logger.warning(f"ModuleState table might not exist yet: {e}")
     
     # Matcher Configs
-    from app.models.matcher_config import MatcherConfig
-    
-    existing = db.query(MatcherConfig).filter_by(name="mediathekviewweb_default").first()
-    if not existing:
-        matcher = MatcherConfig(
-            name="mediathekviewweb_default",
-            source="mediathekviewweb",
-            strategy="regex",
-            enabled=True
-        )
-        db.add(matcher)
-        logger.info(f"✓ Added matcher: mediathekviewweb_default")
+    try:
+        from app.models.matcher_config import MatcherConfig
+        
+        existing = db.query(MatcherConfig).filter_by(name="mediathekviewweb_default").first()
+        if not existing:
+            matcher = MatcherConfig(
+                name="mediathekviewweb_default",
+                source="mediathekviewweb",
+                strategy="regex",
+                enabled=True
+            )
+            db.add(matcher)
+            logger.info(f"✓ Added matcher: mediathekviewweb_default")
+    except Exception as e:
+        logger.warning(f"MatcherConfig table might not exist yet: {e}")
     
     db.commit()
     db.close()
     logger.info("✅ Base config initialized")
+
+
+def load_enabled_modules():
+    """Load enabled modules (placeholder for future implementation)"""
+    logger.info("✓ Modules loaded")
