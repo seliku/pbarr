@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PBArr Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .version {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .config-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .config-item:last-child {
+            border-bottom: none;
+        }
+        
+        .config-key {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .config-value {
+            background: #f5f5f5;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #666;
+            word-break: break-all;
+        }
+        
+        .config-module {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .module-item {
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .module-info {
+            flex: 1;
+        }
+        
+        .module-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .module-type {
+            font-size: 12px;
+            color: #666;
+            margin-top: 3px;
+        }
+        
+        .module-status {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 PBArr Admin Panel</h1>
+            <p class="version">Version: <span id="version">-</span></p>
+            <p class="version" style="margin-top: 5px;">Status: <span id="status" style="color: #28a745; font-weight: bold;">✓ Online</span></p>
+        </header>
+        
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="config-count">-</div>
+                <div class="stat-label">Config Items</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="modules-enabled">-</div>
+                <div class="stat-label">Modules Active</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="modules-total">-</div>
+                <div class="stat-label">Modules Total</div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <!-- Configuration -->
+            <div class="card">
+                <h2>⚙️ Configuration</h2>
+                <div id="config-loading" class="loading">Loading configs...</div>
+                <div id="config-list"></div>
+                <button class="btn btn-secondary" onclick="refreshConfigs()">🔄 Refresh</button>
+            </div>
+            
+            <!-- Modules -->
+            <div class="card">
+                <h2>�� Modules</h2>
+                <div id="modules-loading" class="loading">Loading modules...</div>
+                <div id="modules-list"></div>
+                <button class="btn btn-secondary" onclick="refreshModules()">🔄 Refresh</button>
+            </div>
+        </div>
+        
+        <!-- Full Width Cards -->
+        <div class="card">
+            <h2>🔧 System</h2>
+            <button class="btn" onclick="checkUpdates()">Check for Updates</button>
+            <button class="btn btn-secondary" onclick="refreshAll()" style="margin-left: 10px;">Refresh All</button>
+            <div id="system-message" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = window.location.origin;
+        
+        async function fetchJSON(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+        
+        async function loadDashboard() {
+            try {
+                const data = await fetchJSON(`${API_URL}/admin/dashboard`);
+                document.getElementById('config-count').textContent = data.config_items;
+                document.getElementById('modules-enabled').textContent = data.modules.enabled;
+                document.getElementById('modules-total').textContent = data.modules.total;
+            } catch (error) {
+                console.error('Dashboard error:', error);
+            }
+        }
+        
+        async function loadVersion() {
+            try {
+                const data = await fetchJSON(`${API_URL}/api/system/version`);
+                document.getElementById('version').textContent = data.version;
+            } catch (error) {
+                console.error('Version error:', error);
+            }
+        }
+        
+        async function loadConfigs() {
+            const container = document.getElementById('config-list');
+            const loading = document.getElementById('config-loading');
+            
+            try {
+                const configs = await fetchJSON(`${API_URL}/admin/config`);
+                loading.style.display = 'none';
+                
+                container.innerHTML = configs.map(config => `
+                    <div class="config-item">
+                        <div class="config-key">${config.key}</div>
+                        <div class="config-value">${config.value || '(empty)'}</div>
+                        <span class="config-module">${config.module}</span>
+                        ${config.secret ? '<span class="config-module" style="background: #e74c3c; margin-left: 5px;">�� Secret</span>' : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = `<div class="error">Failed to load configs: ${error.message}</div>`;
+                loading.style.display = 'none';
+            }
+        }
+        
+        async function loadModules() {
+            const container = document.getElementById('modules-list');
+            const loading = document.getElementById('modules-loading');
+            
+            try {
+                const modules = await fetchJSON(`${API_URL}/admin/modules`);
+                loading.style.display = 'none';
+                
+                container.innerHTML = modules.map(module => `
+                    <div class="module-item">
+                        <div class="module-info">
+                            <div class="module-name">${module.module_name}</div>
+                            <div class="module-type">${module.module_type} • v${module.version}</div>
+                        </div>
+                        <span class="module-status ${module.enabled ? 'status-enabled' : 'status-disabled'}">
+                            ${module.enabled ? '✓ Enabled' : '✗ Disabled'}
+                        </span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = `<div class="error">Failed to load modules: ${error.message}</div>`;
+                loading.style.display = 'none';
+            }
+        }
+        
+        async function checkUpdates() {
+            const msg = document.getElementById('system-message');
+            msg.innerHTML = '<div class="loading">Checking for updates...</div>';
+            
+            try {
+                await fetch(`${API_URL}/api/system/check-updates`, { method: 'POST' });
+                msg.innerHTML = '<div class="success">✓ Update check started in background</div>';
+                
+                setTimeout(async () => {
+                    const status = await fetchJSON(`${API_URL}/api/system/update-status`);
+                    if (status.update_available) {
+                        msg.innerHTML = `<div class="success">✓ Update available: ${status.latest}</div>`;
+                    } else {
+                        msg.innerHTML = '<div class="success">✓ You are up to date</div>';
+                    }
+                }, 2000);
+            } catch (error) {
+                msg.innerHTML = `<div class="error">✗ Update check failed: ${error.message}</div>`;
+            }
+        }
+        
+        function refreshConfigs() {
+            document.getElementById('config-loading').style.display = 'block';
+            document.getElementById('config-list').innerHTML = '';
+            loadConfigs();
+        }
+        
+        function refreshModules() {
+            document.getElementById('modules-loading').style.display = 'block';
+            document.getElementById('modules-list').innerHTML = '';
+            loadModules();
+        }
+        
+        function refreshAll() {
+            loadDashboard();
+            loadVersion();
+            refreshConfigs();
+            refreshModules();
+        }
+        
+        // Load on init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboard();
+            loadVersion();
+            loadConfigs();
+            loadModules();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadDashboard, 30000);
+        });
+    </script>
+</body>
+</html>

@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+import os
 
 from app.database import get_db
 from app.models.config import Config
@@ -41,6 +44,15 @@ class ModuleResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+# HTML Admin Panel
+@router.get("/")
+async def admin_panel():
+    """Serve admin.html"""
+    admin_html = os.path.join(os.path.dirname(__file__), "..", "static", "admin.html")
+    if os.path.exists(admin_html):
+        return FileResponse(admin_html, media_type="text/html")
+    return {"error": "Admin panel not found"}
 
 # Endpoints
 @router.get("/config", response_model=List[ConfigResponse])
