@@ -4,6 +4,8 @@ import logging
 from app.database import SessionLocal, init_db
 from app.models.config import Config
 from app.models.module_state import ModuleState
+from app.models.matcher_config import MatcherConfig
+from app.services.pattern_matcher import MatcherTemplates
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +122,26 @@ def init_configs():
             if not existing:
                 db.add(module)
                 logger.info(f"✓ Added module: {module.module_name}")
+        
+        # Default Matcher Configs
+        default_matchers = [
+            MatcherConfig(
+                name="ard_default",
+                source="ard",
+                **MatcherTemplates.ARD_SIMPLE
+            ),
+            MatcherConfig(
+                name="zdf_default",
+                source="zdf",
+                **MatcherTemplates.ZDF_STANDARD
+            ),
+        ]
+        
+        for matcher in default_matchers:
+            existing = db.query(MatcherConfig).filter_by(name=matcher.name).first()
+            if not existing:
+                db.add(matcher)
+                logger.info(f"✓ Added matcher: {matcher.name}")
         
         db.commit()
         logger.info("✅ Base config initialized")
