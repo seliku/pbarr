@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pbuser
+      POSTGRES_PASSWORD: pbpass
+      POSTGRES_DB: pbarr
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pbuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pbarr:
+    build: .
+    image: pbarr:latest
+    environment:
+      - DATABASE_URL=postgresql://pbuser:pbpass@postgres:5432/pbarr
+      - SECRET_KEY=change-me-in-production
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - /data/pbarr/downloads:/app/downloads
+      - /data/pbarr/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
