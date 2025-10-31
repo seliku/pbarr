@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.pool import StaticPool
+from sqlalchemy.exc import OperationalError, ProgrammingError
 import os
 import logging
 
@@ -19,7 +20,11 @@ if "sqlite" in DATABASE_URL:
         poolclass=StaticPool,
     )
 else:
-    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=3600)
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+        pool_recycle=3600
+    )
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -30,34 +35,45 @@ Base = declarative_base()
 
 
 def ensure_database_exists():
-    """Stellt sicher dass die Datenbank existiert (ohne Schema zu erstellen)"""
+    """Stellt sicher dass die Datenbank existiert (nur falls nötig)"""
     if "sqlite" in DATABASE_URL:
         return  # SQLite braucht das nicht
     
     try:
-        from sqlalchemy.engine.url import make_url
-        url = make_url(DATABASE_URL)
-        db_name = url.database
-        db_user = url.username
-        
-        # Verbinde ohne spezifische DB (default 'postgres')
-        admin_url = url.set(database='postgres')
-        admin_engine = create_engine(str(admin_url), isolation_level='AUTOCOMMIT')
-        
-        with admin_engine.connect() as conn:
-            # Check ob DB existiert
-            result = conn.execute(text(f"SELECT 1 FROM pg_database WHERE datname = '{db_name}'"))
-            if not result.fetchone():
-                logger.info(f"Creating database: {db_name}")
-                conn.execute(text(f"CREATE DATABASE {db_name} OWNER {db_user}"))
-                logger.info(f"Database {db_name} created successfully")
-            else:
-                logger.info(f"Database {db_name} already exists")
-        
-        admin_engine.dispose()
-    except Exception as e:
-        logger.warning(f"Could not ensure database exists: {e}")
-        # Non-fatal - Tabellen-Creation wird trotzdem versucht
+        # Versuche normale Verbindung
+        with engine.connect() as conn:
+            logger.info("✓ Database connection successful")
+            return
+    except (OperationalError, ProgrammingError) as e:
+        # DB existiert nicht - erstelle sie
+        if "does not exist" in str(e) or "Unknown database" in str(e):
+            logger.info(f"Database does not exist, creating it...")
+            
+            try:
+                from sqlalchemy.engine.url import make_url
+                url = make_url(DATABASE_URL)
+                db_name = url.database
+                db_user = url.username
+                
+                # Verbinde OHNE Database - zur 'postgres' default-DB
+                admin_url = url.set(database='postgres')
+                admin_engine = create_engine(
+                    str(admin_url),
+                    isolation_level='AUTOCOMMIT'
+                    # KEIN timeout in connect_args!
+                )
+                
+                with admin_engine.connect() as conn:
+                    conn.execute(text(f"CREATE DATABASE {db_name} OWNER {db_user}"))
+                    logger.info(f"✓ Database {db_name} created successfully")
+                
+                admin_engine.dispose()
+            except Exception as create_error:
+                logger.error(f"✗ Failed to create database: {create_error}")
+                raise
+        else:
+            # Andere Connection-Fehler
+            raise
 
 
 def init_db():

@@ -88,5 +88,5 @@ class DownloadWorker:
             except Exception as e:
                 logger.error(f"✗ Error: {download.filename} - {e}")
 
-# Global Worker Instance
-worker = DownloadWorker(interval=30)  # Check alle 30 Sekunden
+
+# WICHTIG: Keine Global Instance! Wird in main.py erstellt

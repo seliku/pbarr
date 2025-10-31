@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pbuser"]
+      test: ["CMD-SHELL", "pg_isready -U pbuser -d pbarr"]
       interval: 10s
       timeout: 5s
       retries: 5

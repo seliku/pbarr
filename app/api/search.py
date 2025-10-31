@@ -17,7 +17,6 @@ router = APIRouter(prefix="/api", tags=["search"])
 
 # Newznab Namespace
 NS = "http://www.newznab.com/DTD/2010/feeds/attributes/"
-ET.register_namespace('newznab', NS)
 
 
 def get_category_by_quality(quality: str) -> str:
@@ -82,56 +81,44 @@ def build_caps_xml(request_url: str = "http://localhost:8000") -> str:
 
 
 def build_newznab_rss(episodes: list, total: int = 0) -> str:
-    """Baut Newznab/RSS XML mit korrektem Namespace"""
+    """Baut Newznab/RSS XML - OHNE namespace register"""
     
-    root = ET.Element("rss")
-    root.set("version", "2.0")
-    root.set("{http://www.w3.org/2000/xmlns/}newznab", NS)
-
-    channel = ET.SubElement(root, "channel")
-    ET.SubElement(channel, "title").text = "PBArr"
-    ET.SubElement(channel, "link").text = "http://localhost:8000"
-    ET.SubElement(channel, "description").text = "PBArr - Public Broadcasting Archive"
-    ET.SubElement(channel, "language").text = "de"
+    # Manuell bauen statt ElementTree (verhindert ns0 Bug)
+    xml_parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<rss version="2.0" xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">',
+        '<channel>',
+        '<title>PBArr</title>',
+        '<link>http://localhost:8000</link>',
+        '<description>PBArr - Public Broadcasting Archive</description>',
+        '<language>de</language>',
+        f'<newznab:response offset="0" total="{max(total, len(episodes))}" />',
+    ]
     
-    # Response Element mit Total Count
-    response = ET.SubElement(channel, f"{{{NS}}}response")
-    response.set("offset", "0")
-    response.set("total", str(max(total, len(episodes))))
-
     for episode in episodes:
-        item = ET.SubElement(channel, "item")
-        
-        title_text = f"{episode.title} - S{episode.season:02d}E{episode.episode_number:02d}"
-        ET.SubElement(item, "title").text = title_text
-        
-        ET.SubElement(item, "link").text = episode.media_url or episode.source_url or ""
-        ET.SubElement(item, "guid").text = f"pbarr-{episode.id}"
-        ET.SubElement(item, "pubDate").text = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
-        
-        # Kategorie basierend auf Qualität
         category = get_category_by_quality(episode.quality)
-        ET.SubElement(item, "category").text = "TV/HD" if category == "5030" else "TV/SD"
-        
+        category_name = "TV/HD" if category == "5030" else "TV/SD"
         desc = f"S{episode.season:02d}E{episode.episode_number:02d}"
         if episode.description:
             desc += f" - {episode.description[:100]}"
-        ET.SubElement(item, "description").text = desc
         
-        # Enclosure
-        enclosure = ET.SubElement(item, "enclosure")
-        enclosure.set("url", episode.media_url or episode.source_url or "")
-        enclosure.set("length", "0")
-        enclosure.set("type", "application/x-nzb")
-        
-        # Newznab Attribute: category
-        attr_cat = ET.SubElement(item, f"{{{NS}}}attr")
-        attr_cat.set("name", "category")
-        attr_cat.set("value", category)
-
-    xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    xml_str += ET.tostring(root, encoding='unicode')
-    return xml_str
+        xml_parts.append(f'''<item>
+<title>{episode.title} - S{episode.season:02d}E{episode.episode_number:02d}</title>
+<link>{episode.media_url or episode.source_url or ""}</link>
+<guid>pbarr-{episode.id}</guid>
+<pubDate>{datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")}</pubDate>
+<category>{category_name}</category>
+<description>{desc}</description>
+<enclosure url="{episode.media_url or episode.source_url or ""}" length="0" type="application/x-nzb" />
+<newznab:attr name="category" value="{category}" />
+</item>''')
+    
+    xml_parts.extend([
+        '</channel>',
+        '</rss>'
+    ])
+    
+    return '\n'.join(xml_parts)
 
 
 @router.get("/")
@@ -147,7 +134,6 @@ async def newznab_search(
 ):
     """Newznab API"""
 
-    # Request-basierte URL für caps
     request_url = f"{request.url.scheme}://{request.url.netloc}"
     logger.info(f"Newznab request: t={t}, tvdbid={tvdbid}, q={q}, cat={cat}, url={request_url}")
 
@@ -170,14 +156,12 @@ async def newznab_search(
         if ep is not None:
             query = query.filter(Episode.episode_number == ep)
 
-        # Kategorie-Filter
         if cat:
             cat_list = [c.strip() for c in cat.split(",")]
             logger.info(f"Filtering by categories: {cat_list}")
             
             episodes = query.filter(Episode.is_available == True).all()
             
-            # Python-seitiger Filter nach Kategorie
             filtered_episodes = []
             for ep_item in episodes:
                 ep_cat = get_category_by_quality(ep_item.quality)
@@ -193,6 +177,5 @@ async def newznab_search(
         xml = build_newznab_rss(episodes, total=len(episodes))
         return Response(content=xml, media_type="application/rss+xml; charset=utf-8")
 
-    # Default leere RSS mit Response Element
     empty = build_newznab_rss([], total=0)
     return Response(content=empty, media_type="application/rss+xml; charset=utf-8")

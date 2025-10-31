@@ -13,7 +13,7 @@ setup_logging(log_level=os.getenv("LOG_LEVEL", "INFO"))
 
 # Services
 from app.database import init_db, get_db
-from app.services.download_worker import worker
+from app.services.download_worker import DownloadWorker
 from app.startup import init_config, load_enabled_modules
 
 
@@ -23,10 +23,15 @@ from app.api import admin, search, system, downloads, matcher, matcher_admin, in
 
 logger = logging.getLogger(__name__)
 
+# Worker wird hier erstellt, nicht global
+download_worker = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
+    global download_worker
+    
     logger.info("Starting PBArr...")
     try:
         init_db()
@@ -42,7 +47,8 @@ async def lifespan(app: FastAPI):
 
 
     try:
-        worker.start()
+        download_worker = DownloadWorker(interval=30)
+        download_worker.start()
     except Exception as e:
         logger.error(f"✗ Download worker init failed: {e}")
 
@@ -52,7 +58,8 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down PBArr...")
-    worker.stop()
+    if download_worker:
+        download_worker.stop()
 
 
 app = FastAPI(
