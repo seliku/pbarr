@@ -89,3 +89,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Import Models
+from app.models.watch_list import WatchList
+from app.models.mediathek_cache import MediathekCache

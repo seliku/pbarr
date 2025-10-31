@@ -1,24 +1,34 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import logging
 import aiohttp
 from xml.etree import ElementTree as ET
+import subprocess
+import tempfile
+import os
+
 
 from app.database import get_db
 from app.models.config import Config
 from app.models.show import Show
 from app.models.episode import Episode
+from app.models.download import Download
 from app.services.tvdb_client import TVDBClient
 from app.services.episode_matcher import EpisodeMatcher
 
+
 logger = logging.getLogger(__name__)
 
+
 router = APIRouter(prefix="/api/integration", tags=["integration"])
+
 
 class SonarrIntegrationRequest(BaseModel):
     tvdb_id: int
     show_name: str
+
 
 @router.post("/sonarr-integration")
 async def sonarr_integration(request: SonarrIntegrationRequest, db: Session = Depends(get_db)):
@@ -149,11 +159,11 @@ async def sonarr_integration(request: SonarrIntegrationRequest, db: Session = De
         logger.error(f"Error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/extract-download-url")
 async def extract_download_url(episode_url: str = Query(...)):
     """Download URL via yt-dlp"""
     try:
-        import subprocess
         cmd = ['yt-dlp', '-f', 'best', '-g', episode_url]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if result.returncode == 0:
@@ -163,3 +173,96 @@ async def extract_download_url(episode_url: str = Query(...)):
             raise HTTPException(status_code=500, detail="yt-dlp failed")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/getnzb")
+async def get_nzb(id: str = Query(...), db: Session = Depends(get_db)):
+    """
+    Sonarr Download-Client Endpoint
+    Sonarr ruft auf: GET /getnzb?id=episode_123
+    PBArr erstellt ein "NZB" (eigentlich nur ein Manifest mit Download-Info)
+    Sonarr sendet das dann an seinen Downloader
+    """
+    try:
+        # Parse episode ID
+        if not id.startswith("pbarr-"):
+            raise HTTPException(status_code=404, detail="Invalid episode ID")
+        
+        episode_id = int(id.replace("pbarr-", ""))
+        episode = db.query(Episode).filter_by(id=episode_id).first()
+        
+        if not episode:
+            raise HTTPException(status_code=404, detail="Episode not found")
+        
+        logger.info(f"NZB Request: {episode.title} (S{episode.season:02d}E{episode.episode_number:02d})")
+        
+        # Erstelle Download Record
+        download = Download(
+            episode_id=episode.id,
+            filename=f"{episode.title}_S{episode.season:02d}E{episode.episode_number:02d}.mkv",
+            source_url=episode.source_url,
+            status="queued",
+            quality=episode.quality or "720p"
+        )
+        db.add(download)
+        db.commit()
+        
+        logger.info(f"✓ Download queued: {download.filename}")
+        
+        # Erstelle "NZB" XML (Fake für Sonarr)
+        # Das ist eigentlich nur ein Manifest, Sonarr braucht das Format
+        nzb_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nzb PUBLIC "-//newzbin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">
+<nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+  <head>
+    <meta type="title">PBArr Download</meta>
+  </head>
+  <file poster="pbarr@pbarray.local" date="{int(__import__('time').time())}" subject="{episode.title}">
+    <groups>
+      <group>pbarr</group>
+    </groups>
+    <segments>
+      <segment bytes="1000000" number="1">pbarr-{episode.id}</segment>
+    </segments>
+  </file>
+</nzb>'''
+        
+        # Speichere als temporäre Datei
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.nzb', delete=False) as f:
+            f.write(nzb_content)
+            nzb_path = f.name
+        
+        logger.info(f"NZB created: {nzb_path}")
+        
+        # Return NZB file
+        return FileResponse(
+            path=nzb_path,
+            filename=f"{episode.title}_S{episode.season:02d}E{episode.episode_number:02d}.nzb",
+            media_type="application/x-nzb"
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"NZB Error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/download-status")
+async def download_status(episode_id: int = Query(...), db: Session = Depends(get_db)):
+    """
+    Sonarr fragt Status ab
+    Status: queued, downloading, completed, failed
+    """
+    download = db.query(Download).filter_by(episode_id=episode_id).order_by(Download.created_at.desc()).first()
+    
+    if not download:
+        return {"status": "unknown"}
+    
+    return {
+        "status": download.status,
+        "filename": download.filename,
+        "progress": download.progress or 0,
+        "created_at": download.created_at,
+        "completed_at": download.completed_at
+    }
