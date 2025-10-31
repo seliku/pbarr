@@ -14,6 +14,7 @@ setup_logging(log_level=os.getenv("LOG_LEVEL", "INFO"))
 # Services
 from app.database import init_db, get_db
 from app.services.download_worker import DownloadWorker
+from app.services.mediathek_cacher import cacher
 from app.startup import init_config, load_enabled_modules
 
 
@@ -25,13 +26,14 @@ logger = logging.getLogger(__name__)
 
 # Worker wird hier erstellt, nicht global
 download_worker = None
+scheduler = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    global download_worker
+    global download_worker, scheduler
     
+    # Startup
     logger.info("Starting PBArr...")
     try:
         init_db()
@@ -39,12 +41,10 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"✗ Database init failed: {e}")
 
-
     try:
         init_config()
     except Exception as e:
         logger.error(f"✗ Config init failed: {e}")
-
 
     try:
         download_worker = DownloadWorker(interval=30)
@@ -52,14 +52,54 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"✗ Download worker init failed: {e}")
 
+    # Start Scheduler für Cache Jobs
+    try:
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from apscheduler.triggers.interval import IntervalTrigger
+        
+        scheduler = AsyncIOScheduler()
+        
+        # Hourly: Cache Sync
+        scheduler.add_job(
+            cacher.sync_watched_shows,
+            'interval',
+            hours=1,
+            id='mediathek_sync',
+            name='Mediathek Cache Sync (Hourly)'
+        )
+        
+        # Daily: Cleanup
+        scheduler.add_job(
+            cacher.cleanup_expired,
+            'cron',
+            hour=2,
+            minute=0,
+            id='cache_cleanup_expired',
+            name='Cleanup Expired Cache'
+        )
+        
+        scheduler.add_job(
+            cacher.cleanup_unwatched,
+            'cron',
+            hour=3,
+            minute=0,
+            id='cache_cleanup_unwatched',
+            name='Cleanup Unwatched Shows'
+        )
+        
+        scheduler.start()
+        logger.info("✓ Scheduler started (hourly cache, daily cleanup)")
+    except Exception as e:
+        logger.error(f"✗ Scheduler init failed: {e}")
 
     yield
-
 
     # Shutdown
     logger.info("Shutting down PBArr...")
     if download_worker:
         download_worker.stop()
+    if scheduler and scheduler.running:
+        scheduler.shutdown()
 
 
 app = FastAPI(

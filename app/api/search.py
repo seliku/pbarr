@@ -1,181 +1,157 @@
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Query, Depends
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
-from xml.etree import ElementTree as ET
+from sqlalchemy import or_
 from datetime import datetime
 import logging
 
 
 from app.database import get_db
-from app.models.show import Show
-from app.models.episode import Episode
+from app.models.watch_list import WatchList
+from app.models.mediathek_cache import MediathekCache
+from app.models.tvdb_cache import TVDBCache
 
 
 logger = logging.getLogger(__name__)
+
+
 router = APIRouter(prefix="/api", tags=["search"])
-
-
-# Newznab Namespace
-NS = "http://www.newznab.com/DTD/2010/feeds/attributes/"
-
-
-def get_category_by_quality(quality: str) -> str:
-    """Bestimme Kategorie basierend auf Qualität"""
-    if quality and "1080" in quality:
-        return "5030"  # TV/HD
-    elif quality and "720" in quality:
-        return "5030"  # TV/HD
-    else:
-        return "5040"  # TV/SD
-
-
-def build_caps_xml(request_url: str = "http://localhost:8000") -> str:
-    """Baut Newznab Capabilities XML"""
-    root = ET.Element("caps")
-
-    server = ET.SubElement(root, "server")
-    server.set("version", "1.0")
-    server.set("title", "PBArr")
-    server.set("strapline", "Public Broadcasting Archive")
-    server.set("email", "")
-    server.set("url", request_url)
-    
-    limits = ET.SubElement(root, "limits")
-    limits.set("max", "100")
-    limits.set("default", "100")
-    
-    registration = ET.SubElement(root, "registration")
-    registration.set("available", "yes")
-    registration.set("open", "no")
-    
-    searching = ET.SubElement(root, "searching")
-    
-    search = ET.SubElement(searching, "search")
-    search.set("available", "yes")
-    search.set("supportedParams", "q")
-    
-    tv_search = ET.SubElement(searching, "tv-search")
-    tv_search.set("available", "yes")
-    tv_search.set("supportedParams", "q,tvdbid,season,ep,imdbid")
-    
-    categories = ET.SubElement(root, "categories")
-    
-    tv_cat = ET.SubElement(categories, "category")
-    tv_cat.set("id", "5000")
-    tv_cat.set("name", "TV")
-    tv_cat.set("description", "TV")
-    
-    tv_hd = ET.SubElement(tv_cat, "subcat")
-    tv_hd.set("id", "5030")
-    tv_hd.set("name", "TV/HD")
-    tv_hd.set("description", "TV/HD")
-    
-    tv_sd = ET.SubElement(tv_cat, "subcat")
-    tv_sd.set("id", "5040")
-    tv_sd.set("name", "TV/SD")
-    tv_sd.set("description", "TV/SD")
-    
-    xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    xml_str += ET.tostring(root, encoding='unicode')
-    return xml_str
-
-
-def build_newznab_rss(episodes: list, total: int = 0) -> str:
-    """Baut Newznab/RSS XML - OHNE namespace register"""
-    
-    # Manuell bauen statt ElementTree (verhindert ns0 Bug)
-    xml_parts = [
-        '<?xml version="1.0" encoding="UTF-8"?>',
-        '<rss version="2.0" xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">',
-        '<channel>',
-        '<title>PBArr</title>',
-        '<link>http://localhost:8000</link>',
-        '<description>PBArr - Public Broadcasting Archive</description>',
-        '<language>de</language>',
-        f'<newznab:response offset="0" total="{max(total, len(episodes))}" />',
-    ]
-    
-    for episode in episodes:
-        category = get_category_by_quality(episode.quality)
-        category_name = "TV/HD" if category == "5030" else "TV/SD"
-        desc = f"S{episode.season:02d}E{episode.episode_number:02d}"
-        if episode.description:
-            desc += f" - {episode.description[:100]}"
-        
-        xml_parts.append(f'''<item>
-<title>{episode.title} - S{episode.season:02d}E{episode.episode_number:02d}</title>
-<link>{episode.media_url or episode.source_url or ""}</link>
-<guid>pbarr-{episode.id}</guid>
-<pubDate>{datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")}</pubDate>
-<category>{category_name}</category>
-<description>{desc}</description>
-<enclosure url="{episode.media_url or episode.source_url or ""}" length="0" type="application/x-nzb" />
-<newznab:attr name="category" value="{category}" />
-</item>''')
-    
-    xml_parts.extend([
-        '</channel>',
-        '</rss>'
-    ])
-    
-    return '\n'.join(xml_parts)
 
 
 @router.get("/")
 async def newznab_search(
     t: str = Query(None),
     q: str = Query(None),
-    tvdbid: str = Query(None),
+    tvdbid: int = Query(None),
     season: int = Query(None),
     ep: int = Query(None),
-    cat: str = Query(None),
-    request: Request = None,
     db: Session = Depends(get_db)
 ):
-    """Newznab API"""
-
-    request_url = f"{request.url.scheme}://{request.url.netloc}"
-    logger.info(f"Newznab request: t={t}, tvdbid={tvdbid}, q={q}, cat={cat}, url={request_url}")
-
-    if t == "caps":
-        xml = build_caps_xml(request_url)
-        return Response(content=xml, media_type="application/rss+xml; charset=utf-8")
-
-    if t == "tvsearch":
-        logger.info(f"TV Search: tvdbid={tvdbid}, season={season}, ep={ep}, cat={cat}")
-
-        query = db.query(Episode)
+    """
+    Newznab API Endpoint
+    
+    Sonarr ruft auf:
+    GET /api/?t=tvsearch&tvdbid=298954&season=11&ep=1
+    
+    Flow:
+    1. Update watch_list (mark as accessed)
+    2. Search mediathek_cache
+    3. Return Newznab XML
+    """
+    
+    try:
+        logger.info(f"Search: t={t}, tvdbid={tvdbid}, season={season}, ep={ep}")
         
-        if tvdbid:
-            logger.info(f"Filtering by tvdbid: {tvdbid}")
-            query = query.filter(Episode.show_id == str(tvdbid))
+        # Validiere Request
+        if t != "tvsearch":
+            return _newznab_error("Invalid search type")
         
-        if season is not None:
-            query = query.filter(Episode.season == season)
+        if not tvdbid:
+            return _newznab_error("Missing tvdbid")
         
-        if ep is not None:
-            query = query.filter(Episode.episode_number == ep)
-
-        if cat:
-            cat_list = [c.strip() for c in cat.split(",")]
-            logger.info(f"Filtering by categories: {cat_list}")
-            
-            episodes = query.filter(Episode.is_available == True).all()
-            
-            filtered_episodes = []
-            for ep_item in episodes:
-                ep_cat = get_category_by_quality(ep_item.quality)
-                if ep_cat in cat_list:
-                    filtered_episodes.append(ep_item)
-            
-            episodes = filtered_episodes
+        tvdb_id_str = str(tvdbid)
+        
+        # Step 1: Update oder Create Watch-List Eintrag
+        watch = db.query(WatchList).filter_by(tvdb_id=tvdb_id_str).first()
+        
+        if watch:
+            # Update last_accessed
+            watch.last_accessed = datetime.utcnow()
+            db.commit()
+            logger.info(f"✓ Watch-list updated: TVDB {tvdb_id_str}")
         else:
-            episodes = query.filter(Episode.is_available == True).all()
+            # Neue Serie in Watch-List
+            # Hole Show-Name von TVDB Cache
+            tvdb_cache = db.query(TVDBCache).filter_by(tvdb_id=tvdb_id_str).first()
+            show_name = tvdb_cache.show_name if tvdb_cache else f"Show_{tvdb_id_str}"
+            
+            watch = WatchList(
+                tvdb_id=tvdb_id_str,
+                show_name=show_name,
+                last_accessed=datetime.utcnow()
+            )
+            db.add(watch)
+            db.commit()
+            logger.info(f"✓ New watch-list entry: {show_name} (TVDB {tvdb_id_str})")
+        
+        # Step 2: Search Cache
+        results = []
+        
+        if season is not None and ep is not None:
+            # Episode-spezifische Suche
+            cache_results = db.query(MediathekCache).filter(
+                MediathekCache.tvdb_id == tvdb_id_str,
+                MediathekCache.season == season,
+                MediathekCache.episode == ep,
+                MediathekCache.expires_at > datetime.utcnow()
+            ).all()
+            
+            logger.info(f"Found {len(cache_results)} cache results for S{season:02d}E{ep:02d}")
+            results = cache_results
+        
+        else:
+            # Alle Episoden dieser Serie im Cache
+            cache_results = db.query(MediathekCache).filter(
+                MediathekCache.tvdb_id == tvdb_id_str,
+                MediathekCache.expires_at > datetime.utcnow()
+            ).all()
+            
+            logger.info(f"Found {len(cache_results)} cache results total")
+            results = cache_results
+        
+        if not results:
+            logger.info("No cache results, returning empty")
+            return _newznab_rss(tvdb_id_str, [])
+        
+        # Step 3: Build Newznab XML
+        return _newznab_rss(tvdb_id_str, results)
+    
+    except Exception as e:
+        logger.error(f"Search error: {e}", exc_info=True)
+        return _newznab_error(str(e))
 
-        logger.info(f"Found {len(episodes)} episodes matching criteria")
 
-        xml = build_newznab_rss(episodes, total=len(episodes))
-        return Response(content=xml, media_type="application/rss+xml; charset=utf-8")
+def _newznab_rss(tvdb_id: str, cache_results):
+    """Build Newznab RSS Response"""
+    
+    items_xml = ""
+    
+    for cache in cache_results:
+        item_xml = f"""
+    <item>
+        <title>{cache.episode_title}</title>
+        <link>{cache.media_url}</link>
+        <description>S{cache.season:02d}E{cache.episode:02d} - {cache.episode_title}</description>
+        <category>5000</category>
+        <pubDate>{cache.created_at.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
+        <enclosure url="{cache.media_url}" type="application/x-nzb" />
+        <newznab:attr name="tvdbid" value="{tvdb_id}" />
+        <newznab:attr name="season" value="{cache.season}" />
+        <newznab:attr name="episode" value="{cache.episode}" />
+    </item>"""
+        items_xml += item_xml
+    
+    rss = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:newznab="http://www.newzbin.com/DTD/2003/nzb">
+    <channel>
+        <title>PBArr - Mediathek Search Results</title>
+        <link>http://pbarray.local/</link>
+        <description>Newznab API für deutschsprachige Mediatheken</description>
+        <language>de</language>
+        {items_xml}
+    </channel>
+</rss>"""
+    
+    return Response(content=rss, media_type="application/rss+xml")
 
-    empty = build_newznab_rss([], total=0)
-    return Response(content=empty, media_type="application/rss+xml; charset=utf-8")
+
+def _newznab_error(message: str):
+    """Newznab Error Response"""
+    error_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+    <channel>
+        <error code="200">{message}</error>
+    </channel>
+</rss>"""
+    
+    return Response(content=error_xml, media_type="application/rss+xml")

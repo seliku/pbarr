@@ -6,8 +6,12 @@ from typing import Optional, List
 import aiohttp
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 import json
 import traceback
+
+
+from app.models.tvdb_cache import TVDBCache
 
 
 logger = logging.getLogger(__name__)
@@ -43,8 +47,19 @@ class TVDBClient:
             logger.error(f"Token error: {e}")
             return False
     
-    async def get_episodes(self, tvdb_id: int) -> List[dict]:
-        logger.info(f"Fetching TVDB episodes #{tvdb_id}")
+    async def get_episodes(self, tvdb_id: int, cache_to_db: bool = True) -> List[dict]:
+        """
+        Fetch TVDB episodes
+        
+        Args:
+            tvdb_id: TVDB Series ID
+            cache_to_db: Speichere in DB
+        
+        Returns:
+            List of episodes
+        """
+        tvdb_id_str = str(tvdb_id)
+        logger.info(f"Fetching TVDB episodes #{tvdb_id_str}")
         
         try:
             async with aiohttp.ClientSession() as session:
@@ -52,7 +67,11 @@ class TVDBClient:
                     return []
                 
                 headers = {'Authorization': f'Bearer {self.access_token}'}
-                url = f"{self.BASE_URL}/series/{tvdb_id}/episodes/official"
+                
+                # Hole Show-Info zuerst
+                show_name = await self._get_show_name(tvdb_id_str, headers, session)
+                
+                url = f"{self.BASE_URL}/series/{tvdb_id_str}/episodes/official"
                 
                 all_episodes = []
                 page = 0
@@ -69,46 +88,35 @@ class TVDBClient:
                                 break
                             
                             data = await resp.json()
-                            logger.info(f"Response keys: {list(data.keys())}")
-                            
-                            # ✅ KORREKT: episodes ist im data['data']['episodes'] Feld
                             response_data = data.get('data', {})
                             eps_list = response_data.get('episodes', []) if isinstance(response_data, dict) else []
                             
                             logger.info(f"Page {page}: {len(eps_list)} items")
                             
-                            # DEBUG first item
-                            if eps_list and len(eps_list) > 0:
-                                first = eps_list[0]
-                                logger.info(f"First item type: {type(first)}")
-                                logger.info(f"First item keys: {list(first.keys()) if isinstance(first, dict) else 'N/A'}")
-                                logger.info(f"First item: {json.dumps(first, default=str)[:500]}")
-                            
-                            # Iteriere über echte Episode-Objects
+                            # Parse Episodes
                             for ep in eps_list:
                                 try:
                                     if not isinstance(ep, dict):
-                                        logger.warning(f"Item not dict: {type(ep)}")
                                         continue
                                     
                                     s = ep.get('seasonNumber')
                                     e = ep.get('number')
                                     name = ep.get('name')
                                     aired = ep.get('aired')
-                                    
-                                    logger.debug(f"Item: S{s}E{e} - {name} ({aired})")
+                                    overview = ep.get('overview', '')
                                     
                                     if s is None or e is None:
-                                        logger.debug(f"Skip: S={s}, E={e}")
                                         continue
                                     
-                                    all_episodes.append({
+                                    episode_data = {
                                         'season': s,
                                         'episode': e,
                                         'name': name or '',
-                                        'overview': ep.get('overview', ''),
+                                        'overview': overview,
                                         'aired': aired,
-                                    })
+                                    }
+                                    
+                                    all_episodes.append(episode_data)
                                 
                                 except Exception as ie:
                                     logger.error(f"Item error: {ie}")
@@ -120,18 +128,98 @@ class TVDBClient:
                                 url = links['next']
                                 page += 1
                             else:
-                                logger.info(f"No more pages")
                                 break
                     
                     except Exception as pe:
                         logger.error(f"Page error: {pe}")
-                        logger.error(traceback.format_exc())
                         break
                 
                 logger.info(f"✓ Total: {len(all_episodes)} episodes")
+                
+                # Step 2: Cache in DB
+                if cache_to_db and self.db and len(all_episodes) > 0:
+                    self._cache_episodes_to_db(tvdb_id_str, show_name, all_episodes)
+                
                 return all_episodes
         
         except Exception as e:
             logger.error(f"Fetch error: {e}")
             logger.error(traceback.format_exc())
             return []
+    
+    async def _get_show_name(self, tvdb_id: str, headers: dict, session: aiohttp.ClientSession) -> str:
+        """Hole Show-Namen"""
+        try:
+            url = f"{self.BASE_URL}/series/{tvdb_id}"
+            async with session.get(url, headers=headers, timeout=10) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    name = data.get('data', {}).get('name', f'Show_{tvdb_id}')
+                    logger.info(f"✓ Show name: {name}")
+                    return name
+        except Exception as e:
+            logger.debug(f"Show name fetch failed: {e}")
+        
+        return f'Show_{tvdb_id}'
+    
+    def _cache_episodes_to_db(self, tvdb_id: str, show_name: str, episodes: List[dict]):
+        """Speichere Episodes in DB - ignore duplicates"""
+        try:
+            logger.info(f"Caching {len(episodes)} episodes to DB...")
+            
+            cached = 0
+            skipped = 0
+            
+            for ep in episodes:
+                try:
+                    # Prüfe ob bereits existiert
+                    existing = self.db.query(TVDBCache).filter(
+                        TVDBCache.tvdb_id == tvdb_id,
+                        TVDBCache.season == ep['season'],
+                        TVDBCache.episode == ep['episode']
+                    ).first()
+                    
+                    if existing:
+                        skipped += 1
+                        continue
+                    
+                    # Parse aired date
+                    aired_date = None
+                    if ep.get('aired'):
+                        try:
+                            aired_date = datetime.fromisoformat(ep['aired']).date()
+                        except:
+                            pass
+                    
+                    # Create cache entry
+                    cache_entry = TVDBCache(
+                        tvdb_id=tvdb_id,
+                        show_name=show_name,
+                        season=ep['season'],
+                        episode=ep['episode'],
+                        episode_name=ep['name'],
+                        description=ep.get('overview', ''),
+                        aired_date=aired_date,
+                    )
+                    self.db.add(cache_entry)
+                    cached += 1
+                    
+                    # Commit pro Episode um duplicates zu vermeiden
+                    if cached % 100 == 0:
+                        self.db.commit()
+                
+                except IntegrityError as ie:
+                    logger.debug(f"Duplicate skipped: S{ep['season']}E{ep['episode']}")
+                    self.db.rollback()
+                    skipped += 1
+                except Exception as e:
+                    logger.error(f"Episode cache error: {e}")
+                    self.db.rollback()
+            
+            # Final commit
+            self.db.commit()
+            logger.info(f"✅ Cached {cached} new episodes ({skipped} skipped)")
+        
+        except Exception as e:
+            logger.error(f"Cache error: {e}", exc_info=True)
+            self.db.rollback()

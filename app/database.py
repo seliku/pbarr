@@ -20,11 +20,7 @@ if "sqlite" in DATABASE_URL:
         poolclass=StaticPool,
     )
 else:
-    engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True,
-        pool_recycle=3600
-    )
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=3600)
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -32,6 +28,19 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # ZENTRALE Base Definition
 Base = declarative_base()
+
+
+# Import ALL Models - WICHTIG für create_all()
+from app.models.config import Config
+from app.models.module_state import ModuleState
+from app.models.show import Show
+from app.models.episode import Episode
+from app.models.download import Download
+from app.models.tvdb_cache import TVDBCache
+from app.models.matcher_config import MatcherConfig
+from app.models.version import AppVersion, UpdateCheck
+from app.models.watch_list import WatchList
+from app.models.mediathek_cache import MediathekCache
 
 
 def ensure_database_exists():
@@ -60,7 +69,6 @@ def ensure_database_exists():
                 admin_engine = create_engine(
                     str(admin_url),
                     isolation_level='AUTOCOMMIT'
-                    # KEIN timeout in connect_args!
                 )
                 
                 with admin_engine.connect() as conn:
@@ -89,7 +97,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-# Import Models
-from app.models.watch_list import WatchList
-from app.models.mediathek_cache import MediathekCache
