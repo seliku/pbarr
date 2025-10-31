@@ -11,7 +11,7 @@ from app.services.scheduler import start_scheduler
 from app.startup import init_configs
 
 # API Routes
-from app.api import admin, search, system
+from app.api import admin, search, system, downloads
 
 # Logging
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -33,7 +33,6 @@ async def lifespan(app: FastAPI):
         logger.error(f"✗ Config init failed: {e}")
     
     try:
-        # Scheduler später aktivieren
         logger.info("✓ Scheduler ready")
     except Exception as e:
         logger.error(f"✗ Scheduler init failed: {e}")
@@ -54,6 +53,7 @@ app = FastAPI(
 app.include_router(admin.router)
 app.include_router(search.router)
 app.include_router(system.router)
+app.include_router(downloads.router)
 
 # Static Files (Optional)
 try:
