@@ -101,12 +101,12 @@ async def sab_api_get(
     }
     logger.info(f"SABnzbd API Call: {all_params}")
     
-        # Wenn cat parameter übergeben wird - prüfen und akzeptieren
-        if cat:
-            logger.info(f"Kategorie-Parameter empfangen: {cat}")
-            if cat not in DEFAULT_CATEGORIES:
-                logger.warning(f"Unknown category: {cat}, aber wir akzeptieren sie trotzdem")
-            # Wir akzeptieren die Kategorie in jedem Fall, um Sonarr zufriedenzustellen
+    # Wenn cat parameter übergeben wird - prüfen und akzeptieren
+    if cat:
+        logger.info(f"Kategorie-Parameter empfangen: {cat}")
+        if cat not in DEFAULT_CATEGORIES:
+            logger.warning(f"Unknown category: {cat}, aber wir akzeptieren sie trotzdem")
+        # Wir akzeptieren die Kategorie in jedem Fall, um Sonarr zufriedenzustellen
     
     try:
         response = {
@@ -298,12 +298,12 @@ async def sab_api_post(
     }
     logger.info(f"SABnzbd API POST Call: {all_params}")
     
-        # Wenn cat parameter übergeben wird - prüfen und akzeptieren
-        if cat:
-            logger.info(f"Kategorie-Parameter empfangen (POST): {cat}")
-            if cat not in DEFAULT_CATEGORIES:
-                logger.warning(f"Unknown category (POST): {cat}, aber wir akzeptieren sie trotzdem")
-            # Wir akzeptieren die Kategorie in jedem Fall, um Sonarr zufriedenzustellen
+    # Wenn cat parameter übergeben wird - prüfen und akzeptieren
+    if cat:
+        logger.info(f"Kategorie-Parameter empfangen (POST): {cat}")
+        if cat not in DEFAULT_CATEGORIES:
+            logger.warning(f"Unknown category (POST): {cat}, aber wir akzeptieren sie trotzdem")
+        # Wir akzeptieren die Kategorie in jedem Fall, um Sonarr zufriedenzustellen
     
     try:
         response = {

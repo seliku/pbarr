@@ -19,7 +19,7 @@ from app.startup import init_config, load_enabled_modules
 
 
 # API Routes
-from app.api import admin, search, system, downloads, matcher, matcher_admin, integration, nzbget_emulator, sabnzbd_emulator
+from app.api import admin, search, system, downloads, matcher, matcher_admin, integration, nzbget_emulator, sabnzbd_emulator, transmission_emulator
 
 
 logger = logging.getLogger(__name__)
@@ -120,6 +120,7 @@ app.include_router(matcher_admin.router)
 app.include_router(integration.router)
 app.include_router(nzbget_emulator.router)
 app.include_router(sabnzbd_emulator.router)
+app.include_router(transmission_emulator.router)
 
 
 # Static Files (Optional)
