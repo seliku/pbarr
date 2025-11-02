@@ -33,8 +33,7 @@ setup_logging(log_level)
 # Setze globale Log-Level auf INFO, um weniger Spam zu haben
 logging.getLogger().setLevel(logging.INFO)
 
-# Setze spezifisches Log-Level für transmission_emulator auf WARNING, um noch weniger Logs zu haben
-logging.getLogger('app.api.transmission_emulator').setLevel(logging.WARNING)
+
 
 
 # Services
@@ -45,7 +44,7 @@ from app.startup import init_config, load_enabled_modules, init_download_directo
 
 
 # API Routes
-from app.api import admin, search, system, downloads, matcher, matcher_admin, integration, transmission_emulator, torznab, webhooks, dashboard
+from app.api import admin, search, system, downloads, matcher, matcher_admin, integration, torznab, webhooks, dashboard
 
 
 logger = logging.getLogger(__name__)
@@ -150,7 +149,7 @@ app.include_router(downloads.router)
 app.include_router(matcher.router)
 app.include_router(matcher_admin.router)
 app.include_router(integration.router)
-app.include_router(transmission_emulator.router)
+
 app.include_router(webhooks.router)
 app.include_router(dashboard.router)
 
