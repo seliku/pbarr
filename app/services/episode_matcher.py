@@ -19,9 +19,41 @@ class MatchResult:
 
 class EpisodeMatcher:
     """Matches MediathekViewWeb Episodes with TVDB"""
-    
+
     def __init__(self, db: Session):
         self.db = db
+
+    def filter_excluded_keywords(self, mediathek_episode: dict, exclude_keywords_string: str) -> bool:
+        """
+        Filtert Episoden basierend auf exclude_keywords.
+        Gibt False zurück wenn die Episode ausgeschlossen werden soll.
+
+        Args:
+            mediathek_episode: Episode dict mit 'title' und 'description'
+            exclude_keywords_string: Komma-separierte Keywords, z.B. "klare Sprache, Audiodeskription, Gebärdensprache"
+
+        Returns:
+            True wenn Episode behalten werden soll, False wenn ausgeschlossen
+        """
+        if not exclude_keywords_string or not exclude_keywords_string.strip():
+            return True  # Keine Filter = Episode behalten
+
+        # Split nach "," (ohne Space nach Komma) und strip whitespace
+        keywords = [kw.strip() for kw in exclude_keywords_string.split(",") if kw.strip()]
+
+        if not keywords:
+            return True
+
+        episode_title = mediathek_episode.get('title', '').lower()
+
+        # Prüfe jedes Keyword case-insensitive NUR im Titel (nicht in Beschreibung)
+        for keyword in keywords:
+            keyword_lower = keyword.lower()
+            if keyword_lower in episode_title:
+                logger.debug(f"Episode excluded due to keyword '{keyword}': {mediathek_episode.get('title', '')}")
+                return False  # Episode ausschließen
+
+        return True  # Episode behalten
     
     def extract_guests(self, title: str) -> List[str]:
         """Extrahiert Gäste-Namen aus Titel"""
@@ -64,28 +96,45 @@ class EpisodeMatcher:
     def match_episode(
         self,
         mediathek_episode: dict,
-        tvdb_episodes: List[dict]
+        tvdb_episodes: List[dict],
+        exclude_keywords_string: str = ""
     ) -> Optional[MatchResult]:
         """
         Matched eine MediathekViewWeb Episode mit TVDB Episodes
-        
+
         Strategy:
-        1. Exaktes Datum-Match
-        2. Gäste-Namen Match
-        3. Datum-Nähe (±14 Tage) + Content
-        4. Datum-Nähe (±7 Tage) fallback
+        1. Filter excluded keywords (am ANFANG!)
+        2. Exaktes Datum-Match
+        3. Gäste-Namen Match
+        4. Datum-Nähe (±14 Tage) + Content
+        5. Datum-Nähe (±7 Tage) fallback
         """
-        
+
+        # DEBUG: Log available TVDB episodes
+        logger.debug(f"Total TVDB episodes available: {len(tvdb_episodes)}")
+        if tvdb_episodes:
+            seasons = set(ep.get('season', 0) for ep in tvdb_episodes)
+            logger.debug(f"TVDB seasons: {sorted(seasons)}")
+            # Show sample episodes
+            for i, ep in enumerate(tvdb_episodes[:3]):
+                logger.debug(f"  TVDB Sample {i+1}: S{ep.get('season', '?')}E{ep.get('episode', '?')} - {ep.get('name', 'Unknown')}")
+
+        # Step 1: Filter excluded keywords AM ANFANG!
+        if not self.filter_excluded_keywords(mediathek_episode, exclude_keywords_string):
+            logger.info(f"🚫 Episode filtered out due to excluded keywords: {mediathek_episode.get('title', '')}")
+            return None
+
         mediathek_title = mediathek_episode.get('title', '')
         mediathek_pub = mediathek_episode.get('pub_date', '')
         mediathek_desc = mediathek_episode.get('description', '')
-        
+
         mediathek_date = self.extract_date(mediathek_pub)
         mediathek_guests = self.extract_guests(mediathek_title)
-        
+
         logger.debug(f"Matching: {mediathek_title}")
         logger.debug(f"  Date: {mediathek_date}")
         logger.debug(f"  Guests: {mediathek_guests}")
+        logger.debug(f"Matching against {len(tvdb_episodes)} TVDB episodes")
         
         # Strategy 1: Exaktes Datum-Match
         if mediathek_date:
@@ -99,13 +148,15 @@ class EpisodeMatcher:
                     
                     # Vergleiche nur das Datum (nicht Zeit)
                     if mediathek_date.date() == tvdb_date.date():
-                        logger.info(f"✓ EXACT DATE MATCH: S{tvdb_ep['season']}E{tvdb_ep['episode']}")
-                        return MatchResult(
+                        logger.info(f"✓ EXACT DATE MATCH: S{tvdb_ep['season']:02d}E{tvdb_ep['episode']:02d}")
+                        result = MatchResult(
                             season=tvdb_ep['season'],
                             episode=tvdb_ep['episode'],
                             confidence=1.0,
                             match_type="exactDate"
                         )
+                        logger.info(f"Created MatchResult: S{result.season:02d}E{result.episode:02d}")
+                        return result
                 except:
                     pass
         
@@ -124,7 +175,7 @@ class EpisodeMatcher:
                 all_guests_found = all(guest.lower() in tvdb_clean for guest in mediathek_guests)
                 
                 if all_guests_found:
-                    logger.info(f"✓ GUEST MATCH: S{tvdb_ep['season']}E{tvdb_ep['episode']} - {tvdb_name}")
+                    logger.info(f"✓ GUEST MATCH: S{tvdb_ep['season']:02d}E{tvdb_ep['episode']:02d} - {tvdb_name}")
                     return MatchResult(
                         season=tvdb_ep['season'],
                         episode=tvdb_ep['episode'],
@@ -158,7 +209,7 @@ class EpisodeMatcher:
                         
                         if names_found > 0:
                             confidence = 0.8 - (days_diff * 0.01)
-                            logger.info(f"✓ CONTENT MATCH: S{tvdb_ep['season']}E{tvdb_ep['episode']} ({days_diff} days, {names_found} names)")
+                            logger.info(f"✓ CONTENT MATCH: S{tvdb_ep['season']:02d}E{tvdb_ep['episode']:02d} ({days_diff} days, {names_found} names)")
                             return MatchResult(
                                 season=tvdb_ep['season'],
                                 episode=tvdb_ep['episode'],
@@ -183,7 +234,7 @@ class EpisodeMatcher:
                     
                     if days_diff <= 7:
                         confidence = 0.65 - (days_diff * 0.05)
-                        logger.info(f"✓ NEAR DATE MATCH: S{tvdb_ep['season']}E{tvdb_ep['episode']} ({days_diff} days)")
+                        logger.info(f"✓ NEAR DATE MATCH: S{tvdb_ep['season']:02d}E{tvdb_ep['episode']:02d} ({days_diff} days)")
                         return MatchResult(
                             season=tvdb_ep['season'],
                             episode=tvdb_ep['episode'],

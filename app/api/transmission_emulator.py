@@ -7,6 +7,7 @@ from typing import Dict, List, Any, Optional
 
 from app.database import get_db
 from app.models.download import Download
+from app.models.config import Config
 from app.services.download_manager import DownloadManager
 
 logger = logging.getLogger(__name__)
@@ -21,11 +22,26 @@ TRANSMISSION_STATUS_MAP = {
     "cancelled": 0     # Stopped
 }
 
-def format_torrent(download: Download) -> Dict[str, Any]:
+
+def get_download_path(db: Session) -> str:
+    """Lese Sonarr Download-Pfad aus Config-Tabelle"""
+    try:
+        config = db.query(Config).filter_by(key="sonarr_download_path_host").first()
+        if config and config.value:
+            logger.info(f"Using download path from config: {config.value}")
+            return config.value
+        else:
+            logger.warning("sonarr_download_path_host config not found or empty")
+    except Exception as e:
+        logger.warning(f"Could not read sonarr_download_path_host from config: {e}")
+
+    return "/downloads"  # Fallback
+
+def format_torrent(download: Download, download_path: str) -> Dict[str, Any]:
     """Wandelt einen Download in ein Transmission-Torrent-Objekt um"""
-    
+
     status = TRANSMISSION_STATUS_MAP.get(download.status, 0)
-    
+
     # Berechnung des Fortschritts (0-100%)
     percent_done = download.progress / 100 if download.progress is not None else 0
 
@@ -34,7 +50,7 @@ def format_torrent(download: Download) -> Dict[str, Any]:
         "name": download.filename,
         "hashString": f"pbarr-{download.id}",  # Fake Hash
         "status": status,
-        "downloadDir": "/downloads/complete/tv-sonarr",  # Kategorie im Pfad für Sonarr
+        "downloadDir": download_path,  # Verwende Config-Pfad direkt
         "percentDone": percent_done,
         "totalSize": 100000000,  # Dummy-Wert: 100MB
         "leftUntilDone": 100000000 * (1 - percent_done),
@@ -149,6 +165,9 @@ async def transmission_rpc(request: Request, db: Session = Depends(get_db)):
         }
         
         if method == "session-get":
+            # Lese Download-Pfad aus Config
+            download_path = get_download_path(db)
+
             # Sitzungsinformationen zurückgeben (Sonarr prüft dies beim Test der Verbindung)
             response["arguments"] = {
                 "alt-speed-down": 0,
@@ -163,7 +182,7 @@ async def transmission_rpc(request: Request, db: Session = Depends(get_db)):
                 "blocklist-url": "",
                 "cache-size-mb": 4,
                 "config-dir": "/config",
-                "download-dir": "/downloads/complete",
+                "download-dir": download_path,  # Verwende Config-Pfad
                 "download-dir-free-space": 100000000000,  # 100 GB frei
                 "download-queue-enabled": True,
                 "download-queue-size": 5,
@@ -208,18 +227,22 @@ async def transmission_rpc(request: Request, db: Session = Depends(get_db)):
             }
         
         elif method == "torrent-get":
+            # Lese Download-Pfad aus Config
+            download_path = get_download_path(db)
+
             # Torrent-Informationen abrufen
             fields = arguments.get("fields", [])
             torrent_ids = arguments.get("ids", [])
-            
+
             # Alle Downloads aus der Datenbank abrufen
             if torrent_ids and torrent_ids != "recently-active":
                 downloads = db.query(Download).filter(Download.id.in_(torrent_ids)).all()
             else:
                 downloads = db.query(Download).all()
-            
-            torrents = [format_torrent(download) for download in downloads]
-            
+
+            # Übergebe download_path an format_torrent
+            torrents = [format_torrent(download, download_path) for download in downloads]
+
             response["arguments"] = {
                 "torrents": torrents,
                 "removed": []  # Keine entfernten Torrents für diesen Aufruf

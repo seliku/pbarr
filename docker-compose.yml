@@ -28,6 +28,7 @@ services:
       - ./app:/app/app
       - /mnt/main-share/Downloads/Series/incomplete:/app/downloads/incomplete
       - /mnt/main-share/Downloads/Series/completed:/app/downloads/completed
+      - /mnt/main-share/Medien/Serien2:/app/library
       - /data/pbarr/logs:/app/logs
     depends_on:
       postgres:

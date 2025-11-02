@@ -1,9 +1,14 @@
 import logging
+import os
+from pathlib import Path
 from app.database import SessionLocal
 from app.models.config import Config
 
 
 logger = logging.getLogger(__name__)
+
+# Hardcoded download path in container (maps to completed directory on host)
+PBARR_DOWNLOAD_PATH = Path("/app/downloads/completed")
 
 
 def init_config():
@@ -13,20 +18,19 @@ def init_config():
     configs = [
         # TVDB
         ("tvdb_api_key", "", "core", False, "string", "TVDB API Key für Episode-Daten"),
-        
+
         # MediathekViewWeb
         ("mediathekviewweb_enabled", "true", "mediathekviewweb", False, "boolean", "MediathekViewWeb aktivieren"),
-        
-        # Download
-        ("download_path", "/app/downloads", "download", False, "string", "Download-Pfad"),
-        ("max_concurrent_downloads", "2", "download", False, "integer", "Max. gleichzeitige Downloads"),
-        ("download_retry_count", "3", "download", False, "integer", "Retry-Versuche bei fehlgeschlagenen Downloads"),
-        
+
+        # Download (path is now hardcoded to /app/downloads)
+        ("max_concurrent_downloads", "2", "download", False, "integer", "Gleichzeitige Downloads"),
+        ("download_retry_count", "3", "download", False, "integer", "Download Versuche"),
+
         # System
         ("log_level", "INFO", "system", False, "string", "Log-Level (DEBUG, INFO, WARNING, ERROR)"),
-        ("scheduler_enabled", "true", "system", False, "boolean", "Scheduler aktivieren"),
-        ("update_check_interval", "86400", "system", False, "integer", "Update-Check Intervall (Sekunden)"),
-        
+        ("scheduler_enabled", "true", "system", False, "boolean", "Hintergrund-Scheduler für automatische Aufgaben aktivieren (Cache-Sync, Cleanup, etc.)"),
+        ("update_check_interval", "86400", "system", False, "integer", "Automatischer Update-Check Intervall für PBArr-Versionen (Sekunden)"),
+
         # Sonarr Integration
         ("sonarr_url", "", "sonarr", False, "string", "Sonarr URL (z.B. http://localhost:8989)"),
         ("sonarr_api_key", "", "sonarr", True, "string", "Sonarr API Key"),
@@ -86,6 +90,17 @@ def init_config():
     except Exception as e:
         logger.warning(f"MatcherConfig table might not exist yet: {e}")
     
+    # Remove deprecated configs
+    deprecated_keys = ["sonarr_download_path", "download_path", "sonarr_download_path_host"]
+    for key in deprecated_keys:
+        try:
+            deprecated_config = db.query(Config).filter_by(key=key).first()
+            if deprecated_config:
+                db.delete(deprecated_config)
+                logger.info(f"✓ Removed deprecated config: {key}")
+        except Exception as e:
+            logger.warning(f"Could not remove deprecated config {key}: {e}")
+
     db.commit()
     db.close()
     logger.info("✅ Base config initialized")
@@ -94,3 +109,21 @@ def init_config():
 def load_enabled_modules():
     """Load enabled modules (placeholder for future implementation)"""
     logger.info("✓ Modules loaded")
+
+
+def init_download_directory():
+    """Initialize the download directory"""
+    try:
+        if not PBARR_DOWNLOAD_PATH.exists():
+            PBARR_DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
+            logger.info(f"📂 Created download directory: {PBARR_DOWNLOAD_PATH}")
+        else:
+            logger.info(f"📂 Download directory exists: {PBARR_DOWNLOAD_PATH}")
+
+        # Log the path info for user clarity
+        logger.info(f"✅ PBArr will download to: {PBARR_DOWNLOAD_PATH}")
+        logger.info("ℹ️  Configure host mapping in docker-compose.yml to control where downloads go on your system")
+
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize download directory: {e}")
+        raise

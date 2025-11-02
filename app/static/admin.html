@@ -42,10 +42,87 @@
         }
         
         .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 20px;
+            column-count: 2;
+            column-gap: 20px;
             margin-bottom: 20px;
+        }
+
+        .grid .card {
+            break-inside: avoid;
+            margin-bottom: 20px;
+        }
+
+        /* Series Management Layout */
+        .series-management-container {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .series-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .series-management-container .card {
+            margin-bottom: 0;
+        }
+
+        .series-item {
+            break-inside: avoid;
+        }
+
+        .logs-container {
+            background: #1e1e1e;
+            color: #f8f8f2;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .log-line {
+            margin-bottom: 2px;
+            padding: 2px 0;
+        }
+
+        .log-level-INFO { color: #50fa7b; }
+        .log-level-WARNING { color: #ffb86c; }
+        .log-level-ERROR { color: #ff5555; }
+        .log-level-DEBUG { color: #6272a4; }
+
+        .log-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .log-controls select,
+        .log-controls input {
+            padding: 5px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .log-status {
+            font-size: 11px;
+            color: #666;
+            margin-left: auto;
+        }
+
+        .log-status.active {
+            color: #28a745;
+        }
+
+        .log-status.error {
+            color: #dc3545;
         }
         
         .card {
@@ -322,6 +399,72 @@
             resize: vertical;
             min-height: 100px;
         }
+
+        .error-box {
+            background-color: #fee;
+            border: 1px solid #fcc;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .error-box h4 {
+            color: #c33;
+            margin-top: 0;
+        }
+
+        .error-message {
+            color: #c33;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .steps-log {
+            margin: 20px 0;
+        }
+
+        .step-item {
+            display: flex;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .step-item.success {
+            background-color: #efe;
+            border-left: 4px solid #0c0;
+        }
+
+        .step-item.error {
+            background-color: #fee;
+            border-left: 4px solid #c33;
+        }
+
+        .status-icon {
+            font-weight: 600;
+            min-width: 20px;
+            margin-right: 10px;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .success-message {
+            color: #0c0;
+            font-weight: 600;
+            padding: 10px;
+            background: #efe;
+            border-radius: 4px;
+        }
+
+        .error-message {
+            color: #c33;
+            font-weight: 600;
+            padding: 10px;
+            background: #fee;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -332,43 +475,150 @@
             <p class="version" style="margin-top: 5px;">Status: <span id="status" style="color: #28a745; font-weight: bold;">✓ Online</span></p>
         </header>
         
-        <div class="dashboard-stats">
-            <div class="stat-card">
-                <div class="stat-number" id="config-count">-</div>
-                <div class="stat-label">Config Items</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="modules-enabled">-</div>
-                <div class="stat-label">Modules Active</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="modules-total">-</div>
-                <div class="stat-label">Modules Total</div>
+
+        
+        <!-- Series Management - Full Width Container -->
+        <div class="series-management-container">
+            <div class="card">
+                <h2>📺 Serien-Verwaltung</h2>
+                <div id="series-loading" class="loading">Lade Serien...</div>
+                <div class="series-grid" id="series-list">
+                </div>
             </div>
         </div>
-        
+
         <div class="grid">
             <!-- Configuration -->
             <div class="card">
-                <h2>⚙️ Configuration</h2>
-                <div id="config-loading" class="loading">Loading configs...</div>
+                <h2>⚙️ Konfiguration</h2>
+                <div id="config-loading" class="loading">Lade Konfiguration...</div>
                 <div id="config-list"></div>
-                <button class="btn btn-secondary" onclick="refreshConfigs()">🔄 Refresh</button>
-                <button class="btn" onclick="openAddConfigModal()">➕ Add Config</button>
+                <button class="btn btn-secondary" onclick="refreshConfigs()">🔄 Aktualisieren</button>
+                <button class="btn" onclick="openAddConfigModal()">➕ Konfiguration hinzufügen</button>
             </div>
-            
+
+            <!-- Downloads -->
+            <div class="card">
+                <h2>⬇️ Downloads</h2>
+                <div id="downloads-loading" class="loading">Loading download settings...</div>
+                <div id="downloads-list"></div>
+            </div>
+
             <!-- Modules -->
             <div class="card">
                 <h2>🔌 Modules</h2>
                 <div id="modules-loading" class="loading">Loading modules...</div>
                 <div id="modules-list"></div>
-                <button class="btn btn-secondary" onclick="refreshModules()">🔄 Refresh</button>
+            </div>
+
+            <!-- Sonarr Integration Setup -->
+            <div class="card">
+                <h2>📺 Sonarr Webhook Integration</h2>
+                <p style="color: #666; margin-bottom: 15px;">Webhook-basierte Integration für automatische Serien-Erkennung</p>
+
+                <!-- Manual Cache Sync Button (only shown when webhook is configured) -->
+                <div id="manual-cache-sync-container" style="display: none; margin-bottom: 15px;">
+                    <button class="btn btn-secondary" onclick="triggerManualCacheSync()" id="manual-cache-sync-btn">
+                        🔄 Mediathek-Cache aktualisieren
+                    </button>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Startet sofortige Suche nach neuen Episoden und prüft auf Monitoring-Änderungen
+                    </div>
+                </div>
+
+                <!-- Manual Import Scan Button (only shown when webhook is configured) -->
+                <div id="manual-import-scan-container" style="display: none; margin-bottom: 15px;">
+                    <button class="btn btn-success" onclick="triggerManualImportScan()" id="manual-import-scan-btn">
+                        📥 Sonarr Import-Scan starten
+                    </button>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Weist Sonarr an, heruntergeladene Dateien zu importieren und der Mediathek hinzuzufügen
+                    </div>
+                </div>
+
+                <!-- Status Box -->
+                <div id="sonarr-status-box" class="success" style="display: none; margin-bottom: 15px;">
+                    <div id="sonarr-status-message"></div>
+                </div>
+
+                <!-- Error Box - INSIDE the component! -->
+                <div id="sonarr-error-box" class="error-box" style="display: none;">
+                    <h4>Fehler</h4>
+                    <div id="sonarr-errors"></div>
+                </div>
+
+                <div id="sonarr-setup-form">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Sonarr URL:</label>
+                        <input type="text" id="sonarr-url" placeholder="http://sonarr:8989" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Sonarr API Key:</label>
+                        <input type="text" id="sonarr-api-key" placeholder="Dein Sonarr API-Key" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">PBArr URL:</label>
+                        <input type="text" id="pbarr-url" placeholder="http://pbarr:8000" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <small style="display: block; color: #666; font-size: 12px; margin-top: 5px;">
+                            Die URL, unter der PBArr erreichbar ist (für Webhooks)
+                        </small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px; padding: 10px; background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px;">
+                        <strong style="color: #004085;">📁 Download-Pfad:</strong>
+                        <div style="margin-top: 5px; font-size: 14px; color: #004085;">
+                            Downloads werden automatisch in <code style="background: #fff; padding: 2px 4px; border-radius: 3px;">/app/downloads/completed</code> gespeichert
+                        </div>
+                        <small style="display: block; color: #666; font-size: 12px; margin-top: 5px;">
+                            Dieses Verzeichnis ist in docker-compose.yml auf deinen Host gemappt
+                        </small>
+                    </div>
+
+                    <button class="btn" onclick="testSonarrConnection()" id="test-btn" style="margin-right: 10px;">🔍 Testen & Speichern</button>
+                    <button class="btn" onclick="startSonarrSetup()" id="setup-btn" disabled>🚀 Setup starten</button>
+                </div>
+
+                <div id="sonarr-setup-progress" style="display: none; margin-top: 15px;">
+                    <h3>⚙️ Setup wird ausgeführt...</h3>
+                    <div id="setup-steps"></div>
+                </div>
+
+                <div id="sonarr-setup-result" style="margin-top: 15px;"></div>
             </div>
         </div>
-        
-        <!-- Full Width Cards -->
+
+        <!-- Logs Section -->
         <div class="card">
+            <h2>📋 System Logs</h2>
+            <div class="log-controls">
+                <select id="log-lines" onchange="loadLogs()">
+                    <option value="50">50 lines</option>
+                    <option value="100" selected>100 lines</option>
+                    <option value="200">200 lines</option>
+                    <option value="500">500 lines</option>
+                </select>
+                <select id="log-level-select" onchange="changeLogLevel()">
+                    <option value="DEBUG">DEBUG</option>
+                    <option value="INFO">INFO</option>
+                    <option value="WARNING">WARNING</option>
+                    <option value="ERROR">ERROR</option>
+                </select>
+                <button class="btn btn-small" onclick="loadLogs()">🔄 Refresh</button>
+                <button class="btn btn-small" id="stream-toggle" onclick="toggleStreaming()">▶️ Start Live</button>
+                <span class="log-status" id="stream-status">Stream: Stopped</span>
+            </div>
+            <div id="logs-container" class="logs-container">Loading logs...</div>
+        </div>
+
+        <!-- System Section -->
+        <div class="card" style="margin-top: 20px;">
             <h2>🔧 System</h2>
+            <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                <span style="font-weight: 600; color: #333;">Version:</span>
+                <span id="system-version" style="margin-left: 10px; color: #666;">-</span>
+            </div>
             <button class="btn" onclick="checkUpdates()">Check for Updates</button>
             <button class="btn btn-secondary" onclick="refreshAll()" style="margin-left: 10px;">Refresh All</button>
             <a href="/static/sonarr_integration.md" class="btn" style="margin-left: 10px; background: #28a745;">📺 Sonarr Integration Guide</a>
@@ -401,6 +651,62 @@
                 </div>
                 <button type="submit" class="btn btn-success">Save</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('addConfigModal')">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Series Filters Modal -->
+    <div id="editSeriesFiltersModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Serien-Filter bearbeiten</div>
+            <div id="series-filters-form">
+                <div class="form-group">
+                    <label>Serie:</label>
+                    <div id="series-title-display" style="font-weight: bold; padding: 8px; background: #f0f0f0; border-radius: 4px;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="min-duration">Mindestdauer (Minuten):</label>
+                    <input type="number" id="min-duration" placeholder="0" min="0">
+                    <small style="color: #666; font-size: 12px;">Episoden kürzer als dieser Wert werden ignoriert (Default: 0 = alle)</small>
+                </div>
+                <div class="form-group">
+                    <label for="max-duration">Maximale Dauer (Minuten):</label>
+                    <input type="number" id="max-duration" placeholder="360" min="0">
+                    <small style="color: #666; font-size: 12px;">Episoden länger als dieser Wert werden ignoriert (Default: 360 Minuten)</small>
+                </div>
+                <div class="form-group">
+                    <label for="exclude-keywords">Auszuschließende Schlüsselwörter:</label>
+                    <textarea id="exclude-keywords" rows="3">klare Sprache,Audiodeskription,Gebärdensprache</textarea>
+                    <small style="color: #666; font-size: 12px;">Kommagetrennte Schlüsselwörter. Episoden mit diesen Wörtern werden ausgeschlossen</small>
+                </div>
+                <div class="form-group">
+                    <label for="include-senders">Einzuschließende Sender:</label>
+                    <textarea id="include-senders" placeholder="" rows="3"></textarea>
+                    <small style="color: #666; font-size: 12px;">Kommagetrennte Sender. Nur Episoden von diesen Sendern werden eingeschlossen (leer lassen für alle)</small>
+                </div>
+                <button class="btn btn-success" onclick="saveSeriesFilters()">Filter speichern</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editSeriesFiltersModal')">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Series Modal -->
+    <div id="addSeriesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Add New Series</div>
+            <form onsubmit="addNewSeries(event)">
+                <div class="form-group">
+                    <label for="new-series-tvdb-id">TVDB ID:</label>
+                    <input type="text" id="new-series-tvdb-id" placeholder="e.g. 12345" required>
+                    <small style="color: #666; font-size: 12px;">The TVDB ID of the series</small>
+                </div>
+                <div class="form-group">
+                    <label for="new-series-title">Series Title (optional):</label>
+                    <input type="text" id="new-series-title" placeholder="Will be fetched from TVDB if empty">
+                    <small style="color: #666; font-size: 12px;">Leave empty to auto-fetch from TVDB</small>
+                </div>
+                <button type="submit" class="btn btn-success">Add Series</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addSeriesModal')">Cancel</button>
             </form>
         </div>
     </div>
@@ -450,6 +756,7 @@
             try {
                 const data = await fetchJSON(`${API_URL}/api/system/version`);
                 document.getElementById('version').textContent = data.version;
+                document.getElementById('system-version').textContent = data.version;
             } catch (error) {
                 console.error('Version error:', error);
             }
@@ -463,7 +770,22 @@
                 const configs = await fetchJSON(`${API_URL}/admin/config`);
                 loading.style.display = 'none';
                 
-                container.innerHTML = configs.map(config => `
+                // Filter out configs that are controlled elsewhere
+                const filteredConfigs = configs.filter(config =>
+                    config.key !== 'log_level' &&
+                    config.key !== 'pbarr_url' &&
+                    config.key !== 'sonarr_url' &&
+                    config.key !== 'sonarr_api_key' &&
+                    config.key !== 'sonarr_download_path_host' &&
+                    config.key !== 'tvdb_api_key' &&
+                    config.key !== 'mediathekviewweb_enabled' &&
+                    config.key !== 'download_path' &&
+                    config.key !== 'update_check_interval' &&
+                    config.key !== 'download_retry_count' &&
+                    config.key !== 'max_concurrent_downloads'
+                );
+
+                container.innerHTML = filteredConfigs.map(config => `
                     <div class="config-item" id="config-${config.id}">
                         <div class="config-key">${config.key}</div>
                         <div class="config-description">${config.description || ''}</div>
@@ -527,25 +849,129 @@
             }
         }
         
+        async function loadDownloads() {
+            const container = document.getElementById('downloads-list');
+            const loading = document.getElementById('downloads-loading');
+
+            try {
+                const configs = await fetchJSON(`${API_URL}/admin/config`);
+                loading.style.display = 'none';
+
+                // Filter for download-specific configs
+                const downloadConfigs = configs.filter(config =>
+                    config.key === 'download_retry_count' || config.key === 'max_concurrent_downloads'
+                );
+
+                container.innerHTML = downloadConfigs.map(config => `
+                    <div class="config-item" id="download-${config.id}">
+                        <div class="config-description" style="font-weight: 600; font-size: 14px; color: #333; margin-bottom: 2px;">${config.description || ''}</div>
+                        <div class="config-key" style="font-size: 11px; color: #888; margin-bottom: 5px;">${config.key === 'max_concurrent_downloads' ? 'Maximale Anzahl gleichzeitiger Downloads' : config.key === 'download_retry_count' ? 'Anzahl der Versuche bei fehlgeschlagenen Downloads' : config.key}</div>
+                        <div class="config-value-display" id="download-display-${config.id}">${config.value || '(empty)'}</div>
+                        <div class="config-tags">
+                            <span class="tag">${config.module}</span>
+                            ${config.secret ? '<span class="tag secret">🔒 Secret</span>' : ''}
+                            <span class="tag" style="background: #999;">${config.data_type}</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-small" onclick="editDownloadConfig(${config.id}, '${config.key}')">✎ Edit</button>
+                        </div>
+                        <input type="text" class="config-value-input" id="download-input-${config.id}" style="display:none;" value="${config.value || ''}">
+                        <div class="action-buttons" id="download-edit-buttons-${config.id}" style="display:none;">
+                            <button class="btn btn-small btn-success" onclick="saveDownloadConfig(${config.id}, '${config.key}')">✓ Save</button>
+                            <button class="btn btn-small btn-secondary" onclick="cancelDownloadEdit(${config.id})">✗ Cancel</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = `<div class="error">Failed to load download settings: ${error.message}</div>`;
+                loading.style.display = 'none';
+            }
+        }
+
+        function editDownloadConfig(id, key) {
+            document.getElementById(`download-display-${id}`).style.display = 'none';
+            document.getElementById(`download-input-${id}`).style.display = 'block';
+            document.getElementById(`download-edit-buttons-${id}`).style.display = 'flex';
+            document.getElementById(`download-${id}`).classList.add('editing');
+        }
+
+        function cancelDownloadEdit(id) {
+            document.getElementById(`download-display-${id}`).style.display = 'block';
+            document.getElementById(`download-input-${id}`).style.display = 'none';
+            document.getElementById(`download-edit-buttons-${id}`).style.display = 'none';
+            document.getElementById(`download-${id}`).classList.remove('editing');
+        }
+
+        async function saveDownloadConfig(id, key) {
+            const newValue = document.getElementById(`download-input-${id}`).value;
+            try {
+                await fetchWithMethod(`${API_URL}/admin/config/${key}`, 'PUT', { value: newValue });
+                document.getElementById(`download-display-${id}`).textContent = newValue || '(empty)';
+                cancelDownloadEdit(id);
+                showSuccess(`Download config '${key}' updated!`);
+            } catch (error) {
+                showError(`Failed to save: ${error.message}`);
+            }
+        }
+
         async function loadModules() {
             const container = document.getElementById('modules-list');
             const loading = document.getElementById('modules-loading');
-            
+
             try {
                 const modules = await fetchJSON(`${API_URL}/admin/modules`);
+                const configs = await fetchJSON(`${API_URL}/admin/config`);
                 loading.style.display = 'none';
-                
-                container.innerHTML = modules.map(module => `
-                    <div class="module-item">
-                        <div class="module-info">
-                            <div class="module-name">${module.module_name}</div>
-                            <div class="module-type">${module.module_type} • v${module.version}</div>
+
+                container.innerHTML = modules.map(module => {
+                    let configHtml = '';
+                    let moduleDescription = '';
+
+                    // Add module-specific configs and descriptions
+                    if (module.module_name === 'scheduler') {
+                        moduleDescription = 'Automatische Tasks: Update-Checks täglich um 3 Uhr, Download-Queue jede Minute';
+                    } else if (module.module_name === 'tvdb') {
+                        const tvdbKey = configs.find(c => c.key === 'tvdb_api_key');
+                        if (tvdbKey) {
+                            configHtml = `
+                                <div style="margin-top: 10px; padding: 8px; background: #f0f0f0; border-radius: 4px;">
+                                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">TVDB API Key:</div>
+                                    <input type="text" id="tvdb-api-key-${module.module_name}" value="${tvdbKey.value || ''}" placeholder="Enter TVDB API Key"
+                                           style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
+                                    <button class="btn btn-small" style="margin-top: 5px;" onclick="saveTVDBKey('${module.module_name}')">💾 Speichern</button>
+                                </div>
+                            `;
+                        }
+                    } else if (module.module_name === 'mediathekviewweb') {
+                        const enabled = configs.find(c => c.key === 'mediathekviewweb_enabled');
+                        if (enabled) {
+                            configHtml = `
+                                <div style="margin-top: 10px; padding: 8px; background: #f0f0f0; border-radius: 4px;">
+                                    <label style="display: flex; align-items: center; font-size: 12px; color: #666;">
+                                        <input type="checkbox" ${enabled.value === 'true' ? 'checked' : ''}
+                                               onchange="updateModuleConfig('mediathekviewweb_enabled', this.checked ? 'true' : 'false')"
+                                               style="margin-right: 8px;">
+                                        MediathekViewWeb aktivieren
+                                    </label>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    return `
+                        <div class="module-item">
+                            <div class="module-info">
+                                <div class="module-name">${module.module_name}</div>
+                                <div class="module-type">${module.module_type} • v${module.version}</div>
+                                ${moduleDescription ? `<div style="font-size: 11px; color: #888; margin-top: 4px;">${moduleDescription}</div>` : ''}
+                                ${configHtml}
+                            </div>
+                            <span class="module-status ${module.enabled ? 'status-enabled' : 'status-disabled'}" onclick="toggleModule('${module.module_name}', ${!module.enabled})">
+                                ${module.enabled ? '✓ Enabled' : '✗ Disabled'}
+                            </span>
                         </div>
-                        <span class="module-status ${module.enabled ? 'status-enabled' : 'status-disabled'}" onclick="toggleModule('${module.module_name}', ${!module.enabled})">
-                            ${module.enabled ? '✓ Enabled' : '✗ Disabled'}
-                        </span>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } catch (error) {
                 container.innerHTML = `<div class="error">Failed to load modules: ${error.message}</div>`;
                 loading.style.display = 'none';
@@ -559,6 +985,26 @@
                 loadModules();
             } catch (error) {
                 showError(`Failed to toggle module: ${error.message}`);
+            }
+        }
+
+        async function updateModuleConfig(key, value) {
+            try {
+                await fetchWithMethod(`${API_URL}/admin/config/${key}`, 'PUT', { value: value });
+                showSuccess(`Module config '${key}' updated!`);
+            } catch (error) {
+                showError(`Failed to update module config: ${error.message}`);
+            }
+        }
+
+        async function saveTVDBKey(moduleName) {
+            const input = document.getElementById(`tvdb-api-key-${moduleName}`);
+            const value = input.value.trim();
+            try {
+                await fetchWithMethod(`${API_URL}/admin/config/tvdb_api_key`, 'PUT', { value: value });
+                showSuccess(`TVDB API Key gespeichert!`);
+            } catch (error) {
+                showError(`Fehler beim Speichern: ${error.message}`);
             }
         }
         
@@ -648,23 +1094,611 @@
             document.body.insertBefore(div, document.body.firstChild);
             setTimeout(() => div.remove(), 5000);
         }
-        
+
+        // Logs functionality
+        let logStream = null;
+        let isStreaming = false;
+
+        async function loadCurrentLogLevel() {
+            try {
+                const config = await fetchJSON(`${API_URL}/admin/config/log_level`);
+                const select = document.getElementById('log-level-select');
+                select.value = config.value || 'INFO';
+            } catch (error) {
+                console.error('Failed to load current log level:', error);
+                // Default to INFO if can't load
+                document.getElementById('log-level-select').value = 'INFO';
+            }
+        }
+
+        async function changeLogLevel() {
+            const select = document.getElementById('log-level-select');
+            const newLevel = select.value;
+
+            try {
+                await fetchWithMethod(`${API_URL}/admin/config/log_level`, 'PUT', { value: newLevel });
+                showSuccess(`Log level changed to ${newLevel}!`);
+            } catch (error) {
+                showError(`Failed to change log level: ${error.message}`);
+                // Revert selection on error
+                loadCurrentLogLevel();
+            }
+        }
+
+        async function loadLogs() {
+            const container = document.getElementById('logs-container');
+            const lines = document.getElementById('log-lines').value;
+
+            try {
+                container.textContent = 'Loading logs...';
+                const data = await fetchJSON(`${API_URL}/admin/logs?lines=${lines}`);
+
+                if (data.logs && data.logs.length > 0) {
+                    container.innerHTML = data.logs.map(log => {
+                        const level = extractLogLevel(log);
+                        return `<div class="log-line log-level-${level}">${escapeHtml(log)}</div>`;
+                    }).join('');
+                    // Auto-scroll to bottom
+                    container.scrollTop = container.scrollHeight;
+                } else {
+                    container.textContent = 'No logs found.';
+                }
+            } catch (error) {
+                container.textContent = `Error loading logs: ${error.message}`;
+            }
+        }
+
+        function extractLogLevel(logLine) {
+            // Extract log level from line like "2025-10-31 10:30:00 - app.main - INFO - ..."
+            const match = logLine.match(/- (\w+) -/);
+            return match ? match[1] : 'INFO';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function toggleStreaming() {
+            const toggleBtn = document.getElementById('stream-toggle');
+            const statusSpan = document.getElementById('stream-status');
+
+            if (isStreaming) {
+                // Stop streaming
+                if (logStream) {
+                    logStream.close();
+                    logStream = null;
+                }
+                isStreaming = false;
+                toggleBtn.textContent = '▶️ Start Live';
+                statusSpan.textContent = 'Stream: Stopped';
+                statusSpan.classList.remove('active');
+            } else {
+                // Start streaming
+                startLogStreaming();
+                isStreaming = true;
+                toggleBtn.textContent = '⏹️ Stop Live';
+                statusSpan.textContent = 'Stream: Active';
+                statusSpan.classList.add('active');
+            }
+        }
+
+        async function startLogStreaming() {
+            try {
+                const container = document.getElementById('logs-container');
+
+                logStream = new EventSource(`${API_URL}/admin/logs/stream`);
+
+                logStream.onmessage = (event) => {
+                    if (event.data && event.data.trim()) {
+                        const level = extractLogLevel(event.data);
+                        const logElement = document.createElement('div');
+                        logElement.className = `log-line log-level-${level}`;
+                        logElement.textContent = event.data;
+
+                        container.appendChild(logElement);
+
+                        // Keep only last 1000 lines to prevent memory issues
+                        while (container.children.length > 1000) {
+                            container.removeChild(container.firstChild);
+                        }
+
+                        // Auto-scroll to bottom
+                        container.scrollTop = container.scrollHeight;
+                    }
+                };
+
+                logStream.onerror = (error) => {
+                    console.error('Log streaming error:', error);
+                    const statusSpan = document.getElementById('stream-status');
+                    statusSpan.textContent = 'Stream: Error';
+                    statusSpan.classList.remove('active');
+                    statusSpan.classList.add('error');
+
+                    // Auto-retry after 5 seconds
+                    setTimeout(() => {
+                        if (isStreaming) {
+                            startLogStreaming();
+                        }
+                    }, 5000);
+                };
+
+                logStream.onopen = () => {
+                    const statusSpan = document.getElementById('stream-status');
+                    statusSpan.textContent = 'Stream: Connected';
+                    statusSpan.classList.add('active');
+                    statusSpan.classList.remove('error');
+                };
+
+            } catch (error) {
+                console.error('Failed to start log streaming:', error);
+                const statusSpan = document.getElementById('stream-status');
+                statusSpan.textContent = 'Stream: Failed';
+                statusSpan.classList.remove('active');
+            }
+        }
+
+        // Sonarr Webhook Integration Setup
+        async function testSonarrConnection() {
+            const sonarrUrl = document.getElementById('sonarr-url').value.trim();
+            const apiKey = document.getElementById('sonarr-api-key').value.trim();
+            const pbarrUrl = document.getElementById('pbarr-url').value.trim();
+
+            if (!sonarrUrl || !apiKey || !pbarrUrl) {
+                showSonarrError(['Bitte alle Felder ausfüllen']);
+                return;
+            }
+
+            // Clear previous errors
+            hideSonarrError();
+
+            try {
+                const response = await fetch(`${API_URL}/admin/sonarr/test-connection`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sonarr_url: sonarrUrl,
+                        api_key: apiKey,
+                        pbarr_url: pbarrUrl
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Enable setup button
+                    document.getElementById('setup-btn').disabled = false;
+                    document.getElementById('setup-btn').textContent = '🚀 Webhook einrichten';
+                    showSonarrSuccess('✓ Verbindung erfolgreich! Webhook kann eingerichtet werden.');
+                } else {
+                    showSonarrError([result.message]);
+                }
+            } catch (error) {
+                showSonarrError([`Fehler beim Testen der Verbindung: ${error.message}`]);
+            }
+        }
+
+        async function startSonarrSetup() {
+            const sonarrUrl = document.getElementById('sonarr-url').value.trim();
+            const apiKey = document.getElementById('sonarr-api-key').value.trim();
+            const pbarrUrl = document.getElementById('pbarr-url').value.trim();
+
+            if (!sonarrUrl || !apiKey || !pbarrUrl) {
+                showSonarrError(['Bitte alle Felder ausfüllen']);
+                return;
+            }
+
+            // Clear previous errors
+            hideSonarrError();
+
+            // Form ausblenden, Progress anzeigen
+            document.getElementById('sonarr-setup-form').style.display = 'none';
+            document.getElementById('sonarr-setup-progress').style.display = 'block';
+            document.getElementById('sonarr-setup-result').innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_URL}/admin/sonarr/webhook/setup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sonarr_url: sonarrUrl,
+                        api_key: apiKey,
+                        pbarr_url: pbarrUrl
+                    })
+                });
+
+                const result = await response.json();
+
+                // Progress ausblenden
+                document.getElementById('sonarr-setup-progress').style.display = 'none';
+
+                // Ergebnisse anzeigen
+                if (result.success) {
+                    // Success
+                    const resultHtml = `
+                        <div class="success-message">
+                            ✅ Webhook erfolgreich eingerichtet!
+                        </div>
+                        <div style="margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 4px; font-size: 14px;">
+                            <strong>Webhook-ID:</strong> ${result.webhook_id || 'N/A'}<br>
+                            <strong>Verbindungstest:</strong> ${result.connection_test || 'Nicht durchgeführt'}
+                        </div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                            Wenn du jetzt eine Serie in Sonarr hinzufügst, wird PBArr automatisch benachrichtigt und beginnt mit der Mediathek-Cache-Erstellung.
+                        </div>
+                    `;
+                    document.getElementById('sonarr-setup-result').innerHTML = resultHtml;
+
+                    // Seite neu laden nach 5 Sekunden, um Status zu aktualisieren
+                    setTimeout(() => {
+                        location.reload();
+                    }, 5000);
+                } else {
+                    // Error
+                    showSonarrError([result.message]);
+                    document.getElementById('sonarr-setup-form').style.display = 'block';
+                }
+
+            } catch (error) {
+                document.getElementById('sonarr-setup-progress').style.display = 'none';
+                showSonarrError([`Webhook-Setup-Fehler: ${error.message}`]);
+                document.getElementById('sonarr-setup-form').style.display = 'block';
+            }
+        }
+
+        function showSonarrError(errors) {
+            const errorBox = document.getElementById('sonarr-error-box');
+            const errorDiv = document.getElementById('sonarr-errors');
+            errorDiv.innerHTML = errors.map(err => `<p class="error-message">${err}</p>`).join('');
+            errorBox.style.display = 'block';
+        }
+
+        function hideSonarrError() {
+            document.getElementById('sonarr-error-box').style.display = 'none';
+        }
+
+        function showSonarrSuccess(message) {
+            const resultDiv = document.getElementById('sonarr-setup-result');
+            resultDiv.innerHTML = `<div class="success">${message}</div>`;
+            setTimeout(() => {
+                resultDiv.innerHTML = '';
+            }, 3000);
+        }
+
+        // Manual Cache Sync Button
+        async function triggerManualCacheSync() {
+            const btn = document.getElementById('manual-cache-sync-btn');
+            const originalText = btn.textContent;
+
+            try {
+                btn.disabled = true;
+                btn.textContent = '🔄 Synchronisiere...';
+
+                const response = await fetch(`${API_URL}/admin/trigger-cache-sync`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess('✅ Mediathek-Cache erfolgreich aktualisiert!');
+                    // Reload logs to show new activity
+                    loadLogs();
+                } else {
+                    showError(`❌ Cache-Sync fehlgeschlagen: ${result.error || 'Unbekannter Fehler'}`);
+                }
+            } catch (error) {
+                showError(`❌ Cache-Sync-Fehler: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        // Manual Import Scan Button
+        async function triggerManualImportScan() {
+            const btn = document.getElementById('manual-import-scan-btn');
+            const originalText = btn.textContent;
+
+            try {
+                btn.disabled = true;
+                btn.textContent = '📥 Scanne...';
+
+                const response = await fetch(`${API_URL}/admin/trigger-import-scan`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess('✅ Sonarr Import-Scan erfolgreich gestartet!');
+                    // Reload logs to show new activity
+                    loadLogs();
+                } else {
+                    showError(`❌ Import-Scan fehlgeschlagen: ${result.message || 'Unbekannter Fehler'}`);
+                }
+            } catch (error) {
+                showError(`❌ Import-Scan-Fehler: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        // Check Sonarr webhook integration status
+        async function checkSonarrStatus() {
+            try {
+                const status = await fetchJSON(`${API_URL}/admin/sonarr/webhook/status`);
+
+                const statusBox = document.getElementById('sonarr-status-box');
+                const statusMessage = document.getElementById('sonarr-status-message');
+                const setupBtn = document.getElementById('setup-btn');
+                const manualCacheBtn = document.getElementById('manual-cache-sync-container');
+                const manualImportBtn = document.getElementById('manual-import-scan-container');
+
+                if (!status.config_complete) {
+                    // Config incomplete - show warning
+                    statusBox.className = 'error';
+                    statusMessage.textContent = status.message;
+                    statusBox.style.display = 'block';
+                    setupBtn.disabled = true;
+                    setupBtn.textContent = 'Konfiguration unvollständig';
+                    manualCacheBtn.style.display = 'none'; // Hide manual cache button
+                    manualImportBtn.style.display = 'none'; // Hide manual import button
+                } else if (!status.connection_ok) {
+                    // Connection failed - show error
+                    statusBox.className = 'error';
+                    statusMessage.textContent = status.message;
+                    statusBox.style.display = 'block';
+                    setupBtn.disabled = true;
+                    setupBtn.textContent = 'Verbindung fehlgeschlagen';
+                    manualCacheBtn.style.display = 'none'; // Hide manual cache button
+                    manualImportBtn.style.display = 'none'; // Hide manual import button
+                } else if (!status.setup_needed) {
+                    // Webhook configured - show success and hide setup buttons, show manual buttons
+                    statusBox.className = 'success';
+                    statusMessage.textContent = status.message;
+                    statusBox.style.display = 'block';
+                    document.getElementById('test-btn').style.display = 'none';
+                    setupBtn.style.display = 'none';
+                    manualCacheBtn.style.display = 'block'; // Show manual cache button
+                    manualImportBtn.style.display = 'block'; // Show manual import button
+
+                    // Replace setup button with info message
+                    if (!document.getElementById('sonarr-info-message')) {
+                        const infoMessage = document.createElement('div');
+                        infoMessage.id = 'sonarr-info-message';
+                        infoMessage.style.cssText = 'margin-top: 10px; padding: 8px; background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; font-size: 12px; color: #004085;';
+                        infoMessage.textContent = 'Webhook ist aktiv. Bei neuen Serien in Sonarr wird PBArr automatisch benachrichtigt.';
+
+                        // Replace the setup button with the info message
+                        setupBtn.parentNode.replaceChild(infoMessage, setupBtn);
+                    }
+                } else {
+                    // Webhook not configured - show warning (red) and show button
+                    statusBox.className = 'error';  // Rot für "noch nicht konfiguriert"
+                    statusMessage.textContent = status.message;
+                    statusBox.style.display = 'block';
+                    setupBtn.disabled = true; // Enable after successful test
+                    setupBtn.textContent = '🚀 Webhook einrichten';
+                    manualCacheBtn.style.display = 'none'; // Hide manual cache button
+                    manualImportBtn.style.display = 'none'; // Hide manual import button
+                }
+            } catch (error) {
+                console.error('Failed to check Sonarr webhook status:', error);
+                // Show error but don't break the UI
+                const statusBox = document.getElementById('sonarr-status-box');
+                const statusMessage = document.getElementById('sonarr-status-message');
+                statusBox.className = 'error';
+                statusMessage.textContent = `Webhook-Status-Check fehlgeschlagen: ${error.message}`;
+                statusBox.style.display = 'block';
+                // Hide manual cache button on error
+                document.getElementById('manual-cache-sync-container').style.display = 'none';
+            }
+        }
+
+        // Load saved Sonarr config
+        async function loadSonarrConfig() {
+            try {
+                const config = await fetchJSON(`${API_URL}/admin/sonarr/config`);
+
+                // Fill form fields with saved values
+                if (config.sonarr_url) {
+                    document.getElementById('sonarr-url').value = config.sonarr_url;
+                }
+                if (config.sonarr_api_key) {
+                    document.getElementById('sonarr-api-key').value = config.sonarr_api_key;
+                }
+                if (config.pbarr_url) {
+                    document.getElementById('pbarr-url').value = config.pbarr_url;
+                }
+                // Note: sonarr_download_path is no longer configurable (hardcoded to /app/downloads)
+            } catch (error) {
+                console.error('Failed to load Sonarr config:', error);
+                // Ignore errors - form will just be empty
+            }
+        }
+
+        // Series Management Functions
+        async function loadSeries() {
+            const container = document.getElementById('series-list');
+            const loading = document.getElementById('series-loading');
+
+            try {
+                const data = await fetchJSON(`${API_URL}/admin/series`);
+                loading.style.display = 'none';
+
+                if (data.series && data.series.length > 0) {
+                    // Sort series alphabetically by title
+                    const sortedSeries = data.series.sort((a, b) => a.title.localeCompare(b.title, 'de'));
+
+                    container.innerHTML = sortedSeries.map(series => {
+                        const filtersActive = (series.min_duration || series.max_duration || series.exclude_keywords || series.include_senders);
+                        const filtersSummary = [];
+                        if (series.min_duration) filtersSummary.push(`Min: ${series.min_duration}min`);
+                        if (series.max_duration) filtersSummary.push(`Max: ${series.max_duration}min`);
+                        if (series.exclude_keywords) filtersSummary.push(`Exclude: ${series.exclude_keywords.split(',').length} keywords`);
+                        if (series.include_senders) filtersSummary.push(`Senders: ${series.include_senders.split(',').length}`);
+
+                        return `
+                            <div class="config-item" style="border-left-color: ${series.tagged_in_sonarr ? '#28a745' : '#667eea'};">
+                                <div class="config-key">${series.title}</div>
+                                <div class="config-description">
+                                    TVDB: ${series.tvdb_id} • Episodes: ${series.episodes_found || 0} • Mediathek: ${series.mediathek_episodes_count || 0}
+                                    ${series.sonarr_series_id ? ` • Sonarr: ${series.sonarr_series_id}` : ''}
+                                </div>
+                                <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                                    ${filtersActive ? `Filters: ${filtersSummary.join(' • ')}` : 'Keine Filter konfiguriert'}
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="btn btn-small" onclick="openEditSeriesFiltersModal('${series.tvdb_id}', '${series.title.replace(/'/g, "\\'")}', ${series.min_duration || 'null'}, ${series.max_duration || 'null'}, '${(series.exclude_keywords || '').replace(/'/g, "\\'")}', '${(series.include_senders || '').replace(/'/g, "\\'")}')">🎛️ Filter bearbeiten</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Keine Serien gefunden.</div>';
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="error">Failed to load series: ${error.message}</div>`;
+                loading.style.display = 'none';
+            }
+        }
+
+        function openEditSeriesFiltersModal(tvdbId, title, minDuration, maxDuration, excludeKeywords, includeSenders) {
+            // Store current series info
+            window.currentSeriesTvdbId = tvdbId;
+
+            // Fill modal
+            document.getElementById('series-title-display').textContent = title;
+            document.getElementById('min-duration').value = minDuration || '';
+            document.getElementById('max-duration').value = maxDuration || '';
+            document.getElementById('exclude-keywords').value = excludeKeywords || '';
+            document.getElementById('include-senders').value = includeSenders || '';
+
+            // Show modal
+            document.getElementById('editSeriesFiltersModal').style.display = 'block';
+        }
+
+        async function saveSeriesFilters() {
+            const tvdbId = window.currentSeriesTvdbId;
+            const minDuration = document.getElementById('min-duration').value.trim();
+            const maxDuration = document.getElementById('max-duration').value.trim();
+            const excludeKeywords = document.getElementById('exclude-keywords').value.trim();
+            const includeSenders = document.getElementById('include-senders').value.trim();
+
+            try {
+                const filters = {
+                    min_duration: minDuration ? parseInt(minDuration) : null,
+                    max_duration: maxDuration ? parseInt(maxDuration) : null,
+                    exclude_keywords: excludeKeywords || null,
+                    include_senders: includeSenders || null
+                };
+
+                const response = await fetch(`${API_URL}/admin/series/${tvdbId}/filters`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(filters)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess('✅ Series filters updated successfully!');
+                    closeModal('editSeriesFiltersModal');
+                    refreshSeries();
+                } else {
+                    showError(`❌ Failed to update filters: ${result.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                showError(`❌ Error updating filters: ${error.message}`);
+            }
+        }
+
+
+
+        function openAddSeriesModal() {
+            document.getElementById('addSeriesModal').style.display = 'block';
+        }
+
+        async function addNewSeries(event) {
+            event.preventDefault();
+
+            const tvdbId = document.getElementById('new-series-tvdb-id').value.trim();
+            const title = document.getElementById('new-series-title').value.trim();
+
+            if (!tvdbId) {
+                showError('❌ TVDB ID is required');
+                return;
+            }
+
+            try {
+                const seriesData = {
+                    tvdb_id: tvdbId,
+                    title: title || null
+                };
+
+                const response = await fetch(`${API_URL}/admin/series/add`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(seriesData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess(`✅ Series "${result.series.title}" added to watchlist!`);
+                    closeModal('addSeriesModal');
+                    document.querySelector('#addSeriesModal form').reset();
+                    refreshSeries();
+                } else {
+                    showError(`❌ Failed to add series: ${result.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                showError(`❌ Error adding series: ${error.message}`);
+            }
+        }
+
+        function refreshSeries() {
+            document.getElementById('series-loading').style.display = 'block';
+            document.getElementById('series-list').innerHTML = '';
+            loadSeries();
+        }
+
+        function refreshAll() {
+            loadDashboard();
+            loadVersion();
+            refreshConfigs();
+            refreshModules();
+            refreshSeries();
+        }
+
         // Load on init
         document.addEventListener('DOMContentLoaded', () => {
             loadDashboard();
             loadVersion();
             loadConfigs();
+            loadDownloads();
             loadModules();
-            
+            loadSeries(); // Load series list
+            loadCurrentLogLevel(); // Load current log level
+            loadLogs(); // Load initial logs
+            loadSonarrConfig(); // Load saved Sonarr config
+            checkSonarrStatus(); // Check Sonarr integration status
+
             // Auto-refresh every 30 seconds
             setInterval(loadDashboard, 30000);
-            
+
             // Close modal when clicking outside
             window.onclick = (event) => {
-                const modal = document.getElementById('addConfigModal');
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
+                const modals = ['addConfigModal', 'editSeriesFiltersModal', 'addSeriesModal'];
+                modals.forEach(modalId => {
+                    const modal = document.getElementById(modalId);
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
             };
         });
     </script>

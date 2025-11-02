@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import threading
+import time
 from datetime import datetime
 from sqlalchemy.orm import Session
 
@@ -51,7 +52,7 @@ class DownloadWorker:
             for _ in range(self.interval):
                 if not self.running:
                     break
-                asyncio.sleep(1)
+                time.sleep(1)
     
     def _process_queue(self, db: Session):
         """Verarbeite Download-Queue"""

@@ -8,18 +8,44 @@ import os
 
 # ✅ Setup Logging FIRST
 from app.utils.logger import setup_logging
-setup_logging(log_level=os.getenv("LOG_LEVEL", "INFO"))
+from app.database import SessionLocal
+from app.models.config import Config
+
+
+def get_log_level_from_db():
+    """Lese Log-Level aus Datenbank, mit Fallback"""
+    try:
+        db = SessionLocal()
+        config = db.query(Config).filter_by(key="log_level").first()
+        db.close()
+        if config:
+            return config.value.upper()
+    except Exception as e:
+        logging.warning(f"Could not read log_level from DB: {e}")
+    
+    # Fallback auf Default
+    return "INFO"
+
+
+log_level = get_log_level_from_db()
+setup_logging(log_level)
+
+# Setze globale Log-Level auf INFO, um weniger Spam zu haben
+logging.getLogger().setLevel(logging.INFO)
+
+# Setze spezifisches Log-Level für transmission_emulator auf WARNING, um noch weniger Logs zu haben
+logging.getLogger('app.api.transmission_emulator').setLevel(logging.WARNING)
 
 
 # Services
 from app.database import init_db, get_db
 from app.services.download_worker import DownloadWorker
 from app.services.mediathek_cacher import cacher
-from app.startup import init_config, load_enabled_modules
+from app.startup import init_config, load_enabled_modules, init_download_directory
 
 
 # API Routes
-from app.api import admin, search, system, downloads, matcher, matcher_admin, integration, nzbget_emulator, sabnzbd_emulator, transmission_emulator
+from app.api import admin, search, system, downloads, matcher, matcher_admin, integration, transmission_emulator, torznab, webhooks, dashboard
 
 
 logger = logging.getLogger(__name__)
@@ -45,6 +71,11 @@ async def lifespan(app: FastAPI):
         init_config()
     except Exception as e:
         logger.error(f"✗ Config init failed: {e}")
+
+    try:
+        init_download_directory()
+    except Exception as e:
+        logger.error(f"✗ Download directory init failed: {e}")
 
     try:
         download_worker = DownloadWorker(interval=30)
@@ -112,16 +143,28 @@ app = FastAPI(
 
 # Routes
 app.include_router(admin.router)
-app.include_router(search.router)
+app.include_router(search.router, prefix="/newznab")
+app.include_router(torznab.router)
 app.include_router(system.router)
 app.include_router(downloads.router)
 app.include_router(matcher.router)
 app.include_router(matcher_admin.router)
 app.include_router(integration.router)
-app.include_router(nzbget_emulator.router)
-app.include_router(sabnzbd_emulator.router)
 app.include_router(transmission_emulator.router)
+app.include_router(webhooks.router)
+app.include_router(dashboard.router)
 
+from fastapi import Request
+
+@app.middleware("http")
+async def log_all_requests(request: Request, call_next):
+    """Log ALL incoming requests to /api (Sonarr)"""
+    if "/api" in request.url.path:
+        query_string = request.url.query if request.url.query else "(no query)"
+        logger.warning(f"🔵 SONARR REQUEST RECEIVED: {request.method} /api?{query_string}")
+    
+    response = await call_next(request)
+    return response
 
 # Static Files (Optional)
 try:
