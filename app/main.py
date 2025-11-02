@@ -44,7 +44,7 @@ from app.startup import init_config, load_enabled_modules, init_download_directo
 
 
 # API Routes
-from app.api import admin, search, system, downloads, matcher, matcher_admin, integration, torznab, webhooks, dashboard
+from app.api import admin, system, downloads, matcher, matcher_admin, integration, webhooks, dashboard
 
 
 logger = logging.getLogger(__name__)
@@ -134,7 +134,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="PBArr - Public Broadcasting Archive Indexer",
-    description="Newznab API für deutschsprachige Mediatheken",
+    description="Mediathek-Caching und Verwaltung für deutschsprachige Mediatheken",
     version="0.1.0",
     lifespan=lifespan
 )
@@ -142,8 +142,6 @@ app = FastAPI(
 
 # Routes
 app.include_router(admin.router)
-app.include_router(search.router, prefix="/newznab")
-app.include_router(torznab.router)
 app.include_router(system.router)
 app.include_router(downloads.router)
 app.include_router(matcher.router)
@@ -153,17 +151,7 @@ app.include_router(integration.router)
 app.include_router(webhooks.router)
 app.include_router(dashboard.router)
 
-from fastapi import Request
 
-@app.middleware("http")
-async def log_all_requests(request: Request, call_next):
-    """Log ALL incoming requests to /api (Sonarr)"""
-    if "/api" in request.url.path:
-        query_string = request.url.query if request.url.query else "(no query)"
-        logger.warning(f"🔵 SONARR REQUEST RECEIVED: {request.method} /api?{query_string}")
-    
-    response = await call_next(request)
-    return response
 
 # Static Files (Optional)
 try:
