@@ -1,3 +1,3 @@
-from . import admin, search, system, downloads, matcher, matcher_admin, integration, sonarr
+from . import admin, system, downloads, matcher, matcher_admin, integration, webhooks, dashboard
 
-__all__ = ["admin", "search", "system", "downloads", "matcher", "matcher_admin", "integration", "sonarr"]
+__all__ = ["admin", "system", "downloads", "matcher", "matcher_admin", "integration", "webhooks", "dashboard"]
