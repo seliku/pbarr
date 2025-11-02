@@ -1,4 +1,4 @@
-import logging
+docker exec pbarr ls -la /app/library/import logging
 import asyncio
 import threading
 import time
