@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  pbarr:
+    image: ghcr.io/dein-github-username/pbarr:latest
+    container_name: pbarr
+    restart: unless-stopped
+    
+    ports:
+      - "8000:8000"
+    
+    environment:
+      DATABASE_URL: postgresql://pbarr:changeme123@postgres:5432/pbarr_db
+      TVDB_API_KEY: ${TVDB_API_KEY}
+      SONARR_URL: ${SONARR_URL:-http://sonarr:8989}
+      SONARR_API_KEY: ${SONARR_API_KEY}
+      LOG_LEVEL: INFO
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
+    
+    volumes:
+      - ./downloads:/app/downloads
+      - ./logs:/app/logs
+      - ./data:/app/data
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: pbarr-postgres
+    restart: unless-stopped
+    
+    environment:
+      POSTGRES_USER: pbarr
+      POSTGRES_PASSWORD: changeme123
+      POSTGRES_DB: pbarr_db
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pbarr"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
