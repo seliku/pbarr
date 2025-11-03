@@ -42,13 +42,10 @@ services:
     restart: unless-stopped
     
     ports:
-      - "8000:8000"
+      - "8070:8000"
     
     environment:
       DATABASE_URL: postgresql://pbarr:changeme123@postgres:5432/pbarr_db
-      TVDB_API_KEY: ${TVDB_API_KEY}
-      SONARR_URL: ${SONARR_URL:-http://sonarr:8989}
-      SONARR_API_KEY: ${SONARR_API_KEY}
       LOG_LEVEL: INFO
     
     depends_on:
@@ -187,4 +184,3 @@ MIT License
 ---
 
 **Version:** 1.0.0
-```
