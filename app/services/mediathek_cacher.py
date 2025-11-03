@@ -1011,7 +1011,8 @@ class MediathekCacher:
                 )
 
                 if result.returncode != 0:
-                    logger.warning(f"Download failed: yt-dlp error")
+                    error_msg = result.stderr.strip() if result.stderr else "Unknown yt-dlp error"
+                    logger.warning(f"Download failed: {error_msg}")
                     return False
 
                 if not temp_file.exists():
