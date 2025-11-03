@@ -42,73 +42,82 @@ def parse_socks5_proxy(proxy_input: str) -> Optional[Dict[str, Any]]:
     """
     Parse and validate SOCKS5 proxy URL.
 
-    Supports multiple formats:
+    Supports formats:
     - socks5://host:port
     - socks5://user:pass@host:port
     - host:port
     - host:port:user:pass
 
-    Args:
-        proxy_input: Proxy configuration string
-
-    Returns:
-        Dict with parsed proxy info or None if invalid
+    Handles passwords with special characters (@, :, etc.)
     """
     if not proxy_input or not proxy_input.strip():
         return None
 
     proxy_input = proxy_input.strip()
 
-    # Auto-prefix socks5:// if missing
-    if not proxy_input.startswith(('socks5://', 'http://', 'https://')):
+    try:
+        # Remove socks5:// or socks5h:// prefix if present for easier parsing
+        if proxy_input.startswith('socks5://'):
+            proxy_input = proxy_input[9:]  # Remove 'socks5://'
+        elif proxy_input.startswith('socks5h://'):
+            proxy_input = proxy_input[10:]  # Remove 'socks5h://'
+
+        username = None
+        password = None
+
+        # Parse user:pass@host:port format
         if '@' in proxy_input:
-            # Format: host:port:user:pass
-            parts = proxy_input.split(':')
-            if len(parts) == 4:
-                host, port, user, password = parts
-                proxy_input = f"socks5://{user}:{password}@{host}:{port}"
+            # Split at last @ (handles passwords with @)
+            auth_part, host_part = proxy_input.rsplit('@', 1)
+
+            # Parse auth (user:pass)
+            if ':' in auth_part:
+                # Split at first : (handles passwords with multiple :)
+                username, password = auth_part.split(':', 1)
             else:
-                logger.warning(f"Invalid proxy format (expected host:port:user:pass): {proxy_input}")
+                username = auth_part
+        else:
+            host_part = proxy_input
+
+        # Parse host:port
+        if ':' in host_part:
+            # Split at last : (handles IPv6, though not relevant here)
+            host, port_str = host_part.rsplit(':', 1)
+            try:
+                port = int(port_str)
+            except ValueError:
+                logger.warning(f"Invalid port in proxy: {port_str}")
                 return None
         else:
-            # Format: host:port
-            parts = proxy_input.split(':')
-            if len(parts) == 2:
-                host, port = parts
-                proxy_input = f"socks5://{host}:{port}"
-            else:
-                logger.warning(f"Invalid proxy format (expected host:port): {proxy_input}")
-                return None
-
-    try:
-        parsed = urlparse(proxy_input)
-
-        if parsed.scheme not in ('socks5', 'http', 'https'):
-            logger.warning(f"Unsupported proxy scheme: {parsed.scheme}")
-            return None
-
-        # Validate host
-        if not parsed.hostname:
-            logger.warning(f"Invalid proxy host: {proxy_input}")
-            return None
-
-        # Validate port
-        port = parsed.port
-        if port is None:
+            host = host_part
             port = 1080  # Default SOCKS5 port
-        elif not (1 <= port <= 65535):
+
+        # Validation
+        if not host:
+            logger.warning("Invalid proxy host")
+            return None
+
+        if not (1 <= port <= 65535):
             logger.warning(f"Invalid proxy port: {port}")
             return None
 
+        # Rebuild normalized URL
+        if username and password:
+            normalized_url = f"socks5h://{username}:{password}@{host}:{port}"
+        elif username:
+            normalized_url = f"socks5h://{username}@{host}:{port}"
+        else:
+            normalized_url = f"socks5h://{host}:{port}"
+
         result = {
-            'host': parsed.hostname,
+            'host': host,
             'port': port,
-            'username': parsed.username,
-            'password': parsed.password,
-            'url': proxy_input
+            'username': username,
+            'password': password,
+            'url': normalized_url
         }
 
-        logger.debug(f"Parsed SOCKS5 proxy: {parsed.hostname}:{port}")
+        logger.debug(f"Parsed SOCKS5 proxy: {host}:{port} (user: {username})")
         return result
 
     except Exception as e:
