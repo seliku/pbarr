@@ -145,6 +145,24 @@ docker compose down -v
 docker compose up -d
 ```
 
+### Bestehende PostgreSQL-Datenbank verwenden
+
+Falls du bereits eine PostgreSQL-Datenbank hast:
+
+1. **Passe die Credentials an:**
+   ```yaml
+   environment:
+     DATABASE_URL: postgresql://[dein-user]:[dein-password]@[host]:5432/[datenbank-name]
+   ```
+
+2. **Entferne den postgres-Service** aus docker-compose.yml
+
+3. **Oder verwende eine andere Datenbank:**
+   ```yaml
+   environment:
+     DATABASE_URL: postgresql://user:pass@external-host:5432/database
+   ```
+
 ### API-Port 8000 bereits in Verwendung?
 
 Ändere in `docker-compose.yml`:
