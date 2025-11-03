@@ -32,18 +32,19 @@ class MediathekCacher:
     CACHE_DURATION_DAYS = 30
     
     async def sync_watched_shows(self):
-        """Hourly: Cache alle beobachteten Shows + Smart Monitoring Detection"""
+        """Hourly: Cache nur manuell getaggte Shows + Smart Monitoring Detection"""
         db = SessionLocal()
         try:
-            logger.info("🔄 Starting Mediathek cache sync...")
+            logger.info("🔄 Starting Mediathek cache sync for tagged shows...")
 
-            watch_list = db.query(WatchList).all()
+            # NUR Serien die bereits manuell in Sonarr getaggt wurden
+            watch_list = db.query(WatchList).filter(WatchList.tagged_in_sonarr == True).all()
 
             if not watch_list:
-                logger.info("No shows in watch list")
+                logger.info("No manually tagged shows in watch list")
                 return
 
-            logger.info(f"Found {len(watch_list)} shows to cache")
+            logger.info(f"Found {len(watch_list)} manually tagged shows to cache")
 
             # SMART MONITORING DETECTION: Check for monitoring changes first
             await self._detect_monitoring_changes(db)
@@ -53,7 +54,7 @@ class MediathekCacher:
                 count = await self._cache_show(watched.tvdb_id, watched.show_name, db)
                 cached_count += count
 
-            logger.info(f"✅ Cached {cached_count} episodes total")
+            logger.info(f"✅ Cached {cached_count} episodes total for tagged shows")
 
         except Exception as e:
             logger.error(f"❌ Cache sync error: {e}", exc_info=True)
@@ -265,37 +266,7 @@ class MediathekCacher:
                 cached += 1
                 logger.debug(f"  Cache entry created, total cached: {cached}")
             
-            # Always check if series should be tagged in Sonarr (only if not already tagged and has episodes)
-            watchlist_entry = db.query(WatchList).filter(WatchList.tvdb_id == tvdb_id).first()
-            if watchlist_entry and not watchlist_entry.tagged_in_sonarr:
-                # Check if series has any mediathek episodes
-                total_episodes = db.query(MediathekCache).filter(
-                    MediathekCache.tvdb_id == tvdb_id,
-                    MediathekCache.expires_at > datetime.utcnow()
-                ).count()
-
-                if total_episodes > 0:
-                    logger.info(f"  Episodes available for {show_name}, attempting to tag in Sonarr")
-                    try:
-                        # Get Sonarr config
-                        sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
-                        sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
-
-                        if sonarr_url_config and sonarr_api_config and sonarr_url_config.value and sonarr_api_config.value:
-                            webhook_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
-                            tagging_result = await webhook_manager.tag_series_in_sonarr(tvdb_id, db)
-                            if tagging_result and tagging_result.get("success"):
-                                # Update watchlist entry to mark as tagged
-                                watchlist_entry.tagged_in_sonarr = True
-                                watchlist_entry.tagged_at = datetime.utcnow()
-                                db.commit()
-                                logger.info(f"  ✓ Successfully tagged {show_name} in Sonarr")
-                            else:
-                                logger.warning(f"  Failed to tag {show_name} in Sonarr: {tagging_result}")
-                        else:
-                            logger.debug("  Sonarr not configured, skipping tagging")
-                    except Exception as e:
-                        logger.error(f"  Error during Sonarr tagging for {show_name}: {e}")
+            # AUTOMATISCHES TAGGING ENTFERNT: Nur manuell getaggte Serien werden verarbeitet
 
             # SMART AUTO-DOWNLOAD: Check for missing episodes and download them
             if watchlist_entry and watchlist_entry.sonarr_series_id:
