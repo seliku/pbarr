@@ -9,17 +9,21 @@ class MediathekCache(Base):
     id = Column(Integer, primary_key=True)
     tvdb_id = Column(String(50), ForeignKey("watch_list.tvdb_id"), nullable=False, index=True)
     
-    # Episode Info
+    # Episode Info (NULL wenn nicht gematcht)
     season = Column(Integer, nullable=True)
     episode = Column(Integer, nullable=True)
-    episode_title = Column(String(500), nullable=False)
-    
+    episode_title = Column(String(500), nullable=True)  # TVDB Titel, NULL wenn unmatched
+
     # Mediathek
-    mediathek_title = Column(String(500))
+    mediathek_title = Column(String(500), nullable=False)
     mediathek_platform = Column(String(50))
-    media_url = Column(Text)
+    media_url = Column(Text, nullable=False)
     quality = Column(String(50))
-    
+
+    # Matching Info
+    match_confidence = Column(Integer, nullable=True)  # 0-100, NULL wenn unmatched
+    match_type = Column(String(50), nullable=True)     # "title", "date", "guest", etc.
+
     # Lifecycle
     created_at = Column(DateTime, server_default=func.now())
     expires_at = Column(DateTime, nullable=False)

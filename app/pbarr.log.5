@@ -1,0 +1,500 @@
+2025-11-03 15:29:34 - app.api.admin - INFO - ✓ Triggered cache sync for all tagged series
+2025-11-03 15:29:34 - app.api.admin - INFO - ✅ Import scan completed: 0 added, 0 updated, 0 removed from 2 total Sonarr series
+2025-11-03 15:29:41 - app.api.admin - INFO - 🔄 Starting Sonarr import scan - syncing series with 'pbarr' tag
+2025-11-03 15:29:41 - httpx - INFO - HTTP Request: GET http://deploy:8989/api/v3/tag "HTTP/1.1 200 OK"
+2025-11-03 15:29:41 - app.api.admin - INFO - PBArr tag ID: 1
+2025-11-03 15:29:41 - httpx - INFO - HTTP Request: GET http://deploy:8989/api/v3/series "HTTP/1.1 200 OK"
+2025-11-03 15:29:41 - app.api.admin - INFO - Found 2 series in Sonarr
+2025-11-03 15:29:41 - app.api.admin - INFO - Series with PBArr tag: 2
+2025-11-03 15:29:41 - app.api.admin - INFO - Series without PBArr tag: 0
+2025-11-03 15:29:41 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
+2025-11-03 15:29:41 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
+2025-11-03 15:29:41 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
+2025-11-03 15:29:41 - httpx - INFO - HTTP Request: GET http://deploy:8989/api/v3/episode?seriesId=1 "HTTP/1.1 200 OK"
+2025-11-03 15:29:41 - httpx - INFO - HTTP Request: GET http://deploy:8989/api/v3/episode?seriesId=9 "HTTP/1.1 200 OK"
+2025-11-03 15:29:41 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
+2025-11-03 15:29:41 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-03 15:29:41 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
+2025-11-03 15:29:42 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
+2025-11-03 15:29:42 - httpx - INFO - HTTP Request: GET http://deploy:8989/api/v3/series/1 "HTTP/1.1 200 OK"
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E14
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E14
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Kaya Yanar und Meltem Kaptan' → S11E14
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E14
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E14 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E13
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E13
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Ralf Schumacher und Étienne Bousquet-Cassagne' → S11E13
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E13
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E13 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E12
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E12
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Doc Esser und Dr. Yael Adler' → S11E12
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E12
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E12 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E11
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E11
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Ilka Bessin und Martin Schneider' → S11E11
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E11
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E11 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E10
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E10
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Ben Zucker und Smudo' → S11E10
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E10
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E10 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E09
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E09
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Maria Furtwängler und Klaus J. Behrendt – Sendung vom 23.10.' → S11E09
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E09
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E09 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E08
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E08
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Negah Amiri und Michael Kessler – Sendung vom 22.10.2025' → S11E08
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E08
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E08 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E07
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E07
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Zachi und Paul von 01099 – Sendung vom 21.10.2025' → S11E07
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E07
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E07 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E06
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E06
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Marie-Luise Marjan und Joachim Luger – Sendung vom 20.10.25' → S11E06
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E06
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E06 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E05
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E05
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Sylvie Meis und Daniel Hartwich – Sendung vom 17.10.2025' → S11E05
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E05
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E05 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E04
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E04
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Sepp Maier und Roman Weidenfeller – Sendung vom 16.10.2025' → S11E04
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E04
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E04 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E03
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E03
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Christian Berkel und Dietmar Bär – Sendung vom 15.10.2025' → S11E03
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E03
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E03 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E02
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E02
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Olli Dittrich und Michael Mittermeier – Sendung vom 14.10.25' → S11E02
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E02
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E02 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E01
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Vorschau: Wer weiß denn sowas und Gefragt - Gejagt im Ersten' → S11E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E01 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E01
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Atze Schröder und Paul Panzer – Sendung vom 13. Oktober 2025' → S11E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E01 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E01
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S11E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Vorschau: Gefragt – Gejagt und wer weiß denn sowas im Ersten' → S11E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E01 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wer weiß denn sowas XXL' → S00E01 ('Wer weiß denn sowas? XXL (1)')
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Wer weiß denn sowas XXL' → S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E01 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wer weiß denn sowas XXL' → S00E01 ('Wer weiß denn sowas? XXL (1)')
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Wer weiß denn sowas XXL' → S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E01 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ SUBSTRING TITLE MATCH: 'Wer weiss denn sowas XXL (Staffel 2025, Folge 1)' → S00E01 ('Wer weiß denn sowas? XXL (1)')
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ SUBSTRINGTITLE MATCH: 'Wer weiss denn sowas XXL (Staffel 2025, Folge 1)' → S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E01 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ SUBSTRING TITLE MATCH: 'Wer weiß denn sowas? (884)' → S00E01 ('Wer weiß denn sowas? XXL (1)')
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ SUBSTRINGTITLE MATCH: 'Wer weiß denn sowas? (884)' → S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E01 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ SUBSTRING TITLE MATCH: 'Wer weiß denn sowas? (877)' → S00E01 ('Wer weiß denn sowas? XXL (1)')
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ SUBSTRINGTITLE MATCH: 'Wer weiß denn sowas? (877)' → S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E01 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ CONTENT MATCH: S11E03 (5 days, 1 names)
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ CONTENTNAME MATCH: 'Wer weiß denn sowas? | 10.10.2025' → S11E03
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S11E03
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S11E03 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ NEAR DATE MATCH: S00E51 (2 days)
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ NEARDATE MATCH: 'Wer weiß denn sowas? | 09.10.2025' → S00E51
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E51
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E51 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ NEAR DATE MATCH: S00E51 (3 days)
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ NEARDATE MATCH: 'Wer weiß denn sowas? | 08.10.2025' → S00E51
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E51
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E51 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ NEAR DATE MATCH: S00E51 (4 days)
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ NEARDATE MATCH: 'Wer weiß denn sowas? | 07.10.2025' → S00E51
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E51
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E51 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ NEAR DATE MATCH: S00E51 (5 days)
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ NEARDATE MATCH: 'Wer weiß denn sowas? | 06.10.2025' → S00E51
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E51
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E51 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ SUBSTRING TITLE MATCH: 'Wer weiß denn sowas? (876)' → S00E01 ('Wer weiß denn sowas? XXL (1)')
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ SUBSTRINGTITLE MATCH: 'Wer weiß denn sowas? (876)' → S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E01 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ SUBSTRING TITLE MATCH: 'Wer weiß denn sowas? (875)' → S00E01 ('Wer weiß denn sowas? XXL (1)')
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ SUBSTRINGTITLE MATCH: 'Wer weiß denn sowas? (875)' → S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E01
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E01 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S00E49
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S00E49
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Ein Song für Elton' → S00E49
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E49
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E49 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S00E49
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S00E49
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Abschied von Elton | Best-of-Rückblick' → S00E49
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S00E49
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S00E49 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S08E132
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S08E132
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Tim Raue und Katharina Raue | 23. Mai | 11:15 Uhr' → S08E132
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E132
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E132 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S08E131
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S08E131
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Frank Zander und Roberto Blanco | 22. Mai | 11:15 Uhr' → S08E131
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E131
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E131 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S08E95
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S08E95
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Jürgen Vogel und Christoph Maria Herbst | 24. März | 11:15 Uhr' → S08E95
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E95
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E95 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S08E78
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S08E78
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Seit Juli 2021 dürfen Energielieferverträge ...?' → S08E78
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E78
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E78 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S08E59
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S08E59
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Dagmar Berghoff und Constantin Schreiber | 27. Januar | 11:15 Uhr' → S08E59
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E59
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E59 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S08E54
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S08E54
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Felix Neureuther und Viktoria Rebensburg | 20.01. | 11:15 Uhr' → S08E54
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E54
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E54 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ NEAR DATE MATCH: S08E39 (7 days)
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ NEARDATE MATCH: 'Christoph Daum und Reiner Calmund | 4. Januar | 11:15 Uhr' → S08E39
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E39
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E39 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S08E33
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S08E33
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Jan-Gregor Kremp und Thomas Heinze | 19. Dezember | 11:15 Uhr' → S08E33
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E33
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E33 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S08E28
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S08E28
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Ronald Zehrfeld und Birgit Minichmayr | 12. Dezember | 11:15 Uhr' → S08E28
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E28
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E28 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S08E08
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S08E08
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Die EU verlost jährlich 60.000 ...?' → S08E08
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E08
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E08 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S08E05
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S08E05
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Ingrid Peters und Peggy March | 01.11 | 11:15 Uhr' → S08E05
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S08E05
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S08E05 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S07E169
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S07E169
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Veronica Ferres und Herbert Knaup - Die Sendung vom 17. Juni 2022' → S07E169
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S07E169
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S07E169 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S07E166
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S07E166
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Johannes B. Kerner und Reinhold Beckmann - Die Sendung vom 14. Juni 2022' → S07E166
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S07E166
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S07E166 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S07E164
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S07E164
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Natalia Wörner und Henning Baum — Die Sendung vom 10. Juni 2022' → S07E164
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S07E164
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S07E164 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S07E160
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S07E160
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Jan Delay und Ferris MC — Die Sendung vom 3. Juni 2022' → S07E160
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S07E160
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S07E160 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S07E157
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S07E157
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Heike Makatsch und Emily Cox — Die Sendung vom 31. Mai 2022' → S07E157
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S07E157
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S07E157 already cached
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S07E149
+2025-11-03 15:29:42 - app.services.episode_matcher - INFO - Created MatchResult: S07E149
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO - ✓ EXACTDATE MATCH: 'Roeland Wiesnekker und Caroline Peters - Die Sendung vom 18. Mai, 11:15 Uhr' → S07E149
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Processing match: S07E149
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Episode S07E149 already cached
+2025-11-03 15:29:42 - httpx - INFO - HTTP Request: GET http://deploy:8989/api/v3/episode?seriesId=1 "HTTP/1.1 200 OK"
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Found 13 monitored episodes without files for Wer weiß denn sowas?
+2025-11-03 15:29:42 - app.services.mediathek_cacher - INFO -   Found 51 cached mediathek episodes for Wer weiß denn sowas?
+2025-11-03 15:29:43 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
+2025-11-03 15:29:43 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-03 15:29:43 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
+2025-11-03 15:29:43 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
+2025-11-03 15:29:43 - httpx - INFO - HTTP Request: GET http://deploy:8989/api/v3/series/9 "HTTP/1.1 200 OK"
+2025-11-03 15:29:43 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
+2025-11-03 15:29:43 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
+2025-11-03 15:29:43 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
+2025-11-03 15:29:43 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen >20 <360
+2025-11-03 15:29:43 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen%20%3E20%20%3C360&future=false
+2025-11-03 15:29:43 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
+2025-11-03 15:29:43 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
+2025-11-03 15:29:43 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002) >20 <360
+2025-11-03 15:29:43 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29%20%3E20%20%3C360&future=false
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Filter - Duration: >20<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Doppelleben (258)' → S20E11
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E11
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E11 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Doppelleben (258) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Gefährliche Liebe (257)' → S20E10
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E10
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E10 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Gefährliche Liebe (257) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Späte Wahrheit (256)' → S20E09
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E09
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E09 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Späte Wahrheit (256) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Pechvogel (255)' → S20E08
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E08
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E08 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Pechvogel (255) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Positiv (254)' → S20E07
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E07
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E07 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Positiv (254) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E05
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E05 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Liebe kennt kein Alter (252) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Gerüchte (251)' → S20E04
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E04
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E04 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Gerüchte (251) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Abflug (250)' → S20E03
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E03
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E03 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Abflug (250) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Plötzlich reich (248)' → S20E01
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E01
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E01 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Plötzlich reich (248) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Bühnenreif (249)' → S20E02
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E02
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E02 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Bühnenreif (249) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Plötzlich reich (248)' → S20E01
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S20E01
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S20E01 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Plötzlich reich (248) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Ausgekocht (247)' → S19E13
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E13
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E13 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Ausgekocht (247) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E12
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E12 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Spieglein, Spieglein (246) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Letzte Chance (245)' → S19E11
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E11
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E11 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Letzte Chance (245) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Familienkrise (244)' → S19E10
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E10
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E10 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Familienkrise (244) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Zweiter Frühling (243)' → S19E09
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E09
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E09 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Zweiter Frühling (243) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Wunschkind (242)' → S19E08
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E08
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E08 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Wunschkind (242) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Loslassen (241)' → S19E07
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E07
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E07 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Loslassen (241) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Utas Erbe (240)' → S19E06
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E06
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E06 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Utas Erbe (240) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Überraschungen (239)' → S19E05
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E05
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E05 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Überraschungen (239) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Rückschläge (238)' → S19E04
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E04
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E04 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Rückschläge (238) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Nervensäge (237)' → S19E03
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E03
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E03 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Nervensäge (237) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Handicaps (236)' → S19E02
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E02
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E02 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Handicaps (236) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Hochzeitswahn (235)' → S19E01
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S19E01
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S19E01 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Hochzeitswahn (235) (Audiodeskription)
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✓ FUZZYTITLE MATCH: 'Zweite Chance (234)' → S18E13
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Processing match: S18E13
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Episode S18E13 already cached
+2025-11-03 15:29:44 - app.services.episode_matcher - INFO - 🚫 Episode filtered out due to excluded keywords: Zweite Chance (234) (Audiodeskription)
+2025-11-03 15:29:44 - httpx - INFO - HTTP Request: GET http://deploy:8989/api/v3/episode?seriesId=9 "HTTP/1.1 200 OK"
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Found 2 monitored episodes without files for For Heaven's Sake (2002)
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO -   Found 25 cached mediathek episodes for For Heaven's Sake (2002)
+2025-11-03 15:29:44 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
+2025-11-03 15:29:44 - app.api.admin - INFO - ✓ Triggered cache sync for all tagged series
+2025-11-03 15:29:44 - app.api.admin - INFO - ✅ Import scan completed: 0 added, 0 updated, 0 removed from 2 total Sonarr series
+2025-11-03 15:33:39 - app.main - INFO - Shutting down PBArr...
+2025-11-03 15:33:39 - app.services.download_worker - INFO - Download Worker stopped
+2025-11-03 15:33:40 - root - INFO - ✓ Logging initialized - Level: INFO, File: /app/app/pbarr.log
+2025-11-03 15:33:40 - app.main - INFO - Starting PBArr...
+2025-11-03 15:33:40 - app.database - INFO - ✓ Database connection successful
+2025-11-03 15:33:40 - app.database - INFO - ✓ All database tables initialized
+2025-11-03 15:33:40 - app.main - INFO - ✓ Database initialized
+2025-11-03 15:33:40 - app.startup - INFO - ✅ Base config initialized
+2025-11-03 15:33:40 - app.startup - INFO - 📂 Download directory exists: /app/downloads/completed
+2025-11-03 15:33:40 - app.startup - INFO - ✅ PBArr will download to: /app/downloads/completed
+2025-11-03 15:33:40 - app.startup - INFO - ℹ️  Configure host mapping in docker-compose.yml to control where downloads go on your system
+2025-11-03 15:33:40 - app.services.download_worker - INFO - ✓ Download Worker started (interval: 30s)
+2025-11-03 15:33:40 - app.main - INFO - ✓ Scheduler started (hourly cache, daily cleanup)
+2025-11-03 15:33:43 - app.main - INFO - Shutting down PBArr...
+2025-11-03 15:33:43 - app.services.download_worker - INFO - Download Worker stopped
+2025-11-03 15:33:44 - root - INFO - ✓ Logging initialized - Level: INFO, File: /app/app/pbarr.log
+2025-11-03 15:33:44 - app.main - INFO - Starting PBArr...
+2025-11-03 15:33:44 - app.database - INFO - ✓ Database connection successful
+2025-11-03 15:33:44 - app.database - INFO - ✓ All database tables initialized
+2025-11-03 15:33:44 - app.main - INFO - ✓ Database initialized
+2025-11-03 15:33:44 - app.startup - INFO - ✅ Base config initialized
+2025-11-03 15:33:44 - app.startup - INFO - 📂 Download directory exists: /app/downloads/completed
+2025-11-03 15:33:44 - app.startup - INFO - ✅ PBArr will download to: /app/downloads/completed
+2025-11-03 15:33:44 - app.startup - INFO - ℹ️  Configure host mapping in docker-compose.yml to control where downloads go on your system
+2025-11-03 15:33:44 - app.services.download_worker - INFO - ✓ Download Worker started (interval: 30s)
+2025-11-03 15:33:44 - app.main - INFO - ✓ Scheduler started (hourly cache, daily cleanup)
+2025-11-03 15:37:41 - app.main - INFO - Shutting down PBArr...
+2025-11-03 15:37:41 - app.services.download_worker - INFO - Download Worker stopped
+2025-11-03 15:37:42 - root - INFO - ✓ Logging initialized - Level: INFO, File: /app/app/pbarr.log
+2025-11-03 15:37:42 - app.main - INFO - Starting PBArr...
+2025-11-03 15:37:42 - app.database - INFO - ✓ Database connection successful
+2025-11-03 15:37:42 - app.database - INFO - ✓ All database tables initialized
+2025-11-03 15:37:42 - app.main - INFO - ✓ Database initialized
+2025-11-03 15:37:42 - app.startup - INFO - ✅ Base config initialized
+2025-11-03 15:37:42 - app.startup - INFO - 📂 Download directory exists: /app/downloads/completed
+2025-11-03 15:37:42 - app.startup - INFO - ✅ PBArr will download to: /app/downloads/completed
+2025-11-03 15:37:42 - app.startup - INFO - ℹ️  Configure host mapping in docker-compose.yml to control where downloads go on your system
+2025-11-03 15:37:42 - app.services.download_worker - INFO - ✓ Download Worker started (interval: 30s)
+2025-11-03 15:37:42 - app.main - INFO - ✓ Scheduler started (hourly cache, daily cleanup)
+2025-11-03 15:37:44 - app.main - INFO - Shutting down PBArr...
+2025-11-03 15:37:45 - app.services.download_worker - INFO - Download Worker stopped
+2025-11-03 15:37:46 - root - INFO - ✓ Logging initialized - Level: INFO, File: /app/app/pbarr.log
+2025-11-03 15:37:46 - app.main - INFO - Starting PBArr...
+2025-11-03 15:37:46 - app.database - INFO - ✓ Database connection successful
+2025-11-03 15:37:46 - app.database - INFO - ✓ All database tables initialized
+2025-11-03 15:37:46 - app.main - INFO - ✓ Database initialized
+2025-11-03 15:37:46 - app.startup - INFO - ✅ Base config initialized
+2025-11-03 15:37:46 - app.startup - INFO - 📂 Download directory exists: /app/downloads/completed
+2025-11-03 15:37:46 - app.startup - INFO - ✅ PBArr will download to: /app/downloads/completed
+2025-11-03 15:37:46 - app.startup - INFO - ℹ️  Configure host mapping in docker-compose.yml to control where downloads go on your system
+2025-11-03 15:37:46 - app.services.download_worker - INFO - ✓ Download Worker started (interval: 30s)
+2025-11-03 15:37:46 - app.main - INFO - ✓ Scheduler started (hourly cache, daily cleanup)
+2025-11-03 15:41:50 - app.main - INFO - Shutting down PBArr...
+2025-11-03 15:41:51 - app.services.download_worker - INFO - Download Worker stopped
+2025-11-03 15:41:52 - root - INFO - ✓ Logging initialized - Level: INFO, File: /app/app/pbarr.log
+2025-11-03 15:41:52 - app.main - INFO - Starting PBArr...
+2025-11-03 15:41:52 - app.database - INFO - ✓ Database connection successful
+2025-11-03 15:41:52 - app.database - INFO - ✓ All database tables initialized
+2025-11-03 15:41:52 - app.main - INFO - ✓ Database initialized
+2025-11-03 15:41:52 - app.startup - INFO - ✅ Base config initialized
+2025-11-03 15:41:52 - app.startup - INFO - 📂 Download directory exists: /app/downloads/completed
+2025-11-03 15:41:52 - app.startup - INFO - ✅ PBArr will download to: /app/downloads/completed
+2025-11-03 15:41:52 - app.startup - INFO - ℹ️  Configure host mapping in docker-compose.yml to control where downloads go on your system
+2025-11-03 15:41:52 - app.services.download_worker - INFO - ✓ Download Worker started (interval: 30s)
+2025-11-03 15:41:52 - app.main - INFO - ✓ Scheduler started (hourly cache, daily cleanup)
+2025-11-03 15:42:07 - app.main - INFO - Shutting down PBArr...
+2025-11-03 15:42:07 - app.services.download_worker - INFO - Download Worker stopped
+2025-11-03 15:42:08 - root - INFO - ✓ Logging initialized - Level: INFO, File: /app/app/pbarr.log
+2025-11-03 15:42:08 - app.main - INFO - Starting PBArr...
+2025-11-03 15:42:08 - app.database - INFO - ✓ Database connection successful
+2025-11-03 15:42:08 - app.database - INFO - ✓ All database tables initialized
+2025-11-03 15:42:08 - app.main - INFO - ✓ Database initialized
+2025-11-03 15:42:08 - app.startup - INFO - ✅ Base config initialized
+2025-11-03 15:42:08 - app.startup - INFO - 📂 Download directory exists: /app/downloads/completed
+2025-11-03 15:42:08 - app.startup - INFO - ✅ PBArr will download to: /app/downloads/completed
+2025-11-03 15:42:08 - app.startup - INFO - ℹ️  Configure host mapping in docker-compose.yml to control where downloads go on your system
+2025-11-03 15:42:08 - app.services.download_worker - INFO - ✓ Download Worker started (interval: 30s)
+2025-11-03 15:42:08 - app.main - INFO - ✓ Scheduler started (hourly cache, daily cleanup)
+2025-11-03 15:42:10 - app.main - INFO - Shutting down PBArr...
+2025-11-03 15:42:11 - app.services.download_worker - INFO - Download Worker stopped
+2025-11-03 15:42:11 - root - INFO - ✓ Logging initialized - Level: INFO, File: /app/app/pbarr.log
+2025-11-03 15:42:12 - app.main - INFO - Starting PBArr...
+2025-11-03 15:42:12 - app.database - INFO - ✓ Database connection successful
+2025-11-03 15:42:12 - app.database - INFO - ✓ All database tables initialized
+2025-11-03 15:42:12 - app.main - INFO - ✓ Database initialized
+2025-11-03 15:42:12 - app.startup - INFO - ✅ Base config initialized
+2025-11-03 15:42:12 - app.startup - INFO - 📂 Download directory exists: /app/downloads/completed
+2025-11-03 15:42:12 - app.startup - INFO - ✅ PBArr will download to: /app/downloads/completed
+2025-11-03 15:42:12 - app.startup - INFO - ℹ️  Configure host mapping in docker-compose.yml to control where downloads go on your system
+2025-11-03 15:42:12 - app.services.download_worker - INFO - ✓ Download Worker started (interval: 30s)
+2025-11-03 15:42:12 - app.main - INFO - ✓ Scheduler started (hourly cache, daily cleanup)
+2025-11-03 15:45:10 - app.main - INFO - Shutting down PBArr...
+2025-11-03 15:45:10 - app.services.download_worker - INFO - Download Worker stopped
+2025-11-03 15:45:11 - root - INFO - ✓ Logging initialized - Level: INFO, File: /app/app/pbarr.log
+2025-11-03 15:45:11 - app.main - INFO - Starting PBArr...
+2025-11-03 15:45:11 - app.database - INFO - ✓ Database connection successful
+2025-11-03 15:45:11 - app.database - INFO - ✓ All database tables initialized
+2025-11-03 15:45:11 - app.main - INFO - ✓ Database initialized
+2025-11-03 15:45:11 - app.startup - INFO - ✅ Base config initialized
+2025-11-03 15:45:11 - app.startup - INFO - 📂 Download directory exists: /app/downloads/completed
+2025-11-03 15:45:11 - app.startup - INFO - ✅ PBArr will download to: /app/downloads/completed

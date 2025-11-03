@@ -12,6 +12,7 @@ import traceback
 
 
 from app.models.tvdb_cache import TVDBCache
+from app.utils.network import create_aiohttp_session, get_proxy_for_url
 
 
 logger = logging.getLogger(__name__)
@@ -62,52 +63,53 @@ class TVDBClient:
         logger.info(f"Fetching TVDB episodes #{tvdb_id_str}")
         
         try:
-            async with aiohttp.ClientSession() as session:
+            proxy_url = get_proxy_for_url(self.BASE_URL)
+            async with create_aiohttp_session(proxy_url=proxy_url) as session:
                 if not await self._get_token(session):
                     return []
-                
+
                 headers = {'Authorization': f'Bearer {self.access_token}'}
-                
+
                 # Hole Show-Info zuerst
                 show_name = await self._get_show_name(tvdb_id_str, headers, session)
-                
+
                 url = f"{self.BASE_URL}/series/{tvdb_id_str}/episodes/official"
-                
+
                 all_episodes = []
                 page = 0
-                
+
                 while url and page < 1000:
                     logger.info(f"Fetching page {page}: {url}")
-                    
+
                     try:
                         async with session.get(url, headers=headers, timeout=10) as resp:
                             logger.info(f"HTTP {resp.status}")
-                            
+
                             if resp.status != 200:
                                 logger.error(f"HTTP {resp.status}")
                                 break
-                            
+
                             data = await resp.json()
                             response_data = data.get('data', {})
                             eps_list = response_data.get('episodes', []) if isinstance(response_data, dict) else []
-                            
+
                             logger.info(f"Page {page}: {len(eps_list)} items")
-                            
+
                             # Parse Episodes
                             for ep in eps_list:
                                 try:
                                     if not isinstance(ep, dict):
                                         continue
-                                    
+
                                     s = ep.get('seasonNumber')
                                     e = ep.get('number')
                                     name = ep.get('name')
                                     aired = ep.get('aired')
                                     overview = ep.get('overview', '')
-                                    
+
                                     if s is None or e is None:
                                         continue
-                                    
+
                                     episode_data = {
                                         'season': s,
                                         'episode': e,
@@ -115,13 +117,13 @@ class TVDBClient:
                                         'overview': overview,
                                         'aired': aired,
                                     }
-                                    
+
                                     all_episodes.append(episode_data)
-                                
+
                                 except Exception as ie:
                                     logger.error(f"Item error: {ie}")
                                     continue
-                            
+
                             # Pagination
                             links = data.get('links', {})
                             if links.get('next'):
@@ -129,17 +131,17 @@ class TVDBClient:
                                 page += 1
                             else:
                                 break
-                    
+
                     except Exception as pe:
                         logger.error(f"Page error: {pe}")
                         break
-                
+
                 logger.info(f"✓ Total: {len(all_episodes)} episodes")
-                
+
                 # Step 2: Cache in DB
                 if cache_to_db and self.db and len(all_episodes) > 0:
                     self._cache_episodes_to_db(tvdb_id_str, show_name, all_episodes)
-                
+
                 return all_episodes
         
         except Exception as e:
@@ -159,8 +161,80 @@ class TVDBClient:
                     return name
         except Exception as e:
             logger.debug(f"Show name fetch failed: {e}")
-        
+
         return f'Show_{tvdb_id}'
+
+    async def get_show_titles(self, tvdb_id: int) -> List[str]:
+        """
+        Get all titles for a show (primary + alternate titles)
+
+        Returns:
+            List of all title variants for this show
+        """
+        titles = []
+
+        try:
+            proxy_url = get_proxy_for_url(self.BASE_URL)
+            async with create_aiohttp_session(proxy_url=proxy_url) as session:
+                if not await self._get_token(session):
+                    logger.warning(f"Could not get TVDB token for titles fetch")
+                    return titles
+
+                headers = {'Authorization': f'Bearer {self.access_token}'}
+
+                # Get primary title
+                primary_title = await self._get_show_name(str(tvdb_id), headers, session)
+                if primary_title and primary_title != f'Show_{tvdb_id}':
+                    titles.append(primary_title)
+                    logger.debug(f"✓ Primary title: {primary_title}")
+
+                # Get alternate titles (translations)
+                # Try different endpoints - TVDB API might have changed
+                translation_urls = [
+                    f"{self.BASE_URL}/series/{tvdb_id}/translations",
+                    f"{self.BASE_URL}/series/{tvdb_id}/translations/de",  # German specific
+                    f"{self.BASE_URL}/series/{tvdb_id}/translations/en",  # English
+                ]
+
+                for url in translation_urls:
+                    try:
+                        logger.debug(f"Trying translations URL: {url}")
+                        async with session.get(url, headers=headers, timeout=10) as resp:
+                            logger.debug(f"Translations API response: {resp.status}")
+
+                            if resp.status == 200:
+                                data = await resp.json()
+                                logger.debug(f"Translations data: {data}")
+
+                                # Handle different response formats
+                                translations = []
+                                if isinstance(data.get('data'), list):
+                                    translations = data.get('data', [])
+                                elif isinstance(data.get('data'), dict):
+                                    # Single translation object
+                                    translations = [data.get('data', {})]
+
+                                for trans in translations:
+                                    if isinstance(trans, dict):
+                                        title = trans.get('name')
+                                        if title and title not in titles:
+                                            titles.append(title)
+                                            logger.info(f"✓ Alternate title: {title}")
+
+                                # If we found translations, break
+                                if translations:
+                                    break
+
+                    except Exception as e:
+                        logger.debug(f"Translations URL {url} failed: {e}")
+                        continue
+
+                logger.info(f"✓ Found {len(titles)} title variants for TVDB {tvdb_id}: {titles}")
+                return titles
+
+        except Exception as e:
+            logger.error(f"Show titles fetch error: {e}")
+            return titles
     
     def _cache_episodes_to_db(self, tvdb_id: str, show_name: str, episodes: List[dict]):
         """Speichere Episodes in DB - ignore duplicates"""

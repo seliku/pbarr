@@ -7,6 +7,7 @@ from urllib.parse import urljoin, urlparse
 from datetime import datetime
 
 from app.models.watch_list import WatchList
+from app.utils.network import create_httpx_client
 
 
 logger = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ class SonarrWebhookManager:
 
             logger.info(f"Creating webhook with URL: {webhook_url}")
 
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with create_httpx_client(timeout=10.0) as client:
                 resp = await client.post(
                     f"{self.sonarr_url}/api/v3/notification",
                     json=payload,

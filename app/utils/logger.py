@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 import shutil
 
-# Erstelle Logs-Verzeichnis
-LOGS_DIR = Path("/app/logs")
+# Erstelle Logs-Verzeichnis (im gemounteten App-Verzeichnis)
+LOGS_DIR = Path("/app/app")
 LOGS_DIR.mkdir(exist_ok=True)
 
 class LineRotatingFileHandler(logging.FileHandler):

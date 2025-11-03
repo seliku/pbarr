@@ -11,11 +11,12 @@ import re
 logger = logging.getLogger(__name__)
 
 class MatchResult:
-    def __init__(self, season: int, episode: int, confidence: float, match_type: str):
+    def __init__(self, season: int, episode: int, confidence: float, match_type: str, episode_title: str = None):
         self.season = season
         self.episode = episode
         self.confidence = confidence
         self.match_type = match_type
+        self.episode_title = episode_title
 
 class EpisodeMatcher:
     """Matches MediathekViewWeb Episodes with TVDB"""
@@ -136,16 +137,66 @@ class EpisodeMatcher:
         logger.debug(f"  Guests: {mediathek_guests}")
         logger.debug(f"Matching against {len(tvdb_episodes)} TVDB episodes")
         
+        # Strategy 0: TITEL-MATCHING (höchste Priorität!)
+        logger.debug(f"  Trying title match...")
+        for tvdb_ep in tvdb_episodes:
+            tvdb_title = tvdb_ep.get('name', '').strip()
+            if not tvdb_title:
+                continue
+
+            # Normalisiere beide Titel für besseren Vergleich
+            mediathek_title_clean = self._normalize_title_for_matching(mediathek_title)
+            tvdb_title_clean = self._normalize_title_for_matching(tvdb_title)
+
+            # Exakter Titel-Match (case-insensitive)
+            if mediathek_title_clean.lower() == tvdb_title_clean.lower():
+                logger.info(f"✓ EXACT TITLE MATCH: '{mediathek_title}' → S{tvdb_ep['season']:02d}E{tvdb_ep['episode']:02d} ('{tvdb_title}')")
+                return MatchResult(
+                    season=tvdb_ep['season'],
+                    episode=tvdb_ep['episode'],
+                    confidence=0.95,
+                    match_type="exactTitle",
+                    episode_title=tvdb_title
+                )
+
+            # Fuzzy Titel-Match (Episode-Nummern in Klammern ignorieren)
+            # Beispiel: "Doppelleben" sollte mit "Doppelleben (258)" matchen
+            mediathek_no_numbers = re.sub(r'\s*\(\d+\)\s*$', '', mediathek_title_clean)
+            tvdb_no_numbers = re.sub(r'\s*\(\d+\)\s*$', '', tvdb_title_clean)
+
+            if mediathek_no_numbers.lower() == tvdb_no_numbers.lower():
+                logger.info(f"✓ FUZZY TITLE MATCH: '{mediathek_title}' → S{tvdb_ep['season']:02d}E{tvdb_ep['episode']:02d} ('{tvdb_title}')")
+                return MatchResult(
+                    season=tvdb_ep['season'],
+                    episode=tvdb_ep['episode'],
+                    confidence=0.90,
+                    match_type="fuzzyTitle",
+                    episode_title=tvdb_title
+                )
+
+            # Teilstring-Match (wenn einer im anderen enthalten ist)
+            if (mediathek_no_numbers.lower() in tvdb_no_numbers.lower() or
+                tvdb_no_numbers.lower() in mediathek_no_numbers.lower()):
+                if len(mediathek_no_numbers) > 5 and len(tvdb_no_numbers) > 5:  # Vermeide zu kurze Matches
+                    logger.info(f"✓ SUBSTRING TITLE MATCH: '{mediathek_title}' → S{tvdb_ep['season']:02d}E{tvdb_ep['episode']:02d} ('{tvdb_title}')")
+                    return MatchResult(
+                        season=tvdb_ep['season'],
+                        episode=tvdb_ep['episode'],
+                        confidence=0.85,
+                        match_type="substringTitle",
+                        episode_title=tvdb_title
+                    )
+
         # Strategy 1: Exaktes Datum-Match
         if mediathek_date:
             for tvdb_ep in tvdb_episodes:
                 tvdb_aired = tvdb_ep.get('aired')
                 if not tvdb_aired:
                     continue
-                
+
                 try:
                     tvdb_date = datetime.fromisoformat(tvdb_aired)
-                    
+
                     # Vergleiche nur das Datum (nicht Zeit)
                     if mediathek_date.date() == tvdb_date.date():
                         logger.info(f"✓ EXACT DATE MATCH: S{tvdb_ep['season']:02d}E{tvdb_ep['episode']:02d}")
@@ -153,7 +204,8 @@ class EpisodeMatcher:
                             season=tvdb_ep['season'],
                             episode=tvdb_ep['episode'],
                             confidence=1.0,
-                            match_type="exactDate"
+                            match_type="exactDate",
+                            episode_title=tvdb_ep.get('name', '')
                         )
                         logger.info(f"Created MatchResult: S{result.season:02d}E{result.episode:02d}")
                         return result
@@ -246,3 +298,28 @@ class EpisodeMatcher:
         
         logger.debug(f"✗ No match found")
         return None
+
+    def _normalize_title_for_matching(self, title: str) -> str:
+        """
+        Normalisiert Titel für besseres Matching:
+        - Umlaute konvertieren (ä→ae, ö→oe, ü→ue, ß→ss)
+        - Sonderzeichen entfernen
+        - Mehrfach-Spaces zu Single-Space
+        - Case-insensitive Vergleich
+        """
+        if not title:
+            return ""
+
+        # Umlaute konvertieren
+        title = title.replace('ä', 'ae').replace('Ä', 'Ae')
+        title = title.replace('ö', 'oe').replace('Ö', 'Oe')
+        title = title.replace('ü', 'ue').replace('Ü', 'Ue')
+        title = title.replace('ß', 'ss')
+
+        # Sonderzeichen entfernen, aber Klammern und Zahlen behalten für Episode-Nummern
+        title = re.sub(r'[^\w\s\(\)\d]', '', title)
+
+        # Mehrfach-Spaces entfernen
+        title = re.sub(r'\s+', ' ', title)
+
+        return title.strip()

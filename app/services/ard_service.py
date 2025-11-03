@@ -6,6 +6,8 @@ import aiohttp
 from typing import List, Optional
 from datetime import datetime
 
+from app.utils.network import create_aiohttp_session, get_proxy_for_url
+
 logger = logging.getLogger(__name__)
 
 class ARDService:
@@ -17,13 +19,14 @@ class ARDService:
     async def search_show(show_title: str) -> Optional[dict]:
         """Sucht Show in ARD Mediathek"""
         try:
-            async with aiohttp.ClientSession() as session:
+            proxy_url = get_proxy_for_url(ARDService.BASE_URL)
+            async with create_aiohttp_session(proxy_url=proxy_url) as session:
                 search_url = f"{ARDService.BASE_URL}/pages/searches/results?searchString={show_title}&pageSize=20"
-                
+
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                 }
-                
+
                 async with session.get(search_url, headers=headers, timeout=10) as resp:
                     if resp.status == 200:
                         data = await resp.json()
@@ -57,13 +60,14 @@ class ARDService:
         episodes = []
         
         try:
-            async with aiohttp.ClientSession() as session:
+            proxy_url = get_proxy_for_url(ARDService.BASE_URL)
+            async with create_aiohttp_session(proxy_url=proxy_url) as session:
                 show_url = f"{ARDService.BASE_URL}/pages/ard/shows/{ard_show_id}"
-                
+
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                 }
-                
+
                 async with session.get(show_url, headers=headers, timeout=10) as resp:
                     if resp.status == 200:
                         data = await resp.json()

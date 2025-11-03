@@ -29,8 +29,9 @@ def get_log_level_from_db():
     # Fallback auf Default
     return "INFO"
 
-# Setze globale Log-Level auf INFO, um weniger Spam zu haben
-logging.getLogger().setLevel(logging.INFO)
+# Reduziere Spam von externen Libraries
+logging.getLogger('apscheduler').setLevel(logging.WARNING)
+logging.getLogger('httpx').setLevel(logging.WARNING)
 
 
 

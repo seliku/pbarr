@@ -1,0 +1,46 @@
+Collecting fastapi==0.104.1
+  Using cached fastapi-0.104.1-py3-none-any.whl.metadata (24 kB)
+Collecting uvicorn==0.24.0 (from uvicorn[standard]==0.24.0)
+  Using cached uvicorn-0.24.0-py3-none-any.whl.metadata (6.4 kB)
+Collecting pydantic==2.5.0
+  Using cached pydantic-2.5.0-py3-none-any.whl.metadata (174 kB)
+Collecting sqlalchemy==2.0.23
+  Using cached SQLAlchemy-2.0.23-py3-none-any.whl.metadata (9.6 kB)
+Collecting alembic==1.12.1
+  Using cached alembic-1.12.1-py3-none-any.whl.metadata (7.3 kB)
+Collecting aiohttp==3.9.1
+  Using cached aiohttp-3.9.1.tar.gz (7.5 MB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting requests==2.31.0
+  Using cached requests-2.31.0-py3-none-any.whl.metadata (4.6 kB)
+Requirement already satisfied: httpx==0.26.0 in /usr/local/lib/python3.13/dist-packages (from httpx[socks]==0.26.0) (0.26.0)
+Collecting yt-dlp==2023.12.30
+  Using cached yt_dlp-2023.12.30-py2.py3-none-any.whl.metadata (160 kB)
+Collecting fuzzywuzzy==0.18.0
+  Using cached fuzzywuzzy-0.18.0-py2.py3-none-any.whl.metadata (4.9 kB)
+Collecting python-levenshtein==0.21.1
+  Using cached python_Levenshtein-0.21.1-py3-none-any.whl.metadata (3.8 kB)
+Collecting packaging==23.2
+  Using cached packaging-23.2-py3-none-any.whl.metadata (3.2 kB)
+Collecting python-json-logger==2.0.7
+  Using cached python_json_logger-2.0.7-py3-none-any.whl.metadata (6.5 kB)
+Collecting pytest==7.4.3
+  Using cached pytest-7.4.3-py3-none-any.whl.metadata (7.9 kB)
+Collecting pytest-asyncio==0.21.1
+  Using cached pytest_asyncio-0.21.1-py3-none-any.whl.metadata (4.0 kB)
+Requirement already satisfied: PySocks==1.7.1 in /usr/local/lib/python3.13/dist-packages (1.7.1)
+Requirement already satisfied: aiohttp-socks in /usr/local/lib/python3.13/dist-packages (0.10.1)
+Collecting anyio<4.0.0,>=3.7.1 (from fastapi==0.104.1)
+  Using cached anyio-3.7.1-py3-none-any.whl.metadata (4.7 kB)
+Collecting starlette<0.28.0,>=0.27.0 (from fastapi==0.104.1)
+  Using cached starlette-0.27.0-py3-none-any.whl.metadata (5.8 kB)
+Requirement already satisfied: typing-extensions>=4.8.0 in /usr/lib/python3/dist-packages (from fastapi==0.104.1) (4.12.2)
+Requirement already satisfied: click>=7.0 in /usr/local/lib/python3.13/dist-packages (from uvicorn==0.24.0->uvicorn[standard]==0.24.0) (8.3.0)
+Requirement already satisfied: h11>=0.8 in /usr/local/lib/python3.13/dist-packages (from uvicorn==0.24.0->uvicorn[standard]==0.24.0) (0.16.0)
+Collecting annotated-types>=0.4.0 (from pydantic==2.5.0)
+  Using cached annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)

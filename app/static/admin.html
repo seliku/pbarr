@@ -488,13 +488,12 @@
         </div>
 
         <div class="grid">
-            <!-- Configuration -->
+            <!-- Network Configuration -->
             <div class="card">
-                <h2>⚙️ Konfiguration</h2>
-                <div id="config-loading" class="loading">Lade Konfiguration...</div>
-                <div id="config-list"></div>
-                <button class="btn btn-secondary" onclick="refreshConfigs()">🔄 Aktualisieren</button>
-                <button class="btn" onclick="openAddConfigModal()">➕ Konfiguration hinzufügen</button>
+                <h2>🌐 Netzwerk</h2>
+                <div id="network-loading" class="loading">Lade Netzwerk-Konfiguration...</div>
+                <div id="network-list"></div>
+                <div id="network-message" style="margin-top: 10px;"></div>
             </div>
 
             <!-- Downloads -->
@@ -502,6 +501,15 @@
                 <h2>⬇️ Downloads</h2>
                 <div id="downloads-loading" class="loading">Loading download settings...</div>
                 <div id="downloads-list"></div>
+            </div>
+
+            <!-- Configuration -->
+            <div class="card">
+                <h2>⚙️ Konfiguration</h2>
+                <div id="config-loading" class="loading">Lade Konfiguration...</div>
+                <div id="config-list"></div>
+                <button class="btn btn-secondary" onclick="refreshConfigs()">🔄 Aktualisieren</button>
+                <button class="btn" onclick="openAddConfigModal()">➕ Konfiguration hinzufügen</button>
             </div>
 
             <!-- Modules -->
@@ -532,7 +540,7 @@
                         📥 Sonarr Import-Scan starten
                     </button>
                     <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                        Weist Sonarr an, heruntergeladene Dateien zu importieren und der Mediathek hinzuzufügen
+                        Synchronisiert PBArr-Watchlist mit Sonarr-Serien die den 'pbarr'-Tag haben
                     </div>
                 </div>
 
@@ -782,7 +790,8 @@
                     config.key !== 'download_path' &&
                     config.key !== 'update_check_interval' &&
                     config.key !== 'download_retry_count' &&
-                    config.key !== 'max_concurrent_downloads'
+                    config.key !== 'max_concurrent_downloads' &&
+                    config.key !== 'socks5_proxy'
                 );
 
                 container.innerHTML = filteredConfigs.map(config => `
@@ -849,6 +858,65 @@
             }
         }
         
+        async function loadNetwork() {
+            const container = document.getElementById('network-list');
+            const loading = document.getElementById('network-loading');
+
+            try {
+                const configs = await fetchJSON(`${API_URL}/admin/config`);
+                loading.style.display = 'none';
+
+                // SOCKS5 Proxy configuration - always show this one
+                let socks5Config = configs.find(config => config.key === 'socks5_proxy');
+
+                // If SOCKS5 proxy config doesn't exist, create a placeholder
+                if (!socks5Config) {
+                    socks5Config = {
+                        id: 'socks5-proxy-placeholder',
+                        key: 'socks5_proxy',
+                        value: '',
+                        module: 'network',
+                        secret: false,
+                        data_type: 'string',
+                        description: 'SOCKS5 Proxy für externe HTTP/HTTPS Requests (MediathekViewWeb, TVDB API, etc.)'
+                    };
+                }
+
+                container.innerHTML = `
+                    <div class="config-item" id="network-${socks5Config.id}">
+                        <div class="config-description" style="font-weight: 600; font-size: 14px; color: #333; margin-bottom: 2px;">${socks5Config.description || 'SOCKS5 Proxy für externe HTTP/HTTPS Requests'}</div>
+                        <div class="config-key" style="font-size: 11px; color: #888; margin-bottom: 5px;">SOCKS5 Proxy URL</div>
+                        <div class="config-value-display" id="network-display-${socks5Config.id}">${socks5Config.value || '(nicht konfiguriert - direkte Verbindung)'}</div>
+                        <div class="config-tags">
+                            <span class="tag">${socks5Config.module}</span>
+                            ${socks5Config.secret ? '<span class="tag secret">🔒 Secret</span>' : ''}
+                            <span class="tag" style="background: #999;">${socks5Config.data_type}</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-small" onclick="editNetworkConfig('${socks5Config.id}', '${socks5Config.key}')">✎ Konfigurieren</button>
+                            <button class="btn btn-small btn-secondary" onclick="testProxyConnection()" style="margin-left: 5px;">🔍 Test</button>
+                        </div>
+                        <input type="text" class="config-value-input" id="network-input-${socks5Config.id}" style="display:none;" value="${socks5Config.value || ''}" placeholder="socks5://user:pass@host:port oder host:port">
+                        <div class="action-buttons" id="network-edit-buttons-${socks5Config.id}" style="display:none;">
+                            <button class="btn btn-small btn-success" onclick="saveNetworkConfig('${socks5Config.id}', '${socks5Config.key}')">✓ Speichern</button>
+                            <button class="btn btn-small btn-secondary" onclick="cancelNetworkEdit('${socks5Config.id}')">✗ Abbrechen</button>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #666; line-height: 1.4;">
+                            <strong>Unterstützte Formate:</strong><br>
+                            • <code>socks5://host:port</code><br>
+                            • <code>socks5://user:pass@host:port</code><br>
+                            • <code>host:port</code><br>
+                            • <code>host:port:user:pass</code><br>
+                            <strong>Hinweis:</strong> Lokaler Traffic (LAN, localhost) verwendet immer direkte Verbindung.
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error">Failed to load network settings: ${error.message}</div>`;
+                loading.style.display = 'none';
+            }
+        }
+
         async function loadDownloads() {
             const container = document.getElementById('downloads-list');
             const loading = document.getElementById('downloads-loading');
@@ -1079,15 +1147,51 @@
             }
         }
         
-        function showSuccess(msg) {
+        function showSuccess(msg, containerId = null) {
+            if (containerId) {
+                // Show in specific container
+                const container = document.getElementById(containerId);
+                if (container) {
+                    // Remove existing messages
+                    const existing = container.querySelector('.message-alert');
+                    if (existing) existing.remove();
+
+                    const div = document.createElement('div');
+                    div.className = 'success message-alert';
+                    div.textContent = msg;
+                    container.appendChild(div);
+                    setTimeout(() => div.remove(), 3000);
+                    return;
+                }
+            }
+
+            // Fallback to global
             const div = document.createElement('div');
             div.className = 'success';
             div.textContent = msg;
             document.body.insertBefore(div, document.body.firstChild);
             setTimeout(() => div.remove(), 3000);
         }
-        
-        function showError(msg) {
+
+        function showError(msg, containerId = null) {
+            if (containerId) {
+                // Show in specific container
+                const container = document.getElementById(containerId);
+                if (container) {
+                    // Remove existing messages
+                    const existing = container.querySelector('.message-alert');
+                    if (existing) existing.remove();
+
+                    const div = document.createElement('div');
+                    div.className = 'error message-alert';
+                    div.textContent = msg;
+                    container.appendChild(div);
+                    setTimeout(() => div.remove(), 5000);
+                    return;
+                }
+            }
+
+            // Fallback to global
             const div = document.createElement('div');
             div.className = 'error';
             div.textContent = msg;
@@ -1672,6 +1776,79 @@
             refreshConfigs();
             refreshModules();
             refreshSeries();
+            refreshNetwork();
+        }
+
+        function refreshNetwork() {
+            document.getElementById('network-loading').style.display = 'block';
+            document.getElementById('network-list').innerHTML = '';
+            loadNetwork();
+        }
+
+        function editNetworkConfig(id, key) {
+            document.getElementById(`network-display-${id}`).style.display = 'none';
+            document.getElementById(`network-input-${id}`).style.display = 'block';
+            document.getElementById(`network-edit-buttons-${id}`).style.display = 'flex';
+            document.getElementById(`network-${id}`).classList.add('editing');
+        }
+
+        function cancelNetworkEdit(id) {
+            document.getElementById(`network-display-${id}`).style.display = 'block';
+            document.getElementById(`network-input-${id}`).style.display = 'none';
+            document.getElementById(`network-edit-buttons-${id}`).style.display = 'none';
+            document.getElementById(`network-${id}`).classList.remove('editing');
+        }
+
+        async function saveNetworkConfig(id, key) {
+            const newValue = document.getElementById(`network-input-${id}`).value;
+            try {
+                // Verwende den neuen /settings Endpoint für SOCKS5 Proxy
+                const response = await fetch(`${API_URL}/admin/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ [key]: newValue })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'ok') {
+                    document.getElementById(`network-display-${id}`).textContent = newValue || '(nicht konfiguriert - direkte Verbindung)';
+                    cancelNetworkEdit(id);
+                    showSuccess(`Netzwerk-Konfiguration '${key}' aktualisiert!`, 'network-message');
+                    // Cache wird automatisch invalidiert
+                } else {
+                    showError(`Fehler beim Speichern: ${result.error}`, 'network-message');
+                }
+            } catch (error) {
+                showError(`Fehler beim Speichern: ${error.message}`, 'network-message');
+            }
+        }
+
+        async function testProxyConnection() {
+            const btn = document.querySelector('button[onclick="testProxyConnection()"]');
+            const originalText = btn.textContent;
+
+            try {
+                btn.disabled = true;
+                btn.textContent = '🔍 Teste...';
+
+                const response = await fetch(`${API_URL}/admin/test-proxy`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'ok') {
+                    showSuccess(`✅ Proxy-Verbindung erfolgreich! (${result.message})`);
+                } else {
+                    showError(`❌ Proxy-Test fehlgeschlagen: ${result.message}`);
+                }
+            } catch (error) {
+                showError(`❌ Proxy-Test-Fehler: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
         }
 
         // Load on init
@@ -1680,6 +1857,7 @@
             loadVersion();
             loadConfigs();
             loadDownloads();
+            loadNetwork();
             loadModules();
             loadSeries(); // Load series list
             loadCurrentLogLevel(); // Load current log level

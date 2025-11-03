@@ -144,13 +144,23 @@ async def update_config(key: str, update: ConfigUpdate, db: Session = Depends(ge
     config = db.query(Config).filter_by(key=key).first()
     if not config:
         raise HTTPException(status_code=404, detail=f"Config key '{key}' not found")
-    
+
+    # SOCKS5 Proxy validation
+    if key == "socks5_proxy" and update.value and update.value.strip():
+        from app.utils.network import parse_socks5_proxy
+        parsed = parse_socks5_proxy(update.value.strip())
+        if not parsed:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid SOCKS5 proxy format. Use: host:port or host:port:user:pass or socks5://host:port"
+            )
+
     config.value = update.value
     config.updated_at = datetime.utcnow()
-    
+
     db.commit()
     db.refresh(config)
-    
+
     # WICHTIG: Wenn Log-Level geändert, sofort anwenden!
     if key == "log_level":
         from app.utils.logger import change_log_level_runtime
@@ -158,7 +168,13 @@ async def update_config(key: str, update: ConfigUpdate, db: Session = Depends(ge
             logger.info(f"Log-Level updated to {update.value}")
         else:
             logger.warning(f"Failed to update log level to {update.value}")
-    
+
+    # SOCKS5 Proxy cache invalidation
+    if key == "socks5_proxy":
+        from app.utils.network import clear_proxy_cache
+        clear_proxy_cache()
+        logger.info("SOCKS5 proxy cache cleared due to configuration change")
+
     return config
 
 
@@ -232,8 +248,10 @@ async def trigger_cache_sync(db: Session = Depends(get_db)):
 
 @router.post("/trigger-import-scan")
 async def trigger_import_scan(db: Session = Depends(get_db)):
-    """Manually trigger Sonarr rescan for all series with downloaded files"""
+    """Synchronize PBArr watchlist with Sonarr series that have the 'pbarr' tag"""
     try:
+        logger.info("🔄 Starting Sonarr import scan - syncing series with 'pbarr' tag")
+
         # Get Sonarr config
         sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
         sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
@@ -245,54 +263,165 @@ async def trigger_import_scan(db: Session = Depends(get_db)):
 
         sonarr_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
 
-        # Get all series with sonarr_series_id
-        series_with_sonarr = db.query(WatchList).filter(
-            WatchList.sonarr_series_id.isnot(None)
-        ).all()
+        # Step 1: Get PBArr tag ID
+        pbarr_tag_id = await sonarr_manager._get_or_create_pbarr_tag()
+        if not pbarr_tag_id:
+            raise HTTPException(status_code=500, detail="Could not get/create PBArr tag in Sonarr")
 
-        if not series_with_sonarr:
-            return {
-                "success": True,
-                "message": "No series with Sonarr integration found",
-                "rescanned_series": 0
-            }
+        logger.info(f"PBArr tag ID: {pbarr_tag_id}")
 
-        rescanned_count = 0
-        errors = []
+        # Step 2: Get all series from Sonarr
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{sonarr_manager.sonarr_url}/api/v3/series",
+                headers=sonarr_manager.headers
+            )
 
-        # Rescan each series
-        for series in series_with_sonarr:
-            try:
-                result = await sonarr_manager.rescan_series(series.sonarr_series_id)
-                if result.get("success"):
-                    rescanned_count += 1
-                    logger.info(f"✅ Rescanned series {series.show_name} (ID: {series.sonarr_series_id})")
+            if resp.status_code != 200:
+                raise HTTPException(status_code=500, detail=f"Failed to get series from Sonarr: HTTP {resp.status_code}")
+
+            sonarr_series = resp.json()
+
+        logger.info(f"Found {len(sonarr_series)} series in Sonarr")
+
+        # Step 3: Identify series with PBArr tag
+        series_with_tag = []
+        series_without_tag = []
+
+        for series in sonarr_series:
+            series_tags = series.get("tags", [])
+            tvdb_id = str(series.get("tvdbId", ""))
+
+            if pbarr_tag_id in series_tags and tvdb_id:
+                series_with_tag.append({
+                    "tvdb_id": tvdb_id,
+                    "title": series.get("title", "Unknown"),
+                    "sonarr_id": series.get("id"),
+                    "tags": series_tags
+                })
+            elif tvdb_id:
+                series_without_tag.append({
+                    "tvdb_id": tvdb_id,
+                    "title": series.get("title", "Unknown"),
+                    "sonarr_id": series.get("id")
+                })
+
+        logger.info(f"Series with PBArr tag: {len(series_with_tag)}")
+        logger.info(f"Series without PBArr tag: {len(series_without_tag)}")
+
+        # Step 4: Process series with PBArr tag (add to watchlist if not already there)
+        added_count = 0
+        updated_count = 0
+
+        for series_data in series_with_tag:
+            tvdb_id = series_data["tvdb_id"]
+            title = series_data["title"]
+            sonarr_id = series_data["sonarr_id"]
+
+            # Check if already in watchlist
+            existing = db.query(WatchList).filter(WatchList.tvdb_id == tvdb_id).first()
+
+            if existing:
+                # Update if not already tagged
+                if not existing.tagged_in_sonarr:
+                    existing.tagged_in_sonarr = True
+                    existing.sonarr_series_id = sonarr_id
+                    updated_count += 1
+                    logger.info(f"✓ Updated existing series: {title} (TVDB: {tvdb_id})")
                 else:
-                    error_msg = f"Failed to rescan {series.show_name}: {result.get('message')}"
-                    errors.append(error_msg)
-                    logger.error(f"❌ {error_msg}")
-            except Exception as e:
-                error_msg = f"Error rescanning {series.show_name}: {str(e)}"
-                errors.append(error_msg)
-                logger.error(f"❌ {error_msg}")
+                    logger.debug(f"Series already tagged: {title} (TVDB: {tvdb_id})")
+            else:
+                # Add new series
+                watchlist_entry = WatchList(
+                    tvdb_id=tvdb_id,
+                    show_name=title,
+                    sonarr_series_id=sonarr_id,
+                    import_source="sonarr_import",
+                    tagged_in_sonarr=True
+                )
+                db.add(watchlist_entry)
+                added_count += 1
+                logger.info(f"✓ Added new series: {title} (TVDB: {tvdb_id})")
 
-        success_message = f"Rescan completed: {rescanned_count} series rescanned"
-        if errors:
-            success_message += f", {len(errors)} errors"
+        # Step 5: Process series without PBArr tag (remove from watchlist and clean up all related data)
+        removed_count = 0
 
-        logger.info(f"✅ Manual rescan completed: {rescanned_count} series rescanned")
+        for series_data in series_without_tag:
+            tvdb_id = series_data["tvdb_id"]
+            title = series_data["title"]
+
+            # Check if in watchlist and was previously tagged
+            existing = db.query(WatchList).filter(
+                WatchList.tvdb_id == tvdb_id,
+                WatchList.tagged_in_sonarr == True
+            ).first()
+
+            if existing:
+                # Remove from watchlist since tag was removed
+                db.delete(existing)
+                removed_count += 1
+                logger.info(f"✗ Removed series (tag removed): {title} (TVDB: {tvdb_id})")
+
+                # Clean up all related data for this series
+                try:
+                    # Remove all TVDB cache entries
+                    from app.models.tvdb_cache import TVDBCache
+                    tvdb_deleted = db.query(TVDBCache).filter(TVDBCache.tvdb_id == tvdb_id).delete()
+                    logger.info(f"  🗑️ Removed {tvdb_deleted} TVDB cache entries for {title}")
+
+                    # Remove all Mediathek cache entries
+                    from app.models.mediathek_cache import MediathekCache
+                    mediathek_deleted = db.query(MediathekCache).filter(MediathekCache.tvdb_id == tvdb_id).delete()
+                    logger.info(f"  🗑️ Removed {mediathek_deleted} Mediathek cache entries for {title}")
+
+                    # Remove all episode monitoring state
+                    from app.models.episode_monitoring_state import EpisodeMonitoringState
+                    monitoring_deleted = db.query(EpisodeMonitoringState).filter(
+                        EpisodeMonitoringState.sonarr_series_id == existing.sonarr_series_id
+                    ).delete()
+                    logger.info(f"  🗑️ Removed {monitoring_deleted} episode monitoring entries for {title}")
+
+                    logger.info(f"  ✅ Complete cleanup finished for {title}")
+
+                except Exception as cleanup_error:
+                    logger.error(f"  ❌ Error during cleanup for {title}: {cleanup_error}")
+                    # Continue with next series even if cleanup fails
+
+        # Step 6: Commit all changes
+        db.commit()
+
+        # Step 7: Trigger cache sync for all tagged series
+        try:
+            from app.services.mediathek_cacher import cacher
+            await cacher.sync_watched_shows()
+            logger.info("✓ Triggered cache sync for all tagged series")
+        except Exception as e:
+            logger.warning(f"Failed to trigger cache sync: {e}")
+
+        # Summary
+        total_processed = len(series_with_tag) + len(series_without_tag)
+        summary = f"Import scan completed: {added_count} added, {updated_count} updated, {removed_count} removed from {total_processed} total Sonarr series"
+
+        logger.info(f"✅ {summary}")
 
         return {
             "success": True,
-            "message": success_message,
-            "rescanned_series": rescanned_count,
-            "errors": errors if errors else None
+            "message": summary,
+            "statistics": {
+                "total_sonarr_series": len(sonarr_series),
+                "series_with_tag": len(series_with_tag),
+                "series_without_tag": len(series_without_tag),
+                "added_to_watchlist": added_count,
+                "updated_in_watchlist": updated_count,
+                "removed_from_watchlist": removed_count
+            },
+            "cache_sync_triggered": True
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Manual rescan error: {e}", exc_info=True)
+        logger.error(f"❌ Import scan error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1032,3 +1161,79 @@ async def delete_series_from_watchlist(tvdb_id: str, db: Session = Depends(get_d
     except Exception as e:
         logger.error(f"Error deleting series: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to delete series: {str(e)}")
+
+
+# SOCKS5 Proxy Testing
+@router.post("/test-proxy")
+async def test_proxy_connection():
+    """Test SOCKS5 proxy connectivity."""
+    from app.utils.network import test_socks5_proxy
+    result = await test_socks5_proxy()
+    return result
+
+
+# Enhanced Settings API
+@router.post("/settings")
+async def update_settings(settings: dict):
+    """Update admin settings with validation."""
+    from app.database import SessionLocal
+    from app.models.config import Config
+    from app.utils.network import parse_socks5_proxy, clear_proxy_cache
+
+    db = SessionLocal()
+
+    try:
+        if "socks5_proxy" in settings:
+            proxy_value = settings["socks5_proxy"]
+
+            if proxy_value and proxy_value.strip():
+                # Validate format
+                parsed = parse_socks5_proxy(proxy_value)
+                if not parsed:
+                    return {
+                        "error": f"Invalid SOCKS5 proxy format: {proxy_value}",
+                        "hint": "Format: 'host:port' or 'socks5://host:port' or 'user:pass@host:port'"
+                    }
+
+                # Save to DB
+                config = db.query(Config).filter_by(key="socks5_proxy").first()
+                if config:
+                    config.value = proxy_value
+                else:
+                    config = Config(key="socks5_proxy", value=proxy_value)
+                    db.add(config)
+                db.commit()
+
+                # Clear cache so new proxy takes effect immediately
+                clear_proxy_cache()
+
+                logger.info(f"SOCKS5 proxy setting updated: {parsed['host']}:{parsed['port']}")
+
+                return {
+                    "status": "ok",
+                    "message": f"Proxy setting saved: {parsed['host']}:{parsed['port']}"
+                }
+            else:
+                # Clear proxy setting
+                config = db.query(Config).filter_by(key="socks5_proxy").first()
+                if config:
+                    db.delete(config)
+                    db.commit()
+
+                # Clear cache
+                clear_proxy_cache()
+
+                logger.info("SOCKS5 proxy setting cleared")
+
+                return {
+                    "status": "ok",
+                    "message": "Proxy setting cleared"
+                }
+
+        return {"error": "Unknown setting"}
+
+    except Exception as e:
+        logger.error(f"Settings update error: {e}")
+        return {"error": f"Failed to update settings: {str(e)}"}
+    finally:
+        db.close()

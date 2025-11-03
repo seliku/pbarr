@@ -18,6 +18,7 @@ from app.database import SessionLocal
 from app.services.episode_matcher import EpisodeMatcher
 from app.services.sonarr_webhook import SonarrWebhookManager
 from app.models.config import Config
+from app.utils.network import create_aiohttp_session, create_httpx_client
 
 # Hardcoded download path in container (maps to completed directory on host)
 PBARR_DOWNLOAD_PATH = Path("/app/downloads/completed")
@@ -65,6 +66,14 @@ class MediathekCacher:
         """Cache eine Show auf MediathekViewWeb mit Episode-Matching"""
         try:
             logger.info(f"  Caching: {show_name} (TVDB {tvdb_id})")
+
+            # Check if Sonarr is configured - if not, skip caching entirely
+            sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
+            sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
+
+            if not (sonarr_url_config and sonarr_api_config and sonarr_url_config.value and sonarr_api_config.value):
+                logger.info(f"  Skipping {show_name} - Sonarr not configured")
+                return 0
 
             # Step 1: Hole TVDB Episodes (fetch if missing)
             tvdb_cache_entries = db.query(TVDBCache).filter(
@@ -125,67 +134,132 @@ class MediathekCacher:
             exclude_keywords = watchlist_entry.exclude_keywords if watchlist_entry and watchlist_entry.exclude_keywords else "klare Sprache,Audiodeskription,Gebärdensprache"
             include_senders = watchlist_entry.include_senders if watchlist_entry and watchlist_entry.include_senders else ""
 
-            # Step 3: Konstruiere MediathekViewWeb Query dynamisch
-            # NUR INKLUSIVE Filter in die URL einbauen (MediathekViewWeb unterstützt keine komplexen Text-Filter)
-            query_parts = []
+            # Step 3: Hole alle Titel-Varianten von TVDB (primary + alternate titles)
+            tvdb_api_config = db.query(Config).filter_by(key="tvdb_api_key").first()
+            show_titles = [show_name]  # Fallback: mindestens der ursprüngliche Titel
 
-            # Serienname
-            query_name = show_name.replace(' ', '%2C')
-            query_parts.append(f"#{query_name}")
-
-            # Duration Filter in URL (auch wenn sie nicht funktionieren - für Debugging)
-            if min_duration > 0 or max_duration < 360:
-                query_parts.append(f">{min_duration} <{max_duration}")
-
-            # Sender Filter: !ard !zdf !3sat (aus include_senders, leer=alle)
-            if include_senders and include_senders.strip():
-                senders = [s.strip() for s in include_senders.split(',') if s.strip()]
-                for sender in senders:
-                    query_parts.append(f"!{sender}")
-
-            # KEINE exclude_keywords in der URL! Diese werden später im Matcher gefiltert
-
-            # Konstruiere finale Query
-            query = " ".join(query_parts)
-            # URL-kodiere die Query für die URL
-            from urllib.parse import quote
-            encoded_query = quote(query)
-            feed_url = f"https://mediathekviewweb.de/feed?query={encoded_query}&future=false"
-
-            # Logge die finale Query und alle verwendeten Filter
-            logger.info(f"  MediathekViewWeb Query: {query}")
-            logger.info(f"  MediathekViewWeb URL: {feed_url}")
-            logger.info(f"  Filter - Duration: >{min_duration}<{max_duration}, Senders: '{include_senders}', Exclude: '{exclude_keywords}' (filtered in matcher)")
-            
-            mediathek_results = []
-            async with aiohttp.ClientSession() as session:
+            if tvdb_api_config and tvdb_api_config.value:
                 try:
-                    async with session.get(feed_url, timeout=15) as resp:
-                        if resp.status != 200:
-                            logger.warning(f"  Feed failed: {resp.status}")
-                            return 0
-                        
-                        content = await resp.text()
-                        root = ET.fromstring(content)
-                        
-                        for item in root.findall('.//item'):
-                            title = item.findtext('title', '')
-                            link = item.findtext('link', '')
-                            pub_date = item.findtext('pubDate', '')
-                            description = item.findtext('description', '')
-                            
-                            if not link:
-                                continue
-                            
-                            mediathek_results.append({
-                                'title': title,
-                                'link': link,
-                                'pub_date': pub_date,
-                                'description': description,
-                            })
+                    from app.services.tvdb_client import TVDBClient
+                    tvdb_client = TVDBClient(tvdb_api_config.value)
+                    show_titles = await tvdb_client.get_show_titles(int(tvdb_id))
+                    if not show_titles:
+                        show_titles = [show_name]  # Fallback
                 except Exception as e:
-                    logger.warning(f"  Feed fetch error: {e}")
-                    return 0
+                    logger.warning(f"  Failed to get alternate titles from TVDB: {e}")
+                    show_titles = [show_name]  # Fallback
+
+            # Step 3.1: Fallback - Hole Titel aus Sonarr falls verfügbar
+            if watchlist_entry and watchlist_entry.sonarr_series_id:
+                try:
+                    sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
+                    sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
+
+                    if sonarr_url_config and sonarr_api_config and sonarr_url_config.value and sonarr_api_config.value:
+                        from app.services.sonarr_webhook import SonarrWebhookManager
+                        sonarr_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
+                        series_info = await sonarr_manager.get_series_info(watchlist_entry.sonarr_series_id)
+
+                        if series_info:
+                            sonarr_title = series_info.get("title")
+                            if sonarr_title and sonarr_title not in show_titles:
+                                show_titles.append(sonarr_title)
+                                logger.info(f"  ✓ Added Sonarr title: {sonarr_title}")
+
+                            # Auch alternativen Titel aus Sonarr prüfen
+                            alternates = series_info.get("alternateTitles", [])
+                            for alt in alternates:
+                                alt_title = alt.get("title")
+                                if alt_title and alt_title not in show_titles:
+                                    show_titles.append(alt_title)
+                                    logger.info(f"  ✓ Added Sonarr alternate title: {alt_title}")
+
+                except Exception as e:
+                    logger.debug(f"  Failed to get titles from Sonarr: {e}")
+
+            logger.info(f"  Searching with {len(show_titles)} title variants: {show_titles}")
+
+            # Step 4: Suche für jeden Titel-Variante in MediathekViewWeb
+            all_mediathek_results = []
+
+            for search_title in show_titles:
+                logger.info(f"  🔍 Searching Mediathek for: '{search_title}'")
+
+                # Konstruiere MediathekViewWeb Query dynamisch
+                # NUR INKLUSIVE Filter in die URL einbauen (MediathekViewWeb unterstützt keine komplexen Text-Filter)
+                query_parts = []
+
+                # Serienname (direkt ohne manuelles Encoding)
+                query_parts.append(search_title)
+
+                # Duration Filter in URL (auch wenn sie nicht funktionieren - für Debugging)
+                if min_duration > 0 or max_duration < 360:
+                    query_parts.append(f">{min_duration} <{max_duration}")
+
+                # Sender Filter: !ard !zdf !3sat (aus include_senders, leer=alle)
+                if include_senders and include_senders.strip():
+                    senders = [s.strip() for s in include_senders.split(',') if s.strip()]
+                    for sender in senders:
+                        query_parts.append(f"!{sender}")
+
+                # KEINE exclude_keywords in der URL! Diese werden später im Matcher gefiltert
+
+                # Konstruiere finale Query
+                query = " ".join(query_parts)
+                # URL-kodiere die Query für die URL (nur einmal!)
+                from urllib.parse import quote
+                encoded_query = quote(query)
+                feed_url = f"https://mediathekviewweb.de/feed?query={encoded_query}&future=false"
+
+                # Logge die finale Query und alle verwendeten Filter
+                logger.info(f"    MediathekViewWeb Query: {query}")
+                logger.info(f"    MediathekViewWeb URL: {feed_url}")
+
+                mediathek_results = []
+                async with create_aiohttp_session() as session:
+                    try:
+                        async with session.get(feed_url, timeout=15) as resp:
+                            if resp.status != 200:
+                                logger.warning(f"    Feed failed: {resp.status}")
+                                continue
+
+                            content = await resp.text()
+                            root = ET.fromstring(content)
+
+                            for item in root.findall('.//item'):
+                                title = item.findtext('title', '')
+                                link = item.findtext('link', '')
+                                pub_date = item.findtext('pubDate', '')
+                                description = item.findtext('description', '')
+
+                                if not link:
+                                    continue
+
+                                mediathek_results.append({
+                                    'title': title,
+                                    'link': link,
+                                    'pub_date': pub_date,
+                                    'description': description,
+                                    'searched_with': search_title  # Markiere mit welchem Titel gesucht wurde
+                                })
+                    except Exception as e:
+                        logger.warning(f"    Feed fetch error for '{search_title}': {e}")
+                        continue
+
+                logger.info(f"    Found {len(mediathek_results)} results for '{search_title}'")
+                all_mediathek_results.extend(mediathek_results)
+
+            # Entferne Duplikate (gleiche Links)
+            unique_results = []
+            seen_links = set()
+            for result in all_mediathek_results:
+                if result['link'] not in seen_links:
+                    unique_results.append(result)
+                    seen_links.add(result['link'])
+
+            mediathek_results = unique_results
+            logger.info(f"  Total unique Mediathek results: {len(mediathek_results)} (from {len(show_titles)} title variants)")
+            logger.info(f"  Filter - Duration: >{min_duration}<{max_duration}, Senders: '{include_senders}', Exclude: '{exclude_keywords}' (filtered in matcher)")
             
             if not mediathek_results:
                 logger.info(f"  No results for {show_name}")
@@ -216,55 +290,54 @@ class MediathekCacher:
             cached = 0
             
             for mvw_ep in mediathek_results:
-                # DEBUG: Log episode data and exclude_keywords
-                logger.info(f" 🔍 DEBUG - mediathek_episode:")
-                logger.info(f" Title: {mvw_ep.get('title', '')}")
-                logger.info(f" Pub Date: {mvw_ep.get('pub_date', '')}")
-                logger.info(f" Description: {mvw_ep.get('description', '')[:100]}")
+                # Prüfe zuerst exclude_keywords Filter (ohne Match-Logs)
+                if matcher.filter_excluded_keywords(mvw_ep, exclude_keywords):
+                    # Episode ist NICHT gefiltert - normale Verarbeitung
+                    match_result = matcher.match_episode(mvw_ep, tvdb_episodes, exclude_keywords)
 
-                logger.info(f" 🔍 DEBUG - exclude_keywords: '{exclude_keywords}'")
+                    if match_result:
+                        # Prüfe Download-Entscheidung
+                        download_decision = await self._decide_download_action(match_result.season, match_result.episode, watchlist_entry, db)
 
-                # Matche Episode (mit exclude_keywords Filter)
-                match_result = matcher.match_episode(mvw_ep, tvdb_episodes, exclude_keywords)
+                        # Prüfe ob bereits im Cache
+                        existing = db.query(MediathekCache).filter(
+                            MediathekCache.tvdb_id == tvdb_id,
+                            MediathekCache.season == match_result.season,
+                            MediathekCache.episode == match_result.episode,
+                            MediathekCache.expires_at > datetime.utcnow()
+                        ).first()
 
-                logger.info(f" 🔍 DEBUG - Match Result: {match_result}")
-                if match_result:
-                    logger.info(f" Season: {match_result.season}, Episode: {match_result.episode}, Type: {match_result.match_type}")
+                        if existing:
+                            continue  # Bereits gecached - nichts zu tun
 
-                if not match_result:
-                    logger.info(f"  No match for: {mvw_ep.get('title', '')}")
-                    continue
+                        if download_decision == "download":
+                            logger.info(f"  → sending result to downloader")
+                        elif download_decision == "file_exists":
+                            logger.info(f"  → ignoring, file already exists")
+                            continue  # Nicht cachen wenn Datei bereits existiert
+                        elif download_decision == "not_monitored":
+                            logger.info(f"  → ignoring, episode not monitored in Sonarr")
+                            continue  # Nicht cachen wenn nicht monitored
+                        else:
+                            logger.info(f"  → don't know what to do with that. cached anyway")
 
-                logger.info(f"  Processing match: S{match_result.season:02d}E{match_result.episode:02d}")
-
-                # Prüfe ob bereits im Cache
-                existing = db.query(MediathekCache).filter(
-                    MediathekCache.tvdb_id == tvdb_id,
-                    MediathekCache.season == match_result.season,
-                    MediathekCache.episode == match_result.episode,
-                    MediathekCache.expires_at > datetime.utcnow()
-                ).first()
-
-                if existing:
-                    logger.info(f"  Episode S{match_result.season:02d}E{match_result.episode:02d} already cached")
-                    continue
-
-                logger.info(f"  Creating cache entry for S{match_result.season:02d}E{match_result.episode:02d}")
-
-                # Erstelle Cache-Eintrag
-                cache_entry = MediathekCache(
-                    tvdb_id=tvdb_id,
-                    season=match_result.season,
-                    episode=match_result.episode,
-                    episode_title=mvw_ep['title'],
-                    mediathek_platform="ard",
-                    media_url=mvw_ep['link'],
-                    quality=self._guess_quality(mvw_ep['title']),
-                    expires_at=datetime.utcnow() + timedelta(days=self.CACHE_DURATION_DAYS)
-                )
-                db.add(cache_entry)
-                cached += 1
-                logger.debug(f"  Cache entry created, total cached: {cached}")
+                        # Erstelle Cache-Eintrag
+                        cache_entry = MediathekCache(
+                            tvdb_id=tvdb_id,
+                            season=match_result.season,
+                            episode=match_result.episode,
+                            episode_title=match_result.episode_title or mvw_ep['title'],
+                            mediathek_platform="ard",
+                            media_url=mvw_ep['link'],
+                            quality=self._guess_quality(mvw_ep['title']),
+                            match_confidence=int(match_result.confidence * 100),  # 0-100
+                            match_type=match_result.match_type,
+                            expires_at=datetime.utcnow() + timedelta(days=self.CACHE_DURATION_DAYS)
+                        )
+                        db.add(cache_entry)
+                        cached += 1
+                        logger.debug(f"  Cache entry created, total cached: {cached}")
+                # else: Episode wurde gefiltert - nur die Filter-Nachricht vom Matcher wird angezeigt
             
             # AUTOMATISCHES TAGGING ENTFERNT: Nur manuell getaggte Serien werden verarbeitet
 
@@ -597,11 +670,10 @@ class MediathekCacher:
             # NUR INKLUSIVE Filter in die URL einbauen (MediathekViewWeb unterstützt keine komplexen Text-Filter)
             query_parts = []
 
-            # Serienname
-            query_name = show_name.replace(' ', '%2C')
-            query_parts.append(f"#{query_name}")
+            # Serienname (direkt ohne manuelles Encoding)
+            query_parts.append(show_name)
 
-            # Duration Filter: >min <max (z.B. >70 <360) - MIT Space!
+            # Duration Filter in URL (auch wenn sie nicht funktionieren - für Debugging)
             if min_duration > 0 or max_duration < 360:
                 query_parts.append(f">{min_duration} <{max_duration}")
 
@@ -615,7 +687,7 @@ class MediathekCacher:
 
             # Konstruiere finale Query
             query = " ".join(query_parts)
-            # URL-kodiere die Query für die URL
+            # URL-kodiere die Query für die URL (nur einmal!)
             from urllib.parse import quote
             encoded_query = quote(query)
             feed_url = f"https://mediathekviewweb.de/feed?query={encoded_query}&future=false"
@@ -624,7 +696,7 @@ class MediathekCacher:
             logger.info(f"  Filter - Duration: >{min_duration}<{max_duration}, Senders: '{include_senders}', Exclude: '{exclude_keywords}' (filtered in matcher)")
 
             mediathek_results = []
-            async with aiohttp.ClientSession() as session:
+            async with create_aiohttp_session() as session:
                 async with session.get(feed_url, timeout=15) as resp:
                     if resp.status == 200:
                         content = await resp.text()
@@ -662,6 +734,8 @@ class MediathekCacher:
                     existing.episode_title = mvw_ep['title']
                     existing.media_url = mvw_ep['link']
                     existing.quality = self._guess_quality(mvw_ep['title'])
+                    existing.match_confidence = int(match_result.confidence * 100)
+                    existing.match_type = match_result.match_type
                     existing.expires_at = datetime.utcnow() + timedelta(days=self.CACHE_DURATION_DAYS)
                 else:
                     # Create new
@@ -673,6 +747,8 @@ class MediathekCacher:
                         mediathek_platform="ard",
                         media_url=mvw_ep['link'],
                         quality=self._guess_quality(mvw_ep['title']),
+                        match_confidence=int(match_result.confidence * 100),
+                        match_type=match_result.match_type,
                         expires_at=datetime.utcnow() + timedelta(days=self.CACHE_DURATION_DAYS)
                     )
                     db.add(cache_entry)
@@ -703,7 +779,7 @@ class MediathekCacher:
             sonarr_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
 
             # Get all episodes for this series
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with create_httpx_client(timeout=10.0) as client:
                 resp = await client.get(
                     f"{sonarr_manager.url}/api/v3/episode?seriesId={watchlist_entry.sonarr_series_id}",
                     headers=sonarr_manager.headers
@@ -899,103 +975,108 @@ class MediathekCacher:
             series_title = series["title"]
             sonarr_series_path = series["path"]  # e.g., "/tv/Show Name" or "/tv/Show Name/Season 01"
 
-            logger.info(f"Sonarr path: {sonarr_series_path}")
-
-            # Step 2: Get correct folder structure for this series
-            target_folder = await self._get_series_structure(sonarr_series_path, season, sonarr_series_id, db)
-
-            logger.info(f"📁 Target folder: {target_folder}")
-
-            # Step 3: Get episode info
-            episode_data = await sonarr_manager.get_episode(sonarr_series_id, season, episode)
-            episode_title = episode_data.get("title", "Unknown")
-
-            logger.info(f"Episode info: S{season:02d}E{episode:02d} - {episode_title}")
-
-            # Step 4: Normalize filename components (remove special chars)
-            from app.utils.filename import normalize_filename
-
-            series_title_normalized = normalize_filename(series_title)
-            episode_title_normalized = normalize_filename(episode_title)
-
-            # Step 5: Build filename
-            # Format: {Series} - S{SS}E{EE} - {Episode Title}.mkv
-            filename = f"{series_title_normalized} - S{season:02d}E{episode:02d} - {episode_title_normalized}.mkv"
-
-            logger.info(f"📄 Filename: {filename}")
-
-            # Step 6: Download to temp location
-            temp_dir = Path("/tmp/pbarr_downloads")
-            temp_dir.mkdir(exist_ok=True)
-            temp_file = temp_dir / filename
-
-            cmd = [
-                'yt-dlp',
-                '-f', 'best',
-                '-o', str(temp_file),
-                mediathek_entry.media_url
-            ]
-
-            logger.debug(f"Downloading: {filename}")
-
-            result = await asyncio.to_thread(
-                subprocess.run,
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=1800  # 30 minutes timeout
-            )
-
-            if result.returncode != 0:
-                logger.error(f"yt-dlp failed: {result.stderr}")
-                return False
-
-            if not temp_file.exists():
-                logger.error(f"Download failed or temp file doesn't exist")
-                return False
-
-            temp_file_path = Path(temp_file)
-            logger.info(f"✅ Downloaded to temp: {temp_file_path}")
-
-            # Step 7: Build final path in target folder and move file
-            final_dir = Path(target_folder)
-            final_dir.mkdir(parents=True, exist_ok=True)
-
-            final_path = final_dir / filename
-
-            logger.info(f"📁 Final directory: {final_dir}")
-
+            # Download the episode (minimal logging)
             try:
-                shutil.move(str(temp_file_path), str(final_path))
-                logger.info(f"✅ File moved to: {final_path}")
+                # Get target folder
+                target_folder = await self._get_series_structure(sonarr_series_path, season, sonarr_series_id, db)
+
+                # Get episode info and build filename
+                episode_data = await sonarr_manager.get_episode(sonarr_series_id, season, episode)
+                episode_title = episode_data.get("title", "Unknown")
+
+                from app.utils.filename import normalize_filename
+                series_title_normalized = normalize_filename(series_title)
+                episode_title_normalized = normalize_filename(episode_title)
+                filename = f"{series_title_normalized} - S{season:02d}E{episode:02d} - {episode_title_normalized}.mkv"
+
+                # Download to temp location
+                temp_dir = Path("/tmp/pbarr_downloads")
+                temp_dir.mkdir(exist_ok=True)
+                temp_file = temp_dir / filename
+
+                cmd = [
+                    'yt-dlp',
+                    '-q',  # Quiet mode - reduce output
+                    '-f', 'best',
+                    '-o', str(temp_file),
+                    mediathek_entry.media_url
+                ]
+
+                result = await asyncio.to_thread(
+                    subprocess.run,
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=1800  # 30 minutes timeout
+                )
+
+                if result.returncode != 0:
+                    logger.warning(f"Download failed: yt-dlp error")
+                    return False
+
+                if not temp_file.exists():
+                    logger.error(f"Download failed or temp file doesn't exist")
+                    return False
+
+                # Move file to final location
+                final_dir = Path(target_folder)
+                final_dir.mkdir(parents=True, exist_ok=True)
+                final_path = final_dir / filename
+
+                shutil.move(str(temp_file), str(final_path))
+
+                # Trigger Sonarr rescan
+                scan_result = await sonarr_manager.trigger_disk_scan(sonarr_series_id)
+                if not scan_result.get("success"):
+                    logger.warning(f"Failed to trigger rescan: {scan_result.get('message')}")
+
+                return True
+
             except Exception as e:
-                logger.error(f"❌ Failed to move file: {e}")
+                logger.warning(f"Download failed: {str(e)}")
                 return False
-
-            # Step 8: Verify file exists and is readable
-            if not final_path.exists():
-                logger.error(f"File doesn't exist after move: {final_path}")
-                return False
-
-            file_size = final_path.stat().st_size
-            logger.info(f"📊 File size: {file_size / (1024*1024):.2f} MB")
-
-            # Step 9: Wait for file I/O to complete before triggering rescan
-            await asyncio.sleep(2)  # Ensure Sonarr sees the complete file
-
-            # Step 10: Trigger Sonarr to rescan this series
-            # This will make Sonarr recognize and reorganize the file
-            scan_result = await sonarr_manager.trigger_disk_scan(sonarr_series_id)
-            if scan_result.get("success"):
-                logger.info(f"✅ Triggered Sonarr rescan for series {sonarr_series_id}")
-            else:
-                logger.warning(f"Failed to trigger rescan: {scan_result.get('message')}")
-
-            return True
 
         except Exception as e:
             logger.error(f"❌ Error in _download_episode_to_sonarr_path: {e}", exc_info=True)
             return False
+
+    async def _decide_download_action(self, season: int, episode: int, watchlist_entry: WatchList, db: Session) -> str:
+        """
+        Decide what to do with a matched episode
+        Returns: "download", "file_exists", "not_monitored", "no_sonarr", "unknown"
+        """
+        try:
+            # Check if Sonarr is configured
+            sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
+            sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
+
+            if not (sonarr_url_config and sonarr_api_config and sonarr_url_config.value and sonarr_api_config.value):
+                return "no_sonarr"
+
+            # Check if episode exists in Sonarr and is monitored
+            sonarr_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
+
+            try:
+                episode_data = await sonarr_manager.get_episode(watchlist_entry.sonarr_series_id, season, episode)
+                if not episode_data:
+                    return "not_monitored"  # Episode doesn't exist in Sonarr
+
+                if not episode_data.get("monitored", False):
+                    return "not_monitored"  # Episode exists but is not monitored
+
+                # Check if file already exists
+                if episode_data.get("hasFile", False):
+                    return "file_exists"
+
+                return "download"
+
+            except Exception as e:
+                logger.debug(f"Error checking episode status: {e}")
+                return "unknown"
+
+        except Exception as e:
+            logger.error(f"Error in _decide_download_action: {e}")
+            return "unknown"
 
     async def cache_series(self, tvdb_id: str, show_name: str):
         """
