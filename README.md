@@ -49,8 +49,7 @@ services:
       LOG_LEVEL: INFO
     
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     
     volumes:
       - ./downloads:/app/downloads
@@ -71,7 +70,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pbuser -d pbarr"]
+      test: ["CMD-SHELL", "pg_isready -U pbuser"]
       interval: 10s
       timeout: 5s
       retries: 5
