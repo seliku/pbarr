@@ -57,7 +57,7 @@ services:
       - ./data:/app/data
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     container_name: pbarr-postgres
     restart: unless-stopped
 
