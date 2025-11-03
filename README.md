@@ -45,7 +45,7 @@ services:
       - "8070:8000"
     
     environment:
-      DATABASE_URL: postgresql://pbarr:changeme123@postgres:5432/pbarr_db
+      DATABASE_URL: postgresql://pbuser:pbpass@postgres:5432/pbarr
       LOG_LEVEL: INFO
     
     depends_on:
@@ -58,20 +58,20 @@ services:
       - ./data:/app/data
 
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: pbarr-postgres
     restart: unless-stopped
-    
+
     environment:
-      POSTGRES_USER: pbarr
-      POSTGRES_PASSWORD: changeme123
-      POSTGRES_DB: pbarr_db
-    
+      POSTGRES_USER: pbuser
+      POSTGRES_PASSWORD: pbpass
+      POSTGRES_DB: pbarr
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pbarr"]
+      test: ["CMD-SHELL", "pg_isready -U pbuser -d pbarr"]
       interval: 10s
       timeout: 5s
       retries: 5
