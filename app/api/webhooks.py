@@ -99,16 +99,54 @@ async def sonarr_webhook(
             logger.info(f"Series {title} already in watchlist")
             return {"status": "already_watched", "series": title, "tvdb_id": tvdb_id}
 
-        # For now, always add to watchlist (placeholder logic)
-        # TODO: Check if series has regular sources in mediatheks
-        logger.info(f"Adding series {title} to watchlist")
+        # PRÜFE OB SERIE DEN "pbarr"-TAG HAT
+        has_pbarr_tag = False
+        try:
+            # Get Sonarr config
+            sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
+            sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
+
+            if sonarr_url_config and sonarr_api_config and sonarr_url_config.value and sonarr_api_config.value:
+                webhook_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
+
+                # Hole Serie-Info von Sonarr um Tags zu prüfen
+                series_info = await webhook_manager.get_series_info(sonarr_series_id)
+                if series_info:
+                    series_tags = series_info.get("tags", [])
+                    # Prüfe ob PBArr-Tag vorhanden ist
+                    pbarr_tag_id = await webhook_manager._get_or_create_pbarr_tag()
+                    if pbarr_tag_id and pbarr_tag_id in series_tags:
+                        has_pbarr_tag = True
+                        logger.info(f"Series {title} has PBArr tag - will be processed")
+                    else:
+                        logger.info(f"Series {title} does NOT have PBArr tag - ignoring")
+                else:
+                    logger.warning(f"Could not get series info for {title} from Sonarr")
+            else:
+                logger.debug("Sonarr not configured, cannot check tags")
+        except Exception as e:
+            logger.error(f"Error checking PBArr tag for {title}: {e}")
+
+        # NUR SERIEN MIT "pbarr"-TAG VERARBEITEN
+        if not has_pbarr_tag:
+            logger.info(f"Ignoring series {title} - no PBArr tag")
+            return {
+                "status": "ignored",
+                "series": title,
+                "tvdb_id": tvdb_id,
+                "reason": "no_pbarr_tag"
+            }
+
+        # Serie hat PBArr-Tag - zur WatchList hinzufügen
+        logger.info(f"Adding series {title} to watchlist (has PBArr tag)")
 
         # Add to watchlist
         watchlist_entry = WatchList(
             tvdb_id=tvdb_id,
             show_name=title,
             sonarr_series_id=sonarr_series_id,  # Store Sonarr series ID
-            import_source="webhook"
+            import_source="webhook",
+            tagged_in_sonarr=True  # Mark as tagged since it has the tag
         )
         db.add(watchlist_entry)
         db.commit()
@@ -121,26 +159,6 @@ async def sonarr_webhook(
             logger.error(f"Failed to start caching for {title}: {e}")
             # Don't fail the webhook if caching fails
 
-        # Try to tag the series in Sonarr if webhook manager is configured
-        tagging_result = None
-        try:
-            # Get Sonarr config
-            sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
-            sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
-
-            if sonarr_url_config and sonarr_api_config and sonarr_url_config.value and sonarr_api_config.value:
-                webhook_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
-                tagging_result = await webhook_manager.tag_series_in_sonarr(tvdb_id, db)
-                if tagging_result and tagging_result.get("success"):
-                    logger.info(f"Successfully tagged series {title} in Sonarr")
-                else:
-                    logger.warning(f"Failed to tag series {title} in Sonarr: {tagging_result}")
-            else:
-                logger.debug("Sonarr not configured, skipping tagging")
-        except Exception as e:
-            logger.error(f"Error during Sonarr tagging for {title}: {e}")
-            # Don't fail webhook if tagging fails
-
         logger.info(f"Successfully processed series addition: {title}")
         return {
             "status": "processed",
@@ -148,7 +166,7 @@ async def sonarr_webhook(
             "tvdb_id": tvdb_id,
             "added_to_watchlist": True,
             "caching_started": True,
-            "tagged_in_sonarr": tagging_result.get("success") if tagging_result else False
+            "has_pbarr_tag": True
         }
 
     except HTTPException:
