@@ -56,7 +56,7 @@ scheduler = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global download_worker, scheduler
-    
+
     # Startup
     logger.info("Starting PBArr...")
     try:
@@ -64,11 +64,14 @@ async def lifespan(app: FastAPI):
         logger.info("✓ Database initialized")
     except Exception as e:
         logger.error(f"✗ Database init failed: {e}")
+        # Don't continue if database init fails
+        raise
 
     try:
         init_config()
     except Exception as e:
         logger.error(f"✗ Config init failed: {e}")
+        # Continue anyway - config might be created later
 
     try:
         init_download_directory()

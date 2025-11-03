@@ -88,19 +88,19 @@ def init_db():
     """Erstellt Datenbank und alle Tabellen"""
     import time
 
-    # Retry database connection up to 30 times (30 seconds)
-    for attempt in range(30):
+    # Retry database connection up to 60 times (60 seconds)
+    for attempt in range(60):
         try:
             ensure_database_exists()
             Base.metadata.create_all(bind=engine)
             logger.info("✓ All database tables initialized")
             return
         except Exception as e:
-            if attempt < 29:  # Don't log on last attempt
-                logger.warning(f"Database not ready (attempt {attempt + 1}/30), retrying in 1s: {e}")
+            if attempt < 59:  # Don't log on last attempt
+                logger.info(f"Database not ready (attempt {attempt + 1}/60), waiting for PostgreSQL...")
                 time.sleep(1)
             else:
-                logger.error(f"Database initialization failed after 30 attempts: {e}")
+                logger.error(f"Database initialization failed after 60 attempts: {e}")
                 raise
 
 
