@@ -343,10 +343,22 @@ def get_proxy_for_url(url: str) -> Optional[str]:
     if should_use_proxy(url):
         proxy_url = get_socks5_proxy_url()
         if proxy_url:
+            # Validate proxy URL before using it
+            parsed = parse_socks5_proxy(proxy_url)
+            if not parsed:
+                logger.error(f"Invalid SOCKS5 proxy URL configured: {proxy_url}")
+                return None
+
             # Normalize for httpx: use socks5h:// for remote DNS resolution
             if proxy_url.startswith('socks5://'):
                 proxy_url = proxy_url.replace('socks5://', 'socks5h://', 1)
-            logger.debug(f"Using SOCKS5 proxy for {url}")
+
+            # Final validation
+            if not proxy_url or ':' not in proxy_url or len(proxy_url.split(':')) < 3:
+                logger.error(f"Invalid normalized proxy URL: {proxy_url}")
+                return None
+
+            logger.debug(f"Using SOCKS5 proxy for {url}: {proxy_url}")
             return proxy_url
         else:
             logger.debug(f"No proxy configured for external URL: {url}")
