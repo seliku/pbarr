@@ -17,6 +17,7 @@ build/
 *.swo
 
 # Environment
+docker-compose.yml
 .env
 .env.local
 *.env

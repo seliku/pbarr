@@ -48,8 +48,8 @@ services:
       DATABASE_URL: postgresql://pbuser:pbpass@postgres:5432/pbarr
       LOG_LEVEL: INFO
     
-    # depends_on:
-    #   - postgres  # Temporär auskommentiert für Debugging
+    depends_on:
+      - postgres
     
     volumes:
       - ./downloads:/app/downloads
@@ -68,12 +68,6 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-    # healthcheck:
-    #   test: ["CMD-SHELL", "pg_isready -U pbuser"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
 
 volumes:
   postgres_data:
