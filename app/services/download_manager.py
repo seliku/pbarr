@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 import subprocess
 
 from app.models.download import Download
+from app.utils.network import get_socks5_proxy_url
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,16 @@ class DownloadManager:
                 '-o', str(output_path),
                 download.source_url
             ]
-            
+
+            # SOCKS5 Proxy Support
+            proxy_url = get_socks5_proxy_url()
+            if proxy_url:
+                logger.info(f"Using SOCKS5 proxy for yt-dlp: {proxy_url}")
+                cmd.insert(1, '--proxy')
+                cmd.insert(2, proxy_url)
+            else:
+                logger.debug("No SOCKS5 proxy configured for yt-dlp")
+
             # Starte Download
             result = await asyncio.to_thread(
                 subprocess.run,
