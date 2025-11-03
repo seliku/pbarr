@@ -86,9 +86,22 @@ def ensure_database_exists():
 
 def init_db():
     """Erstellt Datenbank und alle Tabellen"""
-    ensure_database_exists()
-    Base.metadata.create_all(bind=engine)
-    logger.info("✓ All database tables initialized")
+    import time
+
+    # Retry database connection up to 30 times (30 seconds)
+    for attempt in range(30):
+        try:
+            ensure_database_exists()
+            Base.metadata.create_all(bind=engine)
+            logger.info("✓ All database tables initialized")
+            return
+        except Exception as e:
+            if attempt < 29:  # Don't log on last attempt
+                logger.warning(f"Database not ready (attempt {attempt + 1}/30), retrying in 1s: {e}")
+                time.sleep(1)
+            else:
+                logger.error(f"Database initialization failed after 30 attempts: {e}")
+                raise
 
 
 def get_db():
