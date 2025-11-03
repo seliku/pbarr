@@ -16,8 +16,12 @@ RUN pip install --no-cache-dir yt-dlp
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# App code
+# App code and migrations
 COPY app/ app/
+COPY migrate_*.py ./
+
+# Static files
+COPY app/static/ app/static/
 
 # Volumes
 RUN mkdir -p /app/downloads /app/logs /app/data
