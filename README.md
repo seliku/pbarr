@@ -89,11 +89,11 @@ volumes:
 docker compose up -d
 ```
 
-Öffne im Browser: **http://[deine-server-ip]:8000/admin**
+Öffne im Browser: **http://[deine-server-ip]:[dein-port]/admin**
 
 ### Schritt 3: Konfiguration im Admin-Panel
 
-1. Gehe zu **http://[deine-server-ip]:8000/admin**
+1. Gehe zu **http://[deine-server-ip]:[dein-port]/admin**
 2. Konfiguriere die API-Keys:
    - **TVDB API Key:** Dein TheTVDB API-Key
    - **Sonarr URL:** `http://sonarr:8989` (oder deine Sonarr-Adresse)
