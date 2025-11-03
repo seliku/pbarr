@@ -12,6 +12,9 @@ from app.database import SessionLocal
 from app.models.config import Config
 
 
+# Setup basic logging first (before DB access)
+setup_logging("INFO")  # Default level
+
 def get_log_level_from_db():
     """Lese Log-Level aus Datenbank, mit Fallback"""
     try:
@@ -22,13 +25,9 @@ def get_log_level_from_db():
             return config.value.upper()
     except Exception as e:
         logging.warning(f"Could not read log_level from DB: {e}")
-    
+
     # Fallback auf Default
     return "INFO"
-
-
-log_level = get_log_level_from_db()
-setup_logging(log_level)
 
 # Setze globale Log-Level auf INFO, um weniger Spam zu haben
 logging.getLogger().setLevel(logging.INFO)
