@@ -23,7 +23,7 @@ MediathekViewWeb API → PBArr Cache → TVDB Matching → Filter → Download Q
 - ✅ Min/Max Dauer-Filter (z.B. nur Episoden 20-120 Min)
 - ✅ Ausschluss von Audiodeskription, Gebärdensprache, etc.
 - ✅ Automatische Downloads mit yt-dlp
-- ✅ Sonarr-Integration für Library-Management
+- ✅ Sonarr-Integration für Library-Management (einfach pbarr als tag in der Serie)
 - ✅ PostgreSQL-Datenbank für persistente Speicherung
 
 ## 🚀 Installation - 3 Schritte
