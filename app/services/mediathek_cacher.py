@@ -311,7 +311,15 @@ class MediathekCacher:
                             continue  # Bereits gecached - nichts zu tun
 
                         if download_decision == "download":
-                            logger.info(f"  → sending result to downloader")
+                            logger.info(f"  → downloading episode")
+                            # Download the episode immediately
+                            success = await self._download_episode_to_sonarr_path(
+                                cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
+                            )
+                            if success:
+                                logger.info(f"    ✓ Downloaded S{match_result.season:02d}E{match_result.episode:02d} for {show_name}")
+                            else:
+                                logger.warning(f"    ✗ Failed to download S{match_result.season:02d}E{match_result.episode:02d} for {show_name}")
                         elif download_decision == "file_exists":
                             logger.info(f"  → ignoring, file already exists")
                             continue  # Nicht cachen wenn Datei bereits existiert
@@ -327,6 +335,7 @@ class MediathekCacher:
                             season=match_result.season,
                             episode=match_result.episode,
                             episode_title=match_result.episode_title or mvw_ep['title'],
+                            mediathek_title=mvw_ep['title'],
                             mediathek_platform="ard",
                             media_url=mvw_ep['link'],
                             quality=self._guess_quality(mvw_ep['title']),
@@ -744,6 +753,7 @@ class MediathekCacher:
                         season=match_result.season,
                         episode=match_result.episode,
                         episode_title=mvw_ep['title'],
+                        mediathek_title=mvw_ep['title'],
                         mediathek_platform="ard",
                         media_url=mvw_ep['link'],
                         quality=self._guess_quality(mvw_ep['title']),
@@ -997,7 +1007,9 @@ class MediathekCacher:
                 cmd = [
                     'yt-dlp',
                     '-q',  # Quiet mode - reduce output
-                    '-f', 'best',
+                    '-f', 'best[ext=mp4]/best',
+                    '--external-downloader', 'aria2c',  # ← aria2c unterstützt SOCKS5!
+                    '--external-downloader-args', '-x 16 -k 1M',
                     '-o', str(temp_file),
                     mediathek_entry.media_url
                 ]
