@@ -38,6 +38,12 @@ services:
     environment:
       DATABASE_URL: postgresql://pbuser:pbpass@postgres:5432/pbarr
       LOG_LEVEL: INFO
+      # SOCKS5 proxy configuration (optional - can also be configured via admin panel)
+      # SOCKS5_ENABLED: "false"
+      # SOCKS5_HOST: ""
+      # SOCKS5_PORT: "1080"
+      # SOCKS5_USER: ""
+      # SOCKS5_PASS: ""
 
     depends_on:
       postgres:

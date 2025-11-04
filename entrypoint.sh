@@ -77,15 +77,83 @@ PYEOF
 echo "⏳ Waiting for database connection..."
 sleep 3
 
-# Read DB config
-DB_CONFIG=$(read_from_db)
-echo "DEBUG: DB_CONFIG='$DB_CONFIG'" > /tmp/debug.log
-SOCKS5_ENABLED=$(echo "$DB_CONFIG" | cut -d'|' -f1)
-SOCKS5_HOST=$(echo "$DB_CONFIG" | cut -d'|' -f2)
-SOCKS5_PORT=$(echo "$DB_CONFIG" | cut -d'|' -f3)
-SOCKS5_USER=$(echo "$DB_CONFIG" | cut -d'|' -f4)
-SOCKS5_PASS=$(echo "$DB_CONFIG" | cut -d'|' -f5)
-echo "DEBUG: SOCKS5_ENABLED='$SOCKS5_ENABLED'" >> /tmp/debug.log
+# Try to read SOCKS5 config from environment variables first (for fresh deployments)
+SOCKS5_ENABLED=${SOCKS5_ENABLED:-false}
+SOCKS5_HOST=${SOCKS5_HOST:-""}
+SOCKS5_PORT=${SOCKS5_PORT:-"1080"}
+SOCKS5_USER=${SOCKS5_USER:-""}
+SOCKS5_PASS=${SOCKS5_PASS:-""}
+
+# If SOCKS5 is not configured via environment, try to read from database
+if [ "$SOCKS5_ENABLED" = "false" ] || [ -z "$SOCKS5_HOST" ]; then
+    echo "📖 SOCKS5 not configured via environment, checking database..."
+
+    # Check if database is ready and migrated (config table exists)
+    if python3 -c "
+import os
+import psycopg2
+import sys
+
+try:
+    db_url = os.environ.get('DATABASE_URL', 'postgresql://user:password@localhost/pbarr')
+    if 'postgresql://' in db_url:
+        parts = db_url.replace('postgresql://', '').split('@')
+        user_pass = parts[0].split(':')
+        host_port_db = parts[1].split('/')
+        host_port = host_port_db[0].split(':')
+
+        db_user = user_pass[0]
+        db_pass = user_pass[1] if len(user_pass) > 1 else ''
+        db_host = host_port[0]
+        db_port = host_port[1] if len(host_port) > 1 else '5432'
+        db_name = host_port_db[1]
+
+    conn = psycopg2.connect(host=db_host, port=db_port, database=db_name, user=db_user, password=db_pass)
+    cursor = conn.cursor()
+    cursor.execute(\"SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'config')\")
+    table_exists = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+
+    if table_exists:
+        print('ready')
+        sys.exit(0)
+    else:
+        print('not_ready')
+        sys.exit(1)
+except Exception as e:
+    print('error')
+    sys.exit(1)
+" 2>/dev/null; then
+
+        # Read DB config
+        DB_CONFIG=$(read_from_db)
+        echo "DEBUG: DB_CONFIG='$DB_CONFIG'" > /tmp/debug.log
+        DB_SOCKS5_ENABLED=$(echo "$DB_CONFIG" | cut -d'|' -f1)
+        DB_SOCKS5_HOST=$(echo "$DB_CONFIG" | cut -d'|' -f2)
+        DB_SOCKS5_PORT=$(echo "$DB_CONFIG" | cut -d'|' -f3)
+        DB_SOCKS5_USER=$(echo "$DB_CONFIG" | cut -d'|' -f4)
+        DB_SOCKS5_PASS=$(echo "$DB_CONFIG" | cut -d'|' -f5)
+
+        # Override environment variables with database values if available
+        if [ "$DB_SOCKS5_ENABLED" = "true" ] && [ -n "$DB_SOCKS5_HOST" ]; then
+            SOCKS5_ENABLED="true"
+            SOCKS5_HOST="$DB_SOCKS5_HOST"
+            SOCKS5_PORT="$DB_SOCKS5_PORT"
+            SOCKS5_USER="$DB_SOCKS5_USER"
+            SOCKS5_PASS="$DB_SOCKS5_PASS"
+            echo "✅ SOCKS5 config loaded from database"
+        else
+            echo "ℹ️ No SOCKS5 config found in database, using environment/default values"
+        fi
+    else
+        echo "⚠️ Database not ready or not migrated yet, using environment/default SOCKS5 config"
+    fi
+else
+    echo "✅ SOCKS5 config loaded from environment variables"
+fi
+
+echo "DEBUG: Final SOCKS5_ENABLED='$SOCKS5_ENABLED'" >> /tmp/debug.log
 
 # Function to log both to console and file
 log_message() {
