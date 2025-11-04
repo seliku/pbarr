@@ -1,28 +1,8 @@
 version: '3.8'
 
 services:
-  pbarr:
-    image: ghcr.io/seliku/pbarr:latest
-    container_name: pbarr
-    restart: unless-stopped
-    
-    ports:
-      - "8070:8000"
-    
-    environment:
-      DATABASE_URL: postgresql://pbuser:pbpass@postgres:5432/pbarr
-      LOG_LEVEL: INFO
-    
-    depends_on:
-      - postgres
-    
-    volumes:
-      - ./downloads:/app/downloads
-      - ./logs:/app/logs
-      - ./data:/app/data
-
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: pbarr-postgres
     restart: unless-stopped
 
@@ -33,6 +13,41 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+    ports:
+      - "5432:5432"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pbuser -d pbarr"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pbarr:
+    image: ghcr.io/seliku/pbarr:latest
+    container_name: pbarr
+    restart: unless-stopped
+
+    # WICHTIG: NET_ADMIN capability für iptables (SOCKS5 proxy)
+    cap_add:
+      - NET_ADMIN
+
+    ports:
+      - "8070:8000"
+
+    environment:
+      DATABASE_URL: postgresql://pbuser:pbpass@postgres:5432/pbarr
+      LOG_LEVEL: INFO
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    volumes:
+      - ./downloads:/app/downloads
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./library:/app/library
 
 volumes:
   postgres_data:
