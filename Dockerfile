@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     redsocks \
     iptables \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy entrypoint script
