@@ -1,15 +1,19 @@
--- PBArr Database Initialization Script
--- This script runs automatically when PostgreSQL initializes for the first time
+#!/bin/bash
+# PBArr Database Initialization Script
+# This script runs automatically when PostgreSQL initializes
 
--- Ensure the pbarr database exists and pbuser has access
--- (This is redundant with POSTGRES_DB, but explicit is better)
+set -e
 
--- Grant permissions to pbuser on the pbarr database
-GRANT ALL PRIVILEGES ON DATABASE pbarr TO pbuser;
+# Wait for PostgreSQL to be ready
+until pg_isready -U pbuser -d pbarr; do
+  echo "Waiting for PostgreSQL to be ready..."
+  sleep 2
+done
 
--- Connect to pbarr database and set up basic permissions
-\c pbarr;
+echo "PostgreSQL is ready, running initialization..."
 
+# Run SQL commands to ensure proper permissions
+psql -U pbuser -d pbarr -c "
 -- Ensure pbuser has all privileges on the pbarr database
 GRANT ALL ON SCHEMA public TO pbuser;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO pbuser;
@@ -27,3 +31,6 @@ CREATE TABLE IF NOT EXISTS db_init_test (
 );
 
 INSERT INTO db_init_test (version) VALUES ('1.0') ON CONFLICT DO NOTHING;
+"
+
+echo "Database initialization completed successfully"
