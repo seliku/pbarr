@@ -97,6 +97,14 @@ class SeriesFiltersRequest(BaseModel):
     include_senders: Optional[str] = None
 
 
+class ProxyConfigRequest(BaseModel):
+    enabled: bool
+    host: str
+    port: int
+    username: str
+    password: str
+
+
 # HTML Admin Panel
 @router.get("/")
 async def admin_panel():
@@ -1163,12 +1171,188 @@ async def delete_series_from_watchlist(tvdb_id: str, db: Session = Depends(get_d
         raise HTTPException(status_code=500, detail=f"Failed to delete series: {str(e)}")
 
 
+# SOCKS5 Proxy Configuration
+@router.post("/configure-socks5")
+async def configure_socks5(config: ProxyConfigRequest, db: Session = Depends(get_db)):
+    """
+    Save SOCKS5 proxy configuration to database.
+    Container restart required to activate changes.
+    """
+    try:
+        # Map config to database keys
+        config_map = {
+            "socks5_enabled": str(config.enabled).lower(),
+            "socks5_host": config.host,
+            "socks5_port": str(config.port),
+            "socks5_user": config.username,
+            "socks5_pass": config.password,
+        }
+
+        for key, value in config_map.items():
+            cfg = db.query(Config).filter_by(key=key).first()
+            if cfg:
+                cfg.value = value
+                logger.info(f"Updated config: {key}")
+            else:
+                cfg = Config(key=key, value=value)
+                db.add(cfg)
+                logger.info(f"Created config: {key}")
+
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": "SOCKS5 configuration saved.",
+            "restart_required": True,
+            "restart_instructions": "Run: docker compose restart pbarr"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to save proxy config: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # SOCKS5 Proxy Testing
 @router.post("/test-proxy")
 async def test_proxy_connection():
-    """Test SOCKS5 proxy connectivity."""
-    from app.utils.network import test_socks5_proxy
-    result = await test_socks5_proxy()
+    """Test SOCKS5 proxy connectivity with actual SOCKS5 handshake verification."""
+    import time
+    import socket
+    import asyncio
+    
+    start_time = time.time()
+    
+    from app.utils.network import get_socks5_proxy_url
+    from urllib.parse import urlparse
+    
+    proxy_url = get_socks5_proxy_url()
+    
+    result = {
+        "proxy_configured": proxy_url or None,
+        "direct_ip": None,
+        "proxied_ip": None,
+        "proxy_working": False,
+        "socks5_auth_status": None,
+        "latency_ms": None,
+        "error": None
+    }
+    
+    # Test direct IP (no proxy)
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get("https://api.ipify.org?format=json")
+            response.raise_for_status()
+            data = response.json()
+            result["direct_ip"] = data.get("ip", "N/A")
+    except Exception as e:
+        logger.warning(f"Failed to get direct IP: {e}")
+        result["direct_ip"] = "N/A"
+    
+    # Test proxy if configured
+    if proxy_url:
+        # Parse proxy URL
+        parsed = urlparse(proxy_url)
+        host = parsed.hostname
+        port = parsed.port or 1080
+        username = parsed.username
+        password = parsed.password
+        
+        # Step 1: Test SOCKS5 Handshake
+        def verify_socks5_handshake():
+            """Verify SOCKS5 handshake in thread."""
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                sock.connect((host, port))
+                
+                # Send SOCKS5 greeting
+                sock.sendall(b'\x05\x02\x00\x02')  # Version 5, auth methods: NO_AUTH, USERNAME/PASSWORD
+                greeting_response = sock.recv(2)
+                
+                if greeting_response != b'\x05\x02':
+                    return {
+                        'success': False,
+                        'reason': f'Unexpected greeting response: {greeting_response.hex()}'
+                    }
+                
+                # If username/password required, send auth
+                if username and password:
+                    user_bytes = username.encode() if isinstance(username, str) else username
+                    pass_bytes = password.encode() if isinstance(password, str) else password
+                    
+                    # RFC 1929: [0x01][len(user)][user][len(pass)][pass]
+                    auth_packet = b'\x01' + bytes([len(user_bytes)]) + user_bytes + bytes([len(pass_bytes)]) + pass_bytes
+                    sock.sendall(auth_packet)
+                    
+                    auth_response = sock.recv(2)
+                    if auth_response == b'\x01\x00':
+                        return {'success': True, 'reason': 'Authentication successful'}
+                    else:
+                        return {
+                            'success': False,
+                            'reason': f'Authentication failed (response: {auth_response.hex()})'
+                        }
+                else:
+                    # No auth needed
+                    return {'success': True, 'reason': 'No authentication required'}
+                
+            except socket.timeout:
+                return {'success': False, 'reason': 'Connection timeout'}
+            except ConnectionRefusedError:
+                return {'success': False, 'reason': 'Connection refused'}
+            except Exception as e:
+                return {'success': False, 'reason': str(e)}
+            finally:
+                try:
+                    sock.close()
+                except:
+                    pass
+        
+        # Run handshake test
+        try:
+            handshake_result = await asyncio.get_event_loop().run_in_executor(None, verify_socks5_handshake)
+            result["socks5_auth_status"] = handshake_result['reason']
+            
+            if not handshake_result['success']:
+                result["error"] = f"SOCKS5 Handshake failed: {handshake_result['reason']}"
+                result["proxy_working"] = False
+                result["proxied_ip"] = "N/A"
+                return result
+        except Exception as e:
+            result["error"] = f"SOCKS5 test failed: {str(e)}"
+            result["socks5_auth_status"] = str(e)
+            return result
+        
+        # Step 2: Get IP through proxy (nur wenn Handshake OK)
+        try:
+            async with httpx.AsyncClient(
+                proxies={
+                    'http://': proxy_url,
+                    'https://': proxy_url
+                },
+                timeout=15.0
+            ) as client:
+                response = await client.get("https://api.ipify.org?format=json")
+                response.raise_for_status()
+                data = response.json()
+                result["proxied_ip"] = data.get("ip", "N/A")
+                
+                # Check if proxy is actually used
+                if result["direct_ip"] != "N/A" and result["proxied_ip"] != "N/A":
+                    result["proxy_working"] = result["direct_ip"] != result["proxied_ip"]
+                else:
+                    result["proxy_working"] = True
+                
+                # Calculate latency
+                latency = (time.time() - start_time) * 1000
+                result["latency_ms"] = round(latency, 1)
+        
+        except Exception as e:
+            result["error"] = f"Failed to get proxied IP: {str(e)}"
+            result["proxied_ip"] = "N/A"
+            result["proxy_working"] = False
+            result["latency_ms"] = None
+    
     return result
 
 
@@ -1237,3 +1421,16 @@ async def update_settings(settings: dict):
         return {"error": f"Failed to update settings: {str(e)}"}
     finally:
         db.close()
+
+
+@router.post("/system/restart")
+async def restart_container():
+    """Request container restart (user must execute manually)."""
+    logger.info("Container restart requested via admin panel")
+
+    return {
+        "status": "ok",
+        "message": "Container-Neustart wurde angefordert. Führen Sie folgenden Befehl aus:",
+        "command": "docker compose restart pbarr",
+        "note": "Die Anwendung wird kurzzeitig nicht verfügbar sein."
+    }

@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 import subprocess
 
 from app.models.download import Download
-from app.utils.network import get_socks5_proxy_url
 
 logger = logging.getLogger(__name__)
 
@@ -64,15 +63,6 @@ class DownloadManager:
                 download.source_url
             ]
 
-            # SOCKS5 Proxy Support
-            proxy_url = get_socks5_proxy_url()
-            if proxy_url:
-                logger.info(f"Using SOCKS5 proxy for yt-dlp: {proxy_url}")
-                cmd.insert(1, '--proxy')
-                cmd.insert(2, proxy_url)
-            else:
-                logger.debug("No SOCKS5 proxy configured for yt-dlp")
-
             # Starte Download
             result = await asyncio.to_thread(
                 subprocess.run,
@@ -83,7 +73,14 @@ class DownloadManager:
             )
             
             if result.returncode != 0:
-                raise Exception(f"yt-dlp failed: {result.stderr}")
+                error_details = []
+                if result.stderr:
+                    error_details.append(f"STDERR: {result.stderr.strip()}")
+                if result.stdout:
+                    error_details.append(f"STDOUT: {result.stdout.strip()}")
+                error_details.append(f"Return code: {result.returncode}")
+
+                raise Exception(f"yt-dlp failed: {' | '.join(error_details)}")
             
             # ✅ FIX: Nutze shutil.move statt .rename() für Cross-Device
             completed_path = self.COMPLETED_DIR / download.filename

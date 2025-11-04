@@ -7,7 +7,15 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     git \
     curl \
+    redsocks \
+    iptables \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
 
 # yt-dlp installieren (wichtig!)
 RUN pip install --no-cache-dir yt-dlp
@@ -27,5 +35,3 @@ COPY app/static/ app/static/
 RUN mkdir -p /app/downloads /app/logs /app/data
 
 EXPOSE 8000
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

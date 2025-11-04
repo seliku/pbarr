@@ -103,11 +103,11 @@ def parse_socks5_proxy(proxy_input: str) -> Optional[Dict[str, Any]]:
 
         # Rebuild normalized URL
         if username and password:
-            normalized_url = f"socks5h://{username}:{password}@{host}:{port}"
+            normalized_url = f"socks5://{username}:{password}@{host}:{port}"
         elif username:
-            normalized_url = f"socks5h://{username}@{host}:{port}"
+            normalized_url = f"socks5://{username}@{host}:{port}"
         else:
-            normalized_url = f"socks5h://{host}:{port}"
+            normalized_url = f"socks5://{host}:{port}"
 
         result = {
             'host': host,
@@ -337,11 +337,12 @@ def get_socks5_proxy_url() -> Optional[str]:
         return None
 
 
+
 def get_proxy_for_url(url: str) -> Optional[str]:
     """
     Get proxy URL for a specific URL based on smart routing.
 
-    Normalizes proxy URL format for httpx compatibility (socks5h:// for remote DNS).
+    Normalizes proxy URL format for aiohttp/httpx compatibility (socks5h:// for remote DNS).
 
     Args:
         url: URL to check
@@ -352,13 +353,13 @@ def get_proxy_for_url(url: str) -> Optional[str]:
     if should_use_proxy(url):
         proxy_url = get_socks5_proxy_url()
         if proxy_url:
-            # Parse and rebuild with correct socks5h:// format
+            # Parse and rebuild with correct socks5h:// format for aiohttp/httpx
             parsed = parse_socks5_proxy(proxy_url)
             if not parsed:
                 logger.error(f"Invalid SOCKS5 proxy URL configured: {proxy_url}")
                 return None
 
-            # Rebuild with correct socks5h:// format
+            # Rebuild with socks5h:// format (better for remote DNS resolution)
             if parsed['username'] and parsed['password']:
                 normalized = f"socks5h://{parsed['username']}:{parsed['password']}@{parsed['host']}:{parsed['port']}"
             else:
@@ -382,36 +383,52 @@ def clear_proxy_cache():
     logger.debug("SOCKS5 proxy cache cleared")
 
 
-def create_aiohttp_connector(proxy_url: Optional[str] = None) -> aiohttp.TCPConnector:
+def create_aiohttp_connector(proxy_url: Optional[str] = None) -> aiohttp.BaseConnector:
     """
-    Create an aiohttp TCPConnector with optional SOCKS5 proxy support.
-
+    Create an aiohttp connector with optional SOCKS5 proxy support.
+    
     Args:
-        proxy_url: SOCKS5 proxy URL (socks5://user:pass@host:port or socks5://host:port)
-
+        proxy_url: Already normalized SOCKS5 proxy URL (from get_proxy_for_url)
+    
     Returns:
-        Configured aiohttp.TCPConnector
+        Configured aiohttp connector
     """
     if proxy_url:
         try:
             import aiohttp_socks
-
-            parsed = parse_socks5_proxy(proxy_url)
-            if not parsed:
+            
+            # Parse URL directly
+            parsed = urlparse(proxy_url)
+            
+            if parsed.scheme not in ('socks5', 'socks5h'):
+                logger.warning(f"Unsupported proxy scheme: {parsed.scheme}")
+                return aiohttp.TCPConnector()
+            
+            host = parsed.hostname
+            port = parsed.port or 1080
+            username = parsed.username
+            password = parsed.password
+            
+            if not host:
                 logger.warning(f"Invalid proxy URL: {proxy_url}")
                 return aiohttp.TCPConnector()
-
-            logger.info(f"Using SOCKS5 proxy for aiohttp: {parsed['host']}:{parsed['port']}")
-
+            
+            # Log with username (but not password)
+            if username:
+                logger.info(f"Using SOCKS5 proxy for aiohttp: {username}@{host}:{port}")
+            else:
+                logger.info(f"Using SOCKS5 proxy for aiohttp: {host}:{port}")
+            
             connector = aiohttp_socks.ProxyConnector(
                 proxy_type=aiohttp_socks.ProxyType.SOCKS5,
-                host=parsed['host'],
-                port=parsed['port'],
-                username=parsed['username'],
-                password=parsed['password'],
+                host=host,
+                port=port,
+                username=username,
+                password=password,
                 rdns=True  # Remote DNS resolution
             )
             return connector
+            
         except ImportError:
             logger.warning("aiohttp-socks not installed, SOCKS5 proxy not available")
             return aiohttp.TCPConnector()
