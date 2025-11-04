@@ -47,6 +47,17 @@ try:
 
     cursor = conn.cursor()
 
+    # ✅ FIRST: Check if config table exists
+    cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'config')")
+    table_exists = cursor.fetchone()[0]
+
+    if not table_exists:
+        # Config table doesn't exist yet (fresh deployment)
+        cursor.close()
+        conn.close()
+        print(f"false|||||")
+        exit(0)
+
     # Query configs
     cursor.execute("SELECT key, value FROM config WHERE key LIKE 'socks5_%'")
     results = cursor.fetchall()
