@@ -2,10 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# System dependencies (including ffmpeg für yt-dlp)
+# System dependencies
 RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    git \
     curl \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
@@ -30,6 +28,6 @@ COPY migrate_*.py ./
 COPY app/static/ app/static/
 
 # Volumes
-RUN mkdir -p /app/downloads /app/logs /app/data
+
 
 EXPOSE 8000

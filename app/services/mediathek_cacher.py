@@ -20,8 +20,7 @@ from app.services.sonarr_webhook import SonarrWebhookManager
 from app.models.config import Config
 from app.utils.network import create_aiohttp_session, create_httpx_client
 
-# Hardcoded download path in container (maps to completed directory on host)
-PBARR_DOWNLOAD_PATH = Path("/app/downloads/completed")
+
 
 
 logger = logging.getLogger(__name__)
@@ -493,7 +492,7 @@ class MediathekCacher:
                 return
 
             sonarr_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
-            download_path = PBARR_DOWNLOAD_PATH
+
 
             # Get monitored episodes from Sonarr that don't have files
             monitored_episodes = await sonarr_manager.get_monitored_episodes_without_files(
@@ -804,8 +803,6 @@ class MediathekCacher:
         Force sync monitored episodes (ignore cache timeouts)
         """
         try:
-            download_path = PBARR_DOWNLOAD_PATH
-
             # Get ALL monitored episodes from Sonarr (not just without files)
             sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
             sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
@@ -1052,7 +1049,14 @@ class MediathekCacher:
                     mediathek_entry.media_url
                 ]
 
-                logger.debug(f"Downloading with curl: {mediathek_entry.media_url}")
+                # Get the correct final library path from Sonarr
+                final_dir = await self._get_series_structure(sonarr_series_path, season, sonarr_series_id, db)
+                final_path = Path(final_dir) / filename
+
+                logger.info(f"Downloading with curl: {mediathek_entry.media_url}")
+                logger.info(f"Target directory: {final_dir}")
+                logger.info(f"Target filename: {final_path}")
+
                 result = await asyncio.to_thread(
                     subprocess.run,
                     cmd,
@@ -1063,33 +1067,22 @@ class MediathekCacher:
 
                 if result.returncode != 0:
                     error_msg = result.stderr.strip() if result.stderr else "Unknown curl error"
-                    logger.warning(f"Curl download failed: {error_msg}")
+                    logger.error(f"Curl download failed: {error_msg}")
+                    logger.error(f"Curl stdout: {result.stdout}")
                     return False
 
-                logger.debug("Curl download successful")
+                logger.info("Curl download successful")
+                logger.info(f"Temp file exists: {temp_file.exists()}")
+                logger.info(f"Temp file size: {temp_file.stat().st_size if temp_file.exists() else 'N/A'} bytes")
 
                 if not temp_file.exists():
                     logger.error(f"Download failed or temp file doesn't exist")
                     return False
 
-                # Move file to downloads completed folder first
-                completed_dir = Path("/app/downloads/completed")
-                completed_dir.mkdir(parents=True, exist_ok=True)
-
-                # Use a temporary filename for the completed download
-                temp_filename = f"pbarr_{series_title_normalized}_S{season:02d}E{episode:02d}.mkv"
-                completed_path = completed_dir / temp_filename
-
-                shutil.move(str(temp_file), str(completed_path))
-                logger.info(f"✅ Episode downloaded to: {completed_path}")
-
-                # Now move to correct Sonarr library structure
-                final_dir = Path(target_folder)
+                # Move file directly to Sonarr library (final_dir was already determined above)
                 final_dir.mkdir(parents=True, exist_ok=True)
-                final_path = final_dir / filename
-
-                shutil.move(str(completed_path), str(final_path))
-                logger.info(f"✅ Episode moved to Sonarr library: {final_path}")
+                shutil.move(str(temp_file), str(final_path))
+                logger.info(f"✅ Episode downloaded to Sonarr library: {final_path}")
 
                 # Trigger Sonarr rescan
                 scan_result = await sonarr_manager.trigger_disk_scan(sonarr_series_id)

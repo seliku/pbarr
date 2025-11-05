@@ -10,8 +10,7 @@ from datetime import datetime
 from app.database import get_db
 from app.models.config import Config
 from app.models.episode import Episode
-from app.models.download import Download
-from app.services.download_manager import DownloadManager
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/sonarr", tags=["sonarr"])
@@ -117,20 +116,11 @@ async def grab_release(
             ).first()
             
             if episode:
-                # Queue Download
-                manager = DownloadManager(db)
-                
-                # Benenne File nach Sonarr-Standard
-                filename = f"{releaseTitle}.mkv"
-                
-                download = await manager.queue_download(
-                    episode_id=f"S{season}E{ep_num}",
-                    source_url=episode.media_url or episode.source_url,
-                    filename=filename
-                )
-                
-                logger.info(f"✓ Queued for download: {filename}")
-                
+                # Episode gefunden - würde normalerweise heruntergeladen werden
+                # Aber da wir jetzt direkt über Mediathek-Cacher laden, nur loggen
+                logger.info(f"✓ Episode available for download: S{season}E{ep_num} - {releaseTitle}")
+                logger.info(f"  Media URL: {episode.media_url or episode.source_url}")
+
                 # Optional: Benachrichtige Sonarr
                 if background_tasks:
                     background_tasks.add_task(
@@ -139,8 +129,8 @@ async def grab_release(
                         "GrabSuccess",
                         {
                             "title": releaseTitle,
-                            "downloadId": download.id,
-                            "indexer": "PBArr"
+                            "indexer": "PBArr",
+                            "message": "Episode queued for direct library download"
                         }
                     )
             else:
@@ -159,38 +149,7 @@ async def grab_release(
             "error": str(e)
         }
 
-@router.get("/download/status")
-async def get_download_status(downloadId: int = Query(...), db: Session = Depends(get_db)):
-    """Prüfe Download-Status (Sonarr Polling)"""
-    
-    download = db.query(Download).filter_by(id=downloadId).first()
-    if not download:
-        raise HTTPException(status_code=404, detail="Download not found")
-    
-    return {
-        "downloadId": download.id,
-        "status": download.status,
-        "progress": download.progress,
-        "filePath": download.file_path,
-        "error": download.error_message
-    }
 
-@router.post("/download/remove")
-async def remove_download(
-    downloadId: int = Query(...),
-    db: Session = Depends(get_db)
-):
-    """Entferne Download (wenn Sonarr es ablehnt)"""
-    
-    download = db.query(Download).filter_by(id=downloadId).first()
-    if not download:
-        raise HTTPException(status_code=404, detail="Download not found")
-    
-    download.status = "cancelled"
-    db.commit()
-    
-    logger.info(f"Download cancelled by Sonarr: {download.filename}")
-    return {"success": True}
 
 @router.get("/version")
 async def get_version():
