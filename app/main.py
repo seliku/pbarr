@@ -38,25 +38,23 @@ logging.getLogger('httpx').setLevel(logging.WARNING)
 
 # Services
 from app.database import init_db, get_db
-from app.services.download_worker import DownloadWorker
 from app.services.mediathek_cacher import cacher
 from app.startup import init_config, load_enabled_modules, init_download_directory
 
 
 # API Routes
-from app.api import admin, system, downloads, matcher, matcher_admin, integration, webhooks, dashboard
+from app.api import admin, system, matcher, matcher_admin, integration, webhooks, dashboard
 
 
 logger = logging.getLogger(__name__)
 
-# Worker wird hier erstellt, nicht global
-download_worker = None
+# Scheduler
 scheduler = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global download_worker, scheduler
+    global scheduler
 
     # Startup
     logger.info("Starting PBArr...")
@@ -80,12 +78,6 @@ async def lifespan(app: FastAPI):
         init_download_directory()
     except Exception as e:
         logger.error(f"✗ Download directory init failed: {e}")
-
-    try:
-        download_worker = DownloadWorker(interval=30)
-        download_worker.start()
-    except Exception as e:
-        logger.error(f"✗ Download worker init failed: {e}")
 
     # Start Scheduler für Cache Jobs
     try:
@@ -131,8 +123,6 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down PBArr...")
-    if download_worker:
-        download_worker.stop()
     if scheduler and scheduler.running:
         scheduler.shutdown()
 
@@ -148,7 +138,6 @@ app = FastAPI(
 # Routes
 app.include_router(admin.router)
 app.include_router(system.router)
-app.include_router(downloads.router)
 app.include_router(matcher.router)
 app.include_router(matcher_admin.router)
 app.include_router(integration.router)

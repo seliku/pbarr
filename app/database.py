@@ -36,7 +36,6 @@ from app.models.config import Config
 from app.models.module_state import ModuleState
 from app.models.show import Show
 from app.models.episode import Episode
-from app.models.download import Download
 from app.models.tvdb_cache import TVDBCache
 from app.models.matcher_config import MatcherConfig
 from app.models.version import AppVersion, UpdateCheck
