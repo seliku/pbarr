@@ -7,7 +7,6 @@ from urllib.parse import urljoin, urlparse
 from datetime import datetime
 
 from app.models.watch_list import WatchList
-from app.utils.network import create_httpx_client
 
 
 logger = logging.getLogger(__name__)
