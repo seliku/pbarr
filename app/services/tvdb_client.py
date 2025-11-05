@@ -12,7 +12,7 @@ import traceback
 
 
 from app.models.tvdb_cache import TVDBCache
-from app.utils.network import create_aiohttp_session, get_proxy_for_url
+from app.utils.network import create_aiohttp_session
 
 
 logger = logging.getLogger(__name__)
@@ -63,8 +63,7 @@ class TVDBClient:
         logger.info(f"Fetching TVDB episodes #{tvdb_id_str}")
         
         try:
-            proxy_url = get_proxy_for_url(self.BASE_URL)
-            async with create_aiohttp_session(proxy_url=proxy_url) as session:
+            async with create_aiohttp_session() as session:
                 if not await self._get_token(session):
                     return []
 
@@ -174,8 +173,7 @@ class TVDBClient:
         titles = []
 
         try:
-            proxy_url = get_proxy_for_url(self.BASE_URL)
-            async with create_aiohttp_session(proxy_url=proxy_url) as session:
+            async with create_aiohttp_session() as session:
                 if not await self._get_token(session):
                     logger.warning(f"Could not get TVDB token for titles fetch")
                     return titles

@@ -545,6 +545,21 @@ async def stream_logs():
 # Sonarr Webhook Integration (Wizard removed)
 
 
+# Get saved Sonarr config (for form pre-filling)
+@router.get("/sonarr/config")
+async def get_sonarr_config(db: Session = Depends(get_db)):
+    """Get saved Sonarr configuration for form pre-filling"""
+    config_keys = ["sonarr_url", "sonarr_api_key", "pbarr_url"]
+    config_data = {}
+
+    for key in config_keys:
+        config = db.query(Config).filter_by(key=key).first()
+        if config:
+            config_data[key] = config.value
+
+    return config_data
+
+
 # Simple Sonarr connection test (for webhook setup)
 @router.post("/sonarr/test-connection")
 async def test_sonarr_connection_simple(request: TestConnectionRequest, db: Session = Depends(get_db)):

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models.watch_list import WatchList
 from app.database import SessionLocal
-from app.utils.network import create_aiohttp_session, get_proxy_for_url
+from app.utils.network import create_aiohttp_session
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,7 @@ class MediathekImporter:
             query_name = show_name.replace(' ', '%2C')
             feed_url = f"https://mediathekviewweb.de/feed?query=!ard%20%23{query_name}%20%3E20"
 
-            proxy_url = get_proxy_for_url(feed_url)
-            async with create_aiohttp_session(proxy_url=proxy_url) as session:
+            async with create_aiohttp_session() as session:
                 async with session.get(feed_url, timeout=10) as resp:
                     if resp.status != 200:
                         logger.warning(f"Mediathek search failed for {show_name}: HTTP {resp.status}")

@@ -50,6 +50,8 @@ class SonarrWebhookManager:
                 "configContract": "WebhookSettings",
                 "enabled": True,
                 "onSeriesAdd": True,
+                "onSeriesDelete": True,
+                "onEpisodeFileDelete": True,
                 "fields": [
                     {"name": "url", "value": webhook_url},
                     {"name": "method", "value": 1},  # POST

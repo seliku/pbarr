@@ -6,7 +6,7 @@ import aiohttp
 from typing import List, Optional
 from datetime import datetime
 
-from app.utils.network import create_aiohttp_session, get_proxy_for_url
+from app.utils.network import create_aiohttp_session
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +19,7 @@ class ARDService:
     async def search_show(show_title: str) -> Optional[dict]:
         """Sucht Show in ARD Mediathek"""
         try:
-            proxy_url = get_proxy_for_url(ARDService.BASE_URL)
-            async with create_aiohttp_session(proxy_url=proxy_url) as session:
+            async with create_aiohttp_session() as session:
                 search_url = f"{ARDService.BASE_URL}/pages/searches/results?searchString={show_title}&pageSize=20"
 
                 headers = {
@@ -60,8 +59,7 @@ class ARDService:
         episodes = []
         
         try:
-            proxy_url = get_proxy_for_url(ARDService.BASE_URL)
-            async with create_aiohttp_session(proxy_url=proxy_url) as session:
+            async with create_aiohttp_session() as session:
                 show_url = f"{ARDService.BASE_URL}/pages/ard/shows/{ard_show_id}"
 
                 headers = {
