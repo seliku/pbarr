@@ -61,7 +61,7 @@ class SonarrWebhookManager:
 
             logger.info(f"Creating webhook with URL: {webhook_url}")
 
-            async with create_httpx_client(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(
                     f"{self.sonarr_url}/api/v3/notification",
                     json=payload,
