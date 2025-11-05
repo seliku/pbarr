@@ -36,12 +36,46 @@ _TRUSTED_LOCAL_HOSTNAMES = {
     'radarr',
 }
 
+_db_reference = None  # Global DB reference for loading trusted hostnames
+
+
+def set_db_reference(db):
+    """Set database reference for loading trusted hostnames."""
+    global _db_reference
+    _db_reference = db
+    logger.debug("DB reference set for trusted hostname loading")
+
+
+async def load_trusted_hostnames_from_db():
+    """Load trusted hostnames from database config."""
+    global _TRUSTED_LOCAL_HOSTNAMES
+
+    if not _db_reference:
+        logger.warning("No DB reference available, skipping trusted hostname loading")
+        return
+
+    try:
+        # Load service URLs from config table
+        service_configs = _db_reference.query(Config).filter(
+            Config.key.in_(['sonarr_url', 'radarr_url', 'plex_url', 'ombi_url'])
+        ).all()
+
+        for config in service_configs:
+            if config.value and config.value.strip():
+                hostname = urlparse(config.value.strip()).hostname
+                if hostname and hostname.lower() not in _TRUSTED_LOCAL_HOSTNAMES:
+                    _TRUSTED_LOCAL_HOSTNAMES.add(hostname.lower())
+                    logger.info(f"✓ Loaded trusted hostname from DB: {hostname}")
+
+    except Exception as e:
+        logger.error(f"Failed to load trusted hostnames from DB: {e}")
+
 
 def register_trusted_hostname(hostname: str) -> None:
     """Register a hostname as trusted (internal, no SOCKS5 proxy)."""
     if hostname:
         _TRUSTED_LOCAL_HOSTNAMES.add(hostname.lower())
-        logger.info(f"✓ Registered trusted hostname: {hostname}")
+        logger.info(f"✓ Registered trusted hostname (runtime): {hostname}")
 
 
 def _cleanup_dns_executor():

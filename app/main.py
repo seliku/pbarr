@@ -74,6 +74,23 @@ async def lifespan(app: FastAPI):
         logger.error(f"✗ Config init failed: {e}")
         # Continue anyway - config might be created later
 
+    # Load trusted hostnames from DB for proxy routing
+    try:
+        from app.utils.network import set_db_reference, load_trusted_hostnames_from_db
+        from app.database import get_db
+
+        # Set DB reference for network utilities
+        db_gen = get_db()
+        db = next(db_gen)
+        set_db_reference(db)
+
+        # Load trusted hostnames from service configs
+        import asyncio
+        asyncio.create_task(load_trusted_hostnames_from_db())
+        logger.info("✓ Trusted hostnames will be loaded from DB")
+    except Exception as e:
+        logger.error(f"✗ Failed to setup trusted hostname loading: {e}")
+
     try:
         init_download_directory()
     except Exception as e:
