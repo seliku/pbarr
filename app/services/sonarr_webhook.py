@@ -37,10 +37,14 @@ class SonarrWebhookManager:
         """
         try:
             # CRITICAL: Register hostname BEFORE any HTTP requests to prevent SOCKS5 proxy timeouts
-            from app.utils.network import register_trusted_hostname
+            from app.utils.network import register_trusted_hostname, should_use_proxy, _TRUSTED_LOCAL_HOSTNAMES
             sonarr_hostname = urlparse(self.sonarr_url).hostname
+            logger.info(f"Sonarr URL: {self.sonarr_url}")
+            logger.info(f"Hostname: {sonarr_hostname}")
             if sonarr_hostname:
                 register_trusted_hostname(sonarr_hostname)
+                logger.info(f"Will use proxy? {should_use_proxy(self.sonarr_url)}")
+                logger.info(f"Trusted hostnames: {_TRUSTED_LOCAL_HOSTNAMES}")
 
             # Check if webhook already exists
             existing_webhook = await self._get_existing_webhook()
