@@ -14,7 +14,6 @@ from app.database import get_db
 from app.models.config import Config
 from app.models.module_state import ModuleState
 from app.models.watch_list import WatchList
-from app.services.sonarr_wizard import SonarrSetupWizard
 from app.services.sonarr_webhook import SonarrWebhookManager
 from app.services.mediathek_importer import importer
 
@@ -543,186 +542,60 @@ async def stream_logs():
     )
 
 
-# Sonarr Integration Setup Wizard
+# Sonarr Webhook Integration (Wizard removed)
+
+
+# Simple Sonarr connection test (for webhook setup)
 @router.post("/sonarr/test-connection")
-async def test_sonarr_connection(request: TestConnectionRequest, db: Session = Depends(get_db)):
-    """Test Sonarr connection and save config if successful"""
-    wizard = SonarrSetupWizard(request.sonarr_url, request.api_key)
-    result = await wizard.test_connection()
-
-    # Save config if successful
-    if result.get("success"):
-        configs = [
-            ("sonarr_url", request.sonarr_url),
-            ("sonarr_api_key", request.api_key),
-            ("pbarr_url", request.pbarr_url)  # User-provided PBArr URL
-        ]
-
-        # Only save download path if provided
-        if request.sonarr_download_path:
-            configs.append(("sonarr_download_path", request.sonarr_download_path))
-
-        for key, value in configs:
-            config = db.query(Config).filter_by(key=key).first()
-            if config:
-                config.value = str(value)
-            else:
-                config = Config(key=key, value=str(value))
-                db.add(config)
-        db.commit()
-        logger.info("Sonarr connection test successful - config saved")
-
-    return result
-
-
-@router.get("/sonarr/config")
-async def get_sonarr_config(db: Session = Depends(get_db)):
-    """Get saved Sonarr configuration"""
-    config_keys = ["sonarr_url", "sonarr_api_key", "pbarr_url"]
-    config_data = {}
-
-    for key in config_keys:
-        config = db.query(Config).filter_by(key=key).first()
-        if config:
-            config_data[key] = config.value
-
-    # Add hardcoded download path info
-    config_data["download_path_info"] = {
-        "container_path": "/app/downloads/completed",
-        "description": "PBArr downloads to this fixed path in the container. Configure the host mapping in docker-compose.yml"
-    }
-
-    return config_data
-
-
-@router.post("/sonarr/setup")
-async def setup_sonarr(request: SetupRequest, db: Session = Depends(get_db)):
-    """Execute complete Sonarr setup"""
-    logger.info(f"Setup request received: {request.dict()}")
-    wizard = SonarrSetupWizard(request.sonarr_url, request.api_key)
-    results = await wizard.setup_all(request.pbarr_url, request.sonarr_download_path_host)
-
-    # Save config if successful
-    if results.get("success"):
-        configs = [
-            ("sonarr_url", request.sonarr_url),
-            ("sonarr_api_key", request.api_key),
-            ("pbarr_url", request.pbarr_url),
-            ("sonarr_download_path_host", request.sonarr_download_path_host)
-        ]
-        for key, value in configs:
-            config = db.query(Config).filter_by(key=key).first()
-            if config:
-                config.value = str(value)
-            else:
-                config = Config(key=key, value=str(value))
-                db.add(config)
-        db.commit()
-
-    return results
-
-
-@router.get("/sonarr/status")
-async def get_sonarr_status(db: Session = Depends(get_db)):
-    """Check Sonarr configuration and integration status"""
+async def test_sonarr_connection_simple(request: TestConnectionRequest, db: Session = Depends(get_db)):
+    """Simple Sonarr connection test for webhook setup"""
     try:
-        # Get saved config
-        sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
-        sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{request.sonarr_url}/api/v3/health",
+                headers={"X-Api-Key": request.api_key}
+            )
 
-        status = {
-            "config_complete": False,
-            "connection_ok": False,
-            "download_client_exists": False,
-            "indexer_exists": False,
-            "message": "",
-            "setup_needed": True
+            if resp.status_code == 401:
+                return {
+                    "success": False,
+                    "message": "❌ API-Key ungültig (401 Unauthorized)"
+                }
+            elif resp.status_code != 200:
+                return {
+                    "success": False,
+                    "message": f"❌ Sonarr-Verbindung fehlgeschlagen: HTTP {resp.status_code}"
+                }
+
+        # Save config if successful
+        configs = [
+            ("sonarr_url", request.sonarr_url),
+            ("sonarr_api_key", request.api_key),
+            ("pbarr_url", request.pbarr_url)
+        ]
+        for key, value in configs:
+            config = db.query(Config).filter_by(key=key).first()
+            if config:
+                config.value = str(value)
+            else:
+                config = Config(key=key, value=str(value))
+                db.add(config)
+        db.commit()
+
+        return {
+            "success": True,
+            "message": "✓ Verbindung erfolgreich"
         }
 
-        # Check if config is complete
-        if not sonarr_url_config or not sonarr_url_config.value or not sonarr_api_config or not sonarr_api_config.value:
-            status["message"] = "Sonarr URL und API-Key müssen konfiguriert werden"
-            return status
-
-        status["config_complete"] = True
-
-        # Test connection
-        wizard = SonarrSetupWizard(sonarr_url_config.value, sonarr_api_config.value)
-        connection_result = await wizard.test_connection()
-
-        if not connection_result.get("success"):
-            status["message"] = f"Verbindung zu Sonarr fehlgeschlagen: {connection_result.get('message')}"
-            return status
-
-        status["connection_ok"] = True
-
-        # Check if PBArr download client exists
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                resp = await client.get(
-                    f"{wizard.url}/api/v3/downloadclient",
-                    headers=wizard.headers
-                )
-                if resp.status_code == 200:
-                    clients = resp.json()
-                    logger.info(f"Found {len(clients)} download clients")
-                    for client in clients:
-                        client_name = client.get("name")
-                        logger.info(f"Download client: {client_name}")
-                        if client_name == "PBArr":
-                            status["download_client_exists"] = True
-                            logger.info("PBArr download client found!")
-                            break
-                else:
-                    logger.warning(f"Download client check failed: HTTP {resp.status_code}")
-        except Exception as e:
-            logger.warning(f"Failed to check download clients: {e}")
-
-        # Check if PBArr indexer exists
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                resp = await client.get(
-                    f"{wizard.url}/api/v3/indexer",
-                    headers=wizard.headers
-                )
-                if resp.status_code == 200:
-                    indexers = resp.json()
-                    logger.info(f"Found {len(indexers)} indexers")
-                    for indexer in indexers:
-                        indexer_name = indexer.get("name")
-                        logger.info(f"Indexer: {indexer_name}")
-                        if indexer_name == "PBArr":
-                            status["indexer_exists"] = True
-                            logger.info("PBArr indexer found!")
-                            break
-                else:
-                    logger.warning(f"Indexer check failed: HTTP {resp.status_code}")
-        except Exception as e:
-            logger.warning(f"Failed to check indexers: {e}")
-
-        logger.info(f"Status check result: download_client={status['download_client_exists']}, indexer={status['indexer_exists']}")
-
-        # Determine final status
-        pbarr_configured = status["download_client_exists"] and status["indexer_exists"]
-
-        if pbarr_configured:
-            status["setup_needed"] = False
-            status["message"] = "Sonarr ist für PBArr konfiguriert und erreichbar."
-        else:
-            status["setup_needed"] = True
-            status["message"] = "Sonarr ist noch nicht für PBArr konfiguriert."
-
-        return status
-
-    except Exception as e:
-        logger.error(f"Sonarr status check error: {e}", exc_info=True)
+    except httpx.TimeoutException:
         return {
-            "config_complete": False,
-            "connection_ok": False,
-            "download_client_exists": False,
-            "indexer_exists": False,
-            "message": f"Fehler beim Status-Check: {str(e)}",
-            "setup_needed": True
+            "success": False,
+            "message": "❌ Timeout: Sonarr antwortet nicht"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"❌ Fehler: {str(e)}"
         }
 
 
@@ -733,15 +606,35 @@ async def setup_sonarr_webhook(request: WebhookSetupRequest, db: Session = Depen
     logger.info(f"Webhook setup request received: {request.dict()}")
 
     # Test connection first
-    webhook_manager = SonarrWebhookManager(request.sonarr_url, request.api_key)
-    wizard = SonarrSetupWizard(request.sonarr_url, request.api_key)
-    connection_result = await wizard.test_connection()
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{request.sonarr_url}/api/v3/health",
+                headers={"X-Api-Key": request.api_key}
+            )
 
-    if not connection_result.get("success"):
+            if resp.status_code == 401:
+                return {
+                    "success": False,
+                    "message": "❌ API-Key ungültig (401 Unauthorized)"
+                }
+            elif resp.status_code != 200:
+                return {
+                    "success": False,
+                    "message": f"❌ Sonarr-Verbindung fehlgeschlagen: HTTP {resp.status_code}"
+                }
+    except httpx.TimeoutException:
         return {
             "success": False,
-            "message": f"❌ Sonarr-Verbindung fehlgeschlagen: {connection_result.get('message')}"
+            "message": "❌ Timeout: Sonarr antwortet nicht"
         }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"❌ Sonarr-Verbindung fehlgeschlagen: {str(e)}"
+        }
+
+    webhook_manager = SonarrWebhookManager(request.sonarr_url, request.api_key)
 
     # Create webhook
     webhook_result = await webhook_manager.create_webhook(request.pbarr_url)
@@ -822,14 +715,27 @@ async def get_sonarr_webhook_status(db: Session = Depends(get_db)):
         status["config_complete"] = True
 
         # Test connection
-        wizard = SonarrSetupWizard(sonarr_url_config.value, sonarr_api_config.value)
-        connection_result = await wizard.test_connection()
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.get(
+                    f"{sonarr_url_config.value}/api/v3/health",
+                    headers={"X-Api-Key": sonarr_api_config.value}
+                )
 
-        if not connection_result.get("success"):
-            status["message"] = f"Verbindung zu Sonarr fehlgeschlagen: {connection_result.get('message')}"
+                if resp.status_code == 401:
+                    status["message"] = "API-Key ungültig (401 Unauthorized)"
+                    return status
+                elif resp.status_code != 200:
+                    status["message"] = f"Verbindung zu Sonarr fehlgeschlagen: HTTP {resp.status_code}"
+                    return status
+
+            status["connection_ok"] = True
+        except httpx.TimeoutException:
+            status["message"] = "Timeout: Sonarr antwortet nicht"
             return status
-
-        status["connection_ok"] = True
+        except Exception as e:
+            status["message"] = f"Verbindung zu Sonarr fehlgeschlagen: {str(e)}"
+            return status
 
         # Check if PBArr webhook exists
         webhook_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
