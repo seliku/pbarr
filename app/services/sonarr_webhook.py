@@ -423,15 +423,31 @@ class SonarrWebhookManager:
 
     async def test_webhook_connection(self, pbarr_webhook_url: str) -> Dict:
         """
-        Test webhook connection by sending a test payload
+        Test webhook connection by testing both Sonarr API and PBArr webhook endpoint
 
         Returns: {"success": bool, "message": str}
         """
         try:
+            # First test Sonarr API connection (this is what actually failed before)
+            logger.debug("Testing Sonarr API connection...")
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.get(
+                    f"{self.sonarr_url}/api/v3/system/status",
+                    headers=self.headers
+                )
+
+                if resp.status_code != 200:
+                    return {
+                        "success": False,
+                        "message": f"❌ Sonarr-API nicht erreichbar: HTTP {resp.status_code}"
+                    }
+
             # Parse PBArr URL for webhook URL
             parsed_pbarr = urlparse(pbarr_webhook_url)
             webhook_url = f"{parsed_pbarr.scheme}://{parsed_pbarr.netloc}/webhook/sonarr"
 
+            # Test PBArr webhook endpoint
+            logger.debug(f"Testing PBArr webhook endpoint: {webhook_url}")
             test_payload = {
                 "eventType": "Test",
                 "series": {
@@ -456,14 +472,20 @@ class SonarrWebhookManager:
                 else:
                     return {
                         "success": False,
-                        "message": f"❌ Webhook-Test fehlgeschlagen: HTTP {resp.status_code}"
+                        "message": f"❌ PBArr-Webhook-Endpunkt fehlgeschlagen: HTTP {resp.status_code}"
                     }
 
-        except httpx.ConnectError:
-            return {
-                "success": False,
-                "message": "❌ Webhook-URL nicht erreichbar - Prüfe PBArr-URL"
-            }
+        except httpx.ConnectError as e:
+            if "arrs" in str(e) or self.sonarr_url in str(e):
+                return {
+                    "success": False,
+                    "message": "❌ Sonarr nicht erreichbar - Prüfe Sonarr-URL und API-Key"
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "❌ PBArr-Webhook-URL nicht erreichbar - Prüfe PBArr-URL"
+                }
         except Exception as e:
             logger.error(f"Test webhook connection error: {e}", exc_info=True)
             return {
