@@ -27,6 +27,22 @@ _PROXY_CACHE = {
 # Thread pool for DNS resolution (non-blocking)
 _dns_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="dns")
 
+# Trusted local hostnames (skip SOCKS5 proxy)
+_TRUSTED_LOCAL_HOSTNAMES = {
+    'localhost',
+    'broadcasthost',
+    '127.0.0.1',
+    'sonarr',
+    'radarr',
+}
+
+
+def register_trusted_hostname(hostname: str) -> None:
+    """Register a hostname as trusted (internal, no SOCKS5 proxy)."""
+    if hostname:
+        _TRUSTED_LOCAL_HOSTNAMES.add(hostname.lower())
+        logger.info(f"✓ Registered trusted hostname: {hostname}")
+
 
 def _cleanup_dns_executor():
     """Clean up DNS executor on application shutdown."""
@@ -177,9 +193,8 @@ async def should_use_proxy_async(url: str) -> bool:
             return False
 
         # Quick local hostname checks (no DNS needed)
-        localhost_names = {'localhost', 'broadcasthost', 'sonarr', 'radarr'}
-        if hostname.lower() in localhost_names:
-            logger.debug(f"Skipping proxy for localhost hostname: {url}")
+        if hostname.lower() in _TRUSTED_LOCAL_HOSTNAMES:
+            logger.debug(f"Skipping proxy for trusted hostname: {url}")
             return False
 
         # Check for internal domain suffixes
@@ -259,9 +274,8 @@ def should_use_proxy(url: str) -> bool:
             return False
 
         # Quick local hostname checks (no DNS needed)
-        localhost_names = {'localhost', 'broadcasthost', 'sonarr', 'radarr'}
-        if hostname.lower() in localhost_names:
-            logger.debug(f"Skipping proxy for localhost hostname: {url}")
+        if hostname.lower() in _TRUSTED_LOCAL_HOSTNAMES:
+            logger.debug(f"Skipping proxy for trusted hostname: {url}")
             return False
 
         # Check for internal domain suffixes

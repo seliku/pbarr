@@ -20,6 +20,12 @@ class SonarrWebhookManager:
         self.api_key = api_key
         self.headers = {"X-Api-Key": api_key}
 
+        # Register Sonarr hostname as trusted (skip SOCKS5 proxy)
+        from app.utils.network import register_trusted_hostname
+        sonarr_hostname = urlparse(self.sonarr_url).hostname
+        if sonarr_hostname:
+            register_trusted_hostname(sonarr_hostname)
+
     async def create_webhook(self, pbarr_webhook_url: str) -> Dict:
         """
         Create PBArr webhook in Sonarr for series additions
