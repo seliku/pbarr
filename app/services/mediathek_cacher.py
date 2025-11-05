@@ -1072,12 +1072,24 @@ class MediathekCacher:
                     logger.error(f"Download failed or temp file doesn't exist")
                     return False
 
-                # Move file to final location
+                # Move file to downloads completed folder first
+                completed_dir = Path("/app/downloads/completed")
+                completed_dir.mkdir(parents=True, exist_ok=True)
+
+                # Use a temporary filename for the completed download
+                temp_filename = f"pbarr_{series_title_normalized}_S{season:02d}E{episode:02d}.mkv"
+                completed_path = completed_dir / temp_filename
+
+                shutil.move(str(temp_file), str(completed_path))
+                logger.info(f"✅ Episode downloaded to: {completed_path}")
+
+                # Now move to correct Sonarr library structure
                 final_dir = Path(target_folder)
                 final_dir.mkdir(parents=True, exist_ok=True)
                 final_path = final_dir / filename
 
-                shutil.move(str(temp_file), str(final_path))
+                shutil.move(str(completed_path), str(final_path))
+                logger.info(f"✅ Episode moved to Sonarr library: {final_path}")
 
                 # Trigger Sonarr rescan
                 scan_result = await sonarr_manager.trigger_disk_scan(sonarr_series_id)
