@@ -804,8 +804,7 @@
                     config.key !== 'download_path' &&
                     config.key !== 'update_check_interval' &&
                     config.key !== 'download_retry_count' &&
-                    config.key !== 'max_concurrent_downloads' &&
-                    config.key !== 'socks5_proxy'
+                    config.key !== 'max_concurrent_downloads'
                 );
 
                 container.innerHTML = filteredConfigs.map(config => `

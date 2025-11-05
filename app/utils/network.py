@@ -46,3 +46,17 @@ def create_httpx_sync_client(**kwargs) -> httpx.Client:
         Configured httpx.Client
     """
     return httpx.Client(**kwargs)
+
+
+def get_proxy_for_url(url: str) -> Optional[str]:
+    """
+    Get proxy URL for a given URL. Currently returns None (no proxy).
+
+    Args:
+        url: The URL to get proxy for
+
+    Returns:
+        Proxy URL or None if no proxy should be used
+    """
+    # TODO: Implement proxy configuration lookup from database
+    return None
