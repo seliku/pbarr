@@ -507,50 +507,7 @@
                 <div id="network-list"></div>
                 <div id="network-message" style="margin-top: 10px;"></div>
 
-                <!-- SOCKS5 Proxy Toggle Section -->
-                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
-                    <h3 style="margin: 0 0 10px 0; color: #495057; font-size: 16px;">🔒 SOCKS5 Proxy Routing</h3>
-                    <p style="margin: 0 0 15px 0; font-size: 14px; color: #6c757d;">
-                        Aktiviert/Deaktiviert systemweites SOCKS5 Proxy Routing für alle TCP-Verbindungen.
-                        Lokaler Traffic (LAN, Docker-Netzwerke) wird immer direkt geroutet.
-                    </p>
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <label style="font-weight: 600; color: #495057;">Status:</label>
-                            <span id="socks5-status" style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Lade...</span>
-                        </div>
-                        <button id="socks5-toggle-btn" class="btn" onclick="toggleSocks5Proxy()" style="display: none;">
-                            🔄 Aktiviere Proxy
-                        </button>
-                    </div>
-                    <div id="socks5-config-section" style="margin-top: 15px; display: none;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #495057;">Host:</label>
-                                <input type="text" id="socks5-host" placeholder="proxy.example.com" style="width: 100%; padding: 6px; border: 1px solid #ced4da; border-radius: 4px; font-size: 13px;">
-                            </div>
-                            <div>
-                                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #495057;">Port:</label>
-                                <input type="number" id="socks5-port" placeholder="1080" value="1080" min="1" max="65535" style="width: 100%; padding: 6px; border: 1px solid #ced4da; border-radius: 4px; font-size: 13px;">
-                            </div>
-                            <div>
-                                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #495057;">Benutzername:</label>
-                                <input type="text" id="socks5-user" placeholder="username" style="width: 100%; padding: 6px; border: 1px solid #ced4da; border-radius: 4px; font-size: 13px;">
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 10px;">
-                            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #495057;">Passwort:</label>
-                            <input type="text" id="socks5-pass" placeholder="password" style="width: 100%; padding: 6px; border: 1px solid #ced4da; border-radius: 4px; font-size: 13px;">
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-success" onclick="saveSocks5Config()" style="font-size: 13px; padding: 6px 12px;">💾 Speichern und Neustarten</button>
-                            <button class="btn btn-secondary" onclick="cancelSocks5Config()" style="font-size: 13px; padding: 6px 12px;">✗ Abbrechen</button>
-                        </div>
-                    </div>
-                    <div style="margin-top: 10px; font-size: 12px; color: #6c757d;">
-                        <strong>ℹ️ Hinweis:</strong> Änderungen erfordern einen Container-Neustart (<code>docker compose restart pbarr</code>)
-                    </div>
-                </div>
+
             </div>
 
             <!-- Downloads -->
@@ -934,8 +891,7 @@
                     <button onclick="checkExternalIPs()">🔍 IPs prüfen</button>
                 `;
 
-                // Load SOCKS5 status
-                await loadSocks5Status();
+
             } catch (error) {
                 container.innerHTML = `<div class="error">Failed to load network settings: ${error.message}</div>`;
                 loading.style.display = 'none';
@@ -1906,153 +1862,7 @@
             }
         }
 
-        // SOCKS5 Proxy Management Functions
-        async function loadSocks5Status() {
-            try {
-                const configs = await fetchJSON(`${API_URL}/admin/config`);
-                const enabledConfig = configs.find(config => config.key === 'socks5_enabled');
-                const hostConfig = configs.find(config => config.key === 'socks5_host');
-                const portConfig = configs.find(config => config.key === 'socks5_port');
-                const userConfig = configs.find(config => config.key === 'socks5_user');
-                const passConfig = configs.find(config => config.key === 'socks5_pass');
 
-                const statusSpan = document.getElementById('socks5-status');
-                const toggleBtn = document.getElementById('socks5-toggle-btn');
-
-                const isEnabled = enabledConfig && enabledConfig.value === 'true';
-                const hasConfig = hostConfig && hostConfig.value && userConfig && userConfig.value && passConfig && passConfig.value;
-
-                if (isEnabled && hasConfig) {
-                    statusSpan.textContent = '✅ Aktiv';
-                    statusSpan.style.cssText = 'padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #d4edda; color: #155724;';
-                    toggleBtn.textContent = '🔄 Deaktivieren';
-                    toggleBtn.style.display = 'inline-block';
-                } else if (hasConfig) {
-                    statusSpan.textContent = '⚠️ Konfiguriert (inaktiv)';
-                    statusSpan.style.cssText = 'padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #fff3cd; color: #856404;';
-                    toggleBtn.textContent = '🔄 Aktivieren';
-                    toggleBtn.style.display = 'inline-block';
-                } else {
-                    statusSpan.textContent = '❌ Nicht konfiguriert';
-                    statusSpan.style.cssText = 'padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #f8d7da; color: #721c24;';
-                    toggleBtn.textContent = '⚙️ Konfigurieren';
-                    toggleBtn.style.display = 'inline-block';
-                }
-
-                // Fill form fields if config exists
-                if (hostConfig && hostConfig.value) document.getElementById('socks5-host').value = hostConfig.value;
-                if (portConfig && portConfig.value) document.getElementById('socks5-port').value = portConfig.value;
-                if (userConfig && userConfig.value) document.getElementById('socks5-user').value = userConfig.value;
-                if (passConfig && passConfig.value) document.getElementById('socks5-pass').value = passConfig.value;
-
-            } catch (error) {
-                console.error('Failed to load SOCKS5 status:', error);
-                document.getElementById('socks5-status').textContent = '❌ Fehler';
-                document.getElementById('socks5-status').style.cssText = 'padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #f8d7da; color: #721c24;';
-            }
-        }
-
-        async function toggleSocks5Proxy() {
-            try {
-                const configs = await fetchJSON(`${API_URL}/admin/config`);
-                const enabledConfig = configs.find(config => config.key === 'socks5_enabled');
-                const hostConfig = configs.find(config => config.key === 'socks5_host');
-                const userConfig = configs.find(config => config.key === 'socks5_user');
-                const passConfig = configs.find(config => config.key === 'socks5_pass');
-
-                const hasConfig = hostConfig && hostConfig.value && userConfig && userConfig.value && passConfig && passConfig.value;
-                const isEnabled = enabledConfig && enabledConfig.value === 'true';
-
-                if (!hasConfig) {
-                    // Show configuration form
-                    document.getElementById('socks5-config-section').style.display = 'block';
-                    document.getElementById('socks5-toggle-btn').style.display = 'none';
-                    return;
-                }
-
-                // Toggle enabled/disabled
-                const newEnabled = !isEnabled;
-
-                const response = await fetch(`${API_URL}/admin/configure-socks5`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        enabled: newEnabled,
-                        host: hostConfig.value,
-                        port: parseInt(configs.find(config => config.key === 'socks5_port')?.value || '1080'),
-                        username: userConfig.value,
-                        password: passConfig.value
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    showSuccess(`${newEnabled ? '✅ SOCKS5 Proxy aktiviert' : '❌ SOCKS5 Proxy deaktiviert'} - Container-Neustart erforderlich!`);
-                    await loadSocks5Status(); // Refresh status
-                } else {
-                    showError(`❌ Fehler: ${result.message}`);
-                }
-
-            } catch (error) {
-                showError(`❌ Fehler beim Umschalten: ${error.message}`);
-            }
-        }
-
-        async function saveSocks5Config() {
-            const host = document.getElementById('socks5-host').value.trim();
-            const port = parseInt(document.getElementById('socks5-port').value);
-            const username = document.getElementById('socks5-user').value.trim();
-            const password = document.getElementById('socks5-pass').value.trim();
-
-            if (!host || !username || !password) {
-                showError('❌ Host, Benutzername und Passwort sind erforderlich');
-                return;
-            }
-
-            if (isNaN(port) || port < 1 || port > 65535) {
-                showError('❌ Ungültiger Port (1-65535)');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/admin/configure-socks5`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        enabled: true,
-                        host: host,
-                        port: port,
-                        username: username,
-                        password: password
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    showSuccess('✅ SOCKS5 Proxy konfiguriert! Führen Sie jetzt den Container-Neustart aus.');
-                    document.getElementById('socks5-config-section').style.display = 'none';
-                    document.getElementById('socks5-toggle-btn').style.display = 'inline-block';
-
-                    // Zeige Restart-Anweisung
-                    setTimeout(() => {
-                        alert('Container-Neustart erforderlich!\n\nFühren Sie folgenden Befehl aus:\n\ndocker compose restart pbarr\n\nDanach wird SOCKS5 aktiv.');
-                    }, 500);
-
-                } else {
-                    showError(`❌ Fehler: ${result.message}`);
-                }
-
-            } catch (error) {
-                showError(`❌ Fehler beim Speichern: ${error.message}`);
-            }
-        }
-
-        function cancelSocks5Config() {
-            document.getElementById('socks5-config-section').style.display = 'none';
-            document.getElementById('socks5-toggle-btn').style.display = 'inline-block';
-        }
 
         // Container Restart Function
         async function restartContainer() {
