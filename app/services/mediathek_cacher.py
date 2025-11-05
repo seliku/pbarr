@@ -310,8 +310,24 @@ class MediathekCacher:
                         if existing:
                             continue  # Bereits gecached - nichts zu tun
 
+                        cache_entry = None  # Initialize cache_entry
+
                         if download_decision == "download":
                             logger.info(f"  → downloading episode")
+                            # Erstelle Cache-Eintrag für Download
+                            cache_entry = MediathekCache(
+                                tvdb_id=tvdb_id,
+                                season=match_result.season,
+                                episode=match_result.episode,
+                                episode_title=match_result.episode_title or mvw_ep['title'],
+                                mediathek_title=mvw_ep['title'],
+                                mediathek_platform="ard",
+                                media_url=mvw_ep['link'],
+                                quality=self._guess_quality(mvw_ep['title']),
+                                match_confidence=int(match_result.confidence * 100),  # 0-100
+                                match_type=match_result.match_type,
+                                expires_at=datetime.utcnow() + timedelta(days=self.CACHE_DURATION_DAYS)
+                            )
                             # Download the episode immediately
                             success = await self._download_episode_to_sonarr_path(
                                 cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
@@ -327,25 +343,27 @@ class MediathekCacher:
                             logger.info(f"  → ignoring, episode not monitored in Sonarr")
                             continue  # Nicht cachen wenn nicht monitored
                         else:
-                            logger.info(f"  → don't know what to do with that. cached anyway")
+                            logger.info(f"  → caching episode for future use")
+                            # Erstelle Cache-Eintrag für spätere Verwendung
+                            cache_entry = MediathekCache(
+                                tvdb_id=tvdb_id,
+                                season=match_result.season,
+                                episode=match_result.episode,
+                                episode_title=match_result.episode_title or mvw_ep['title'],
+                                mediathek_title=mvw_ep['title'],
+                                mediathek_platform="ard",
+                                media_url=mvw_ep['link'],
+                                quality=self._guess_quality(mvw_ep['title']),
+                                match_confidence=int(match_result.confidence * 100),  # 0-100
+                                match_type=match_result.match_type,
+                                expires_at=datetime.utcnow() + timedelta(days=self.CACHE_DURATION_DAYS)
+                            )
 
-                        # Erstelle Cache-Eintrag
-                        cache_entry = MediathekCache(
-                            tvdb_id=tvdb_id,
-                            season=match_result.season,
-                            episode=match_result.episode,
-                            episode_title=match_result.episode_title or mvw_ep['title'],
-                            mediathek_title=mvw_ep['title'],
-                            mediathek_platform="ard",
-                            media_url=mvw_ep['link'],
-                            quality=self._guess_quality(mvw_ep['title']),
-                            match_confidence=int(match_result.confidence * 100),  # 0-100
-                            match_type=match_result.match_type,
-                            expires_at=datetime.utcnow() + timedelta(days=self.CACHE_DURATION_DAYS)
-                        )
-                        db.add(cache_entry)
-                        cached += 1
-                        logger.debug(f"  Cache entry created, total cached: {cached}")
+                        # Cache-Eintrag zur Datenbank hinzufügen (nur wenn erstellt)
+                        if cache_entry is not None:
+                            db.add(cache_entry)
+                            cached += 1
+                            logger.debug(f"  Cache entry created, total cached: {cached}")
                 # else: Episode wurde gefiltert - nur die Filter-Nachricht vom Matcher wird angezeigt
             
             # AUTOMATISCHES TAGGING ENTFERNT: Nur manuell getaggte Serien werden verarbeitet
