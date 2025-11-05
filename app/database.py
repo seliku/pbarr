@@ -9,8 +9,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://pbuser:pbpass@localhost:5432/pbarr")
-
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("❌ DATABASE_URL environment variable not set!")
 
 # In-Memory SQLite für Tests
 if "sqlite" in DATABASE_URL:

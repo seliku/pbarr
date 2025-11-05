@@ -11,7 +11,9 @@ def migrate_watchlist_table():
     """Add new columns to watch_list table"""
 
     # Get database URL from environment
-    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://pbuser:pbpass@postgres:5432/pbarr")
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        raise RuntimeError("❌ DATABASE_URL environment variable not set!")
 
     # Create engine
     if "sqlite" in DATABASE_URL:
