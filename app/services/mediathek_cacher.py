@@ -523,6 +523,7 @@ class MediathekCacher:
 
                 if mediathek_match:
                     logger.info(f"  Found mediathek match for S{season:02d}E{episode:02d}, downloading...")
+                    logger.debug(f"  Mediathek match details: {mediathek_match.media_url}, series_id: {watchlist_entry.sonarr_series_id}")
                     # Download the episode
                     success = await self._download_episode_to_sonarr_path(
                         mediathek_match, season, episode, watchlist_entry.sonarr_series_id, db
@@ -985,16 +986,24 @@ class MediathekCacher:
     ):
         """Download episode directly to Sonarr library"""
         try:
+            logger.debug(f"Starting download for S{season:02d}E{episode:02d}, series_id: {sonarr_series_id}")
+
             # Step 1: Get series info
             sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
             sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
+
+            logger.debug(f"Sonarr URL config: {sonarr_url_config.value if sonarr_url_config else 'None'}")
+            logger.debug(f"Sonarr API config: {'***' if sonarr_api_config and sonarr_api_config.value else 'None'}")
 
             if not sonarr_url_config or not sonarr_api_config or not sonarr_url_config.value or not sonarr_api_config.value:
                 logger.error("Sonarr config not available")
                 return False
 
+            logger.debug(f"Creating SonarrWebhookManager with URL: {sonarr_url_config.value}")
             sonarr_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
+            logger.debug(f"Getting series info for series_id: {sonarr_series_id}")
             series = await sonarr_manager.get_series_info(sonarr_series_id)
+            logger.debug(f"Series info result: {series}")
 
             if not series:
                 logger.error(f"Series {sonarr_series_id} not found")
@@ -1002,6 +1011,7 @@ class MediathekCacher:
 
             series_title = series["title"]
             sonarr_series_path = series["path"]  # e.g., "/tv/Show Name" or "/tv/Show Name/Season 01"
+            logger.debug(f"Series title: {series_title}, path: {sonarr_series_path}")
 
             # Download the episode (minimal logging)
             try:
