@@ -66,6 +66,12 @@ class SonarrWebhookManager:
 
             logger.info(f"Creating webhook with URL: {webhook_url}")
 
+            # Ensure Sonarr hostname is registered as trusted (skip SOCKS5 proxy)
+            from app.utils.network import register_trusted_hostname
+            sonarr_hostname = urlparse(self.sonarr_url).hostname
+            if sonarr_hostname:
+                register_trusted_hostname(sonarr_hostname)
+
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(
                     f"{self.sonarr_url}/api/v3/notification",
