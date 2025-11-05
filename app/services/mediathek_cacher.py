@@ -1022,16 +1022,19 @@ class MediathekCacher:
                 temp_dir.mkdir(exist_ok=True)
                 temp_file = temp_dir / filename
 
+                # Download with curl (direct MP4 links from Mediathek)
                 cmd = [
-                    'yt-dlp',
-                    '-q',  # Quiet mode - reduce output
-                    '-f', 'best[ext=mp4]/best',
-                    '--external-downloader', 'aria2c',  # ← aria2c unterstützt SOCKS5!
-                    '--external-downloader-args', '-x 16 -k 1M',
-                    '-o', str(temp_file),
+                    'curl',
+                    '-L',  # Follow redirects
+                    '-s',  # Silent mode
+                    '-o', str(temp_file),  # Output file
+                    '--max-time', '1800',  # 30 minutes timeout
+                    '--retry', '3',  # Retry 3 times
+                    '--retry-delay', '5',  # Wait 5 seconds between retries
                     mediathek_entry.media_url
                 ]
 
+                logger.debug(f"Downloading with curl: {mediathek_entry.media_url}")
                 result = await asyncio.to_thread(
                     subprocess.run,
                     cmd,
@@ -1041,9 +1044,11 @@ class MediathekCacher:
                 )
 
                 if result.returncode != 0:
-                    error_msg = result.stderr.strip() if result.stderr else "Unknown yt-dlp error"
-                    logger.warning(f"Download failed: {error_msg}")
+                    error_msg = result.stderr.strip() if result.stderr else "Unknown curl error"
+                    logger.warning(f"Curl download failed: {error_msg}")
                     return False
+
+                logger.debug("Curl download successful")
 
                 if not temp_file.exists():
                     logger.error(f"Download failed or temp file doesn't exist")

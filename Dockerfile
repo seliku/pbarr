@@ -16,8 +16,7 @@ RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 
-# yt-dlp installieren (wichtig!)
-RUN pip install --no-cache-dir yt-dlp
+
 
 # Python dependencies
 COPY requirements.txt .
