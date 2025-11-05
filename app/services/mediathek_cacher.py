@@ -1083,8 +1083,23 @@ class MediathekCacher:
                 scan_result = await sonarr_manager.trigger_disk_scan(sonarr_series_id)
                 if not scan_result.get("success"):
                     logger.warning(f"Failed to trigger rescan: {scan_result.get('message')}")
+                    return True  # Download war erfolgreich, nur Rescan fehlgeschlagen
 
-                return True
+                # Warte kurz, damit Sonarr die Datei verarbeiten kann
+                await asyncio.sleep(2)
+
+                # Prüfe ob die Episode jetzt in Sonarr erkannt wurde
+                try:
+                    updated_episode_data = await sonarr_manager.get_episode(sonarr_series_id, season, episode)
+                    if updated_episode_data and updated_episode_data.get("hasFile", False):
+                        logger.info(f"✅ Episode S{season:02d}E{episode:02d} successfully added to Sonarr library")
+                        return True
+                    else:
+                        logger.warning(f"⚠️ Episode S{season:02d}E{episode:02d} downloaded but not recognized by Sonarr yet")
+                        return True  # Download war erfolgreich, Sonarr braucht vielleicht mehr Zeit
+                except Exception as e:
+                    logger.warning(f"Could not verify episode status in Sonarr: {e}")
+                    return True  # Download war erfolgreich, Verifikation fehlgeschlagen
 
             except Exception as e:
                 logger.warning(f"Download failed: {str(e)}")
