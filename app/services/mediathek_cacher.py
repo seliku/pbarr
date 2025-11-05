@@ -38,6 +38,14 @@ class MediathekCacher:
         try:
             logger.info("🔄 Starting Mediathek cache sync for tagged shows...")
 
+            # Check for orphaned series before processing
+            try:
+                logger.info("🧹 Starting orphaned series cleanup...")
+                await self._cleanup_orphaned_series(db)
+                logger.info("✅ Orphaned series cleanup completed")
+            except Exception as e:
+                logger.error(f"❌ Orphaned series cleanup failed: {e}")
+
             # NUR Serien die bereits manuell in Sonarr getaggt wurden
             watch_list = db.query(WatchList).filter(WatchList.tagged_in_sonarr == True).all()
 
@@ -1142,6 +1150,132 @@ class MediathekCacher:
             raise
         finally:
             db.close()
+
+    async def _cleanup_orphaned_series(self, db: Session):
+        """
+        Check if watchlist series still exist in Sonarr and have PBArr tag, remove orphaned entries
+        from all PBArr tables: watch_list, mediathek_cache, tvdb_cache, episode_monitoring_state
+        """
+        try:
+            logger.info("🔍 Checking for orphaned series in Sonarr...")
+
+            # Get Sonarr config
+            sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
+            sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
+
+            if not (sonarr_url_config and sonarr_api_config and sonarr_url_config.value and sonarr_api_config.value):
+                logger.info("Sonarr not configured, skipping orphaned series cleanup")
+                return
+
+            sonarr_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
+
+            # Get PBArr tag ID for checking
+            pbarr_tag_id = await sonarr_manager._get_or_create_pbarr_tag()
+            if not pbarr_tag_id:
+                logger.warning("Could not get PBArr tag ID, skipping tag validation")
+                pbarr_tag_id = None
+
+            # Get all series from watchlist that are tagged in Sonarr
+            watchlist_series = db.query(WatchList).filter(
+                WatchList.tagged_in_sonarr == True,
+                WatchList.sonarr_series_id.isnot(None)
+            ).all()
+
+            if not watchlist_series:
+                logger.info("No series tagged in Sonarr to check")
+                return
+
+            logger.info(f"Checking {len(watchlist_series)} series for existence and PBArr tag in Sonarr...")
+
+            orphaned_count = 0
+
+            for watchlist_entry in watchlist_series:
+                try:
+                    # Check if series still exists in Sonarr
+                    series_info = await sonarr_manager.get_series_info(watchlist_entry.sonarr_series_id)
+
+                    if not series_info:
+                        # Series no longer exists in Sonarr - clean up all related data
+                        logger.info(f"🗑️ Series '{watchlist_entry.show_name}' (TVDB: {watchlist_entry.tvdb_id}) no longer exists in Sonarr, cleaning up...")
+
+                        # Delete from mediathek_cache
+                        mediathek_deleted = db.query(MediathekCache).filter(
+                            MediathekCache.tvdb_id == watchlist_entry.tvdb_id
+                        ).delete()
+
+                        # Delete from tvdb_cache
+                        tvdb_deleted = db.query(TVDBCache).filter(
+                            TVDBCache.tvdb_id == watchlist_entry.tvdb_id
+                        ).delete()
+
+                        # Delete from episode_monitoring_state
+                        monitoring_deleted = db.query(EpisodeMonitoringState).filter(
+                            EpisodeMonitoringState.sonarr_series_id == watchlist_entry.sonarr_series_id
+                        ).delete()
+
+                        # Delete from watch_list
+                        db.delete(watchlist_entry)
+
+                        db.commit()
+
+                        logger.info(f"  ✅ Cleaned up orphaned series '{watchlist_entry.show_name}':")
+                        logger.info(f"    - {mediathek_deleted} mediathek cache entries")
+                        logger.info(f"    - {tvdb_deleted} TVDB cache entries")
+                        logger.info(f"    - {monitoring_deleted} monitoring state entries")
+                        logger.info(f"    - 1 watchlist entry")
+
+                        orphaned_count += 1
+                    else:
+                        # Series exists in Sonarr - check if it still has PBArr tag
+                        if pbarr_tag_id:
+                            series_tags = series_info.get("tags", [])
+                            if pbarr_tag_id not in series_tags:
+                                # Series exists but no longer has PBArr tag - clean up
+                                logger.info(f"🗑️ Series '{watchlist_entry.show_name}' (TVDB: {watchlist_entry.tvdb_id}) no longer has PBArr tag in Sonarr, cleaning up...")
+
+                                # Delete from mediathek_cache
+                                mediathek_deleted = db.query(MediathekCache).filter(
+                                    MediathekCache.tvdb_id == watchlist_entry.tvdb_id
+                                ).delete()
+
+                                # Delete from tvdb_cache
+                                tvdb_deleted = db.query(TVDBCache).filter(
+                                    TVDBCache.tvdb_id == watchlist_entry.tvdb_id
+                                ).delete()
+
+                                # Delete from episode_monitoring_state
+                                monitoring_deleted = db.query(EpisodeMonitoringState).filter(
+                                    EpisodeMonitoringState.sonarr_series_id == watchlist_entry.sonarr_series_id
+                                ).delete()
+
+                                # Delete from watch_list
+                                db.delete(watchlist_entry)
+
+                                db.commit()
+
+                                logger.info(f"  ✅ Cleaned up series without PBArr tag '{watchlist_entry.show_name}':")
+                                logger.info(f"    - {mediathek_deleted} mediathek cache entries")
+                                logger.info(f"    - {tvdb_deleted} TVDB cache entries")
+                                logger.info(f"    - {monitoring_deleted} monitoring state entries")
+                                logger.info(f"    - 1 watchlist entry")
+
+                                orphaned_count += 1
+                            else:
+                                logger.debug(f"✓ Series '{watchlist_entry.show_name}' still exists in Sonarr with PBArr tag")
+                        else:
+                            logger.debug(f"✓ Series '{watchlist_entry.show_name}' still exists in Sonarr")
+
+                except Exception as e:
+                    logger.error(f"Error checking series {watchlist_entry.show_name}: {e}")
+                    continue
+
+            if orphaned_count > 0:
+                logger.info(f"✅ Cleaned up {orphaned_count} orphaned series")
+            else:
+                logger.info("No orphaned series found")
+
+        except Exception as e:
+            logger.error(f"❌ Error in orphaned series cleanup: {e}", exc_info=True)
 
     async def cleanup_unwatched(self):
         """Daily: Lösche Cache für nicht mehr beobachtete Shows"""
