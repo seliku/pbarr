@@ -20,12 +20,6 @@ class SonarrWebhookManager:
         self.api_key = api_key
         self.headers = {"X-Api-Key": api_key}
 
-        # Register Sonarr hostname as trusted (skip SOCKS5 proxy)
-        from app.utils.network import register_trusted_hostname
-        sonarr_hostname = urlparse(self.sonarr_url).hostname
-        if sonarr_hostname:
-            register_trusted_hostname(sonarr_hostname)
-
     async def create_webhook(self, pbarr_webhook_url: str) -> Dict:
         """
         Create PBArr webhook in Sonarr for series additions
@@ -36,16 +30,6 @@ class SonarrWebhookManager:
         Returns: {"success": bool, "message": str, "webhook_id": int}
         """
         try:
-            # CRITICAL: Register hostname BEFORE any HTTP requests to prevent SOCKS5 proxy timeouts
-            from app.utils.network import register_trusted_hostname, should_use_proxy, _TRUSTED_LOCAL_HOSTNAMES
-            sonarr_hostname = urlparse(self.sonarr_url).hostname
-            logger.info(f"Sonarr URL: {self.sonarr_url}")
-            logger.info(f"Hostname: {sonarr_hostname}")
-            if sonarr_hostname:
-                register_trusted_hostname(sonarr_hostname)
-                logger.info(f"Will use proxy? {should_use_proxy(self.sonarr_url)}")
-                logger.info(f"Trusted hostnames: {_TRUSTED_LOCAL_HOSTNAMES}")
-
             # Check if webhook already exists
             existing_webhook = await self._get_existing_webhook()
             if existing_webhook:
@@ -75,12 +59,6 @@ class SonarrWebhookManager:
             }
 
             logger.info(f"Creating webhook with URL: {webhook_url}")
-
-            # Ensure Sonarr hostname is registered as trusted (skip SOCKS5 proxy)
-            from app.utils.network import register_trusted_hostname
-            sonarr_hostname = urlparse(self.sonarr_url).hostname
-            if sonarr_hostname:
-                register_trusted_hostname(sonarr_hostname)
 
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(

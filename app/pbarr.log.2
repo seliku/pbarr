@@ -1,535 +1,535 @@
-2025-11-04 18:11:02 - app.main - INFO - Starting PBArr...
-2025-11-04 18:11:02 - app.database - INFO - ✓ Database connection successful
-2025-11-04 18:11:02 - app.database - INFO - ✓ All database tables initialized
-2025-11-04 18:11:02 - app.main - INFO - ✓ Database initialized
-2025-11-04 18:11:02 - app.startup - INFO - ✅ Base config initialized
-2025-11-04 18:11:02 - app.startup - INFO - 📂 Download directory exists: /app/downloads/completed
-2025-11-04 18:11:02 - app.startup - INFO - ✅ PBArr will download to: /app/downloads/completed
-2025-11-04 18:11:02 - app.startup - INFO - ℹ️  Configure host mapping in docker-compose.yml to control where downloads go on your system
-2025-11-04 18:11:02 - app.services.download_worker - INFO - ✓ Download Worker started (interval: 30s)
-2025-11-04 18:11:02 - app.main - INFO - ✓ Scheduler started (hourly cache, daily cleanup)
-2025-11-04 19:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
-2025-11-04 19:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
-2025-11-04 19:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
-2025-11-04 19:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
-2025-11-04 19:11:03 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-04 19:11:04 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
-2025-11-04 19:11:04 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
-2025-11-04 19:11:04 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
-2025-11-04 19:11:04 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
-2025-11-04 19:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
-2025-11-04 19:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
-2025-11-04 19:11:05 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
-2025-11-04 19:11:05 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
-2025-11-04 19:11:05 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-04 19:11:05 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
-2025-11-04 19:11:05 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
-2025-11-04 19:11:05 - app.services.mediathek_cacher - INFO -   → downloading episode
-2025-11-04 19:11:05 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
-Traceback (most recent call last):
-  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
-    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
-    ^^^^^^^^^^^
-UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
-2025-11-04 19:11:05 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
-2025-11-04 19:11:09 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-04 19:11:09 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
-2025-11-04 19:11:09 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
-2025-11-04 19:11:09 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
-2025-11-04 19:11:09 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
-2025-11-04 19:11:09 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
-2025-11-04 19:11:09 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
-2025-11-04 19:11:09 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 19:11:15 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   → ignoring, file already exists
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   Found 3 monitored episodes without files for For Heaven's Sake (2002)
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   Found 1 cached mediathek episodes for For Heaven's Sake (2002)
-2025-11-04 19:11:15 - app.services.mediathek_cacher - INFO -   Found mediathek match for S20E11, downloading...
-2025-11-04 19:11:16 - app.services.mediathek_cacher - INFO - Series uses Season folders (from Sonarr API): /app/library/For Heaven's Sake (2002)/Season 20
-2025-11-04 19:11:18 - app.services.mediathek_cacher - WARNING - Download failed: WARNING: External Downloader arguments given without specifying name. The arguments will be given to aria2c
-ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
-2025-11-04 19:11:18 - app.services.mediathek_cacher - WARNING -     ✗ Failed to download S20E11 for For Heaven's Sake (2002)
-2025-11-04 19:11:18 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
-2025-11-04 20:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
-2025-11-04 20:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
-2025-11-04 20:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
-2025-11-04 20:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
-2025-11-04 20:11:03 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-04 20:11:03 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
-2025-11-04 20:11:03 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
-2025-11-04 20:11:03 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
-2025-11-04 20:11:03 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
-2025-11-04 20:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
-2025-11-04 20:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
-2025-11-04 20:11:04 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
-2025-11-04 20:11:04 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
-2025-11-04 20:11:04 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-04 20:11:04 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
-2025-11-04 20:11:04 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
-2025-11-04 20:11:04 - app.services.mediathek_cacher - INFO -   → downloading episode
-2025-11-04 20:11:04 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
-Traceback (most recent call last):
-  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
-    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
-    ^^^^^^^^^^^
-UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
-2025-11-04 20:11:04 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
-2025-11-04 20:11:04 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-04 20:11:05 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
-2025-11-04 20:11:05 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
-2025-11-04 20:11:05 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
-2025-11-04 20:11:05 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
-2025-11-04 20:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
-2025-11-04 20:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
-2025-11-04 20:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
-2025-11-04 20:11:05 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
-2025-11-04 20:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
-2025-11-04 20:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
-2025-11-04 20:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 20:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, file already exists
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   Found 3 monitored episodes without files for For Heaven's Sake (2002)
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   Found 1 cached mediathek episodes for For Heaven's Sake (2002)
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO -   Found mediathek match for S20E11, downloading...
-2025-11-04 20:11:06 - app.services.mediathek_cacher - INFO - Series uses Season folders (from Sonarr API): /app/library/For Heaven's Sake (2002)/Season 20
-2025-11-04 20:11:07 - app.services.mediathek_cacher - WARNING - Download failed: WARNING: External Downloader arguments given without specifying name. The arguments will be given to aria2c
-ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
-2025-11-04 20:11:07 - app.services.mediathek_cacher - WARNING -     ✗ Failed to download S20E11 for For Heaven's Sake (2002)
-2025-11-04 20:11:07 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
-2025-11-04 21:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
-2025-11-04 21:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
-2025-11-04 21:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
-2025-11-04 21:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
-2025-11-04 21:11:04 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-04 21:11:04 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
-2025-11-04 21:11:05 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
-2025-11-04 21:11:05 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
-2025-11-04 21:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
-2025-11-04 21:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
-2025-11-04 21:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
-2025-11-04 21:11:05 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
-2025-11-04 21:11:05 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
-2025-11-04 21:11:05 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-04 21:11:05 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
-2025-11-04 21:11:05 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
-2025-11-04 21:11:05 - app.services.mediathek_cacher - INFO -   → downloading episode
-2025-11-04 21:11:05 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
-Traceback (most recent call last):
-  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
-    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
-    ^^^^^^^^^^^
-UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
-2025-11-04 21:11:05 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
-2025-11-04 21:11:06 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-04 21:11:06 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
-2025-11-04 21:11:07 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
-2025-11-04 21:11:07 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
-2025-11-04 21:11:07 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
-2025-11-04 21:11:07 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
-2025-11-04 21:11:07 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
-2025-11-04 21:11:07 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
-2025-11-04 21:11:07 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
-2025-11-04 21:11:07 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
-2025-11-04 21:11:07 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
-2025-11-04 21:11:07 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
-2025-11-04 21:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:09 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:09 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:09 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:09 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:09 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:09 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:09 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:09 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 21:11:09 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   → ignoring, file already exists
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   Found 3 monitored episodes without files for For Heaven's Sake (2002)
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   Found 1 cached mediathek episodes for For Heaven's Sake (2002)
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO -   Found mediathek match for S20E11, downloading...
-2025-11-04 21:11:09 - app.services.mediathek_cacher - INFO - Series uses Season folders (from Sonarr API): /app/library/For Heaven's Sake (2002)/Season 20
-2025-11-04 21:11:10 - app.services.mediathek_cacher - WARNING - Download failed: WARNING: External Downloader arguments given without specifying name. The arguments will be given to aria2c
-ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
-2025-11-04 21:11:10 - app.services.mediathek_cacher - WARNING -     ✗ Failed to download S20E11 for For Heaven's Sake (2002)
-2025-11-04 21:11:10 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
-2025-11-04 22:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
-2025-11-04 22:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
-2025-11-04 22:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
-2025-11-04 22:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
-2025-11-04 22:11:03 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-04 22:11:03 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
-2025-11-04 22:11:03 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
-2025-11-04 22:11:03 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
-2025-11-04 22:11:03 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
-2025-11-04 22:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
-2025-11-04 22:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
-2025-11-04 22:11:04 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
-2025-11-04 22:11:04 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
-2025-11-04 22:11:04 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-04 22:11:04 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
-2025-11-04 22:11:04 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
-2025-11-04 22:11:04 - app.services.mediathek_cacher - INFO -   → downloading episode
-2025-11-04 22:11:04 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
-Traceback (most recent call last):
-  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
-    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
-    ^^^^^^^^^^^
-UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
-2025-11-04 22:11:04 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
-2025-11-04 22:11:04 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-04 22:11:04 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
-2025-11-04 22:11:05 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
-2025-11-04 22:11:05 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
-2025-11-04 22:11:05 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
-2025-11-04 22:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
-2025-11-04 22:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
-2025-11-04 22:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
-2025-11-04 22:11:06 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
-2025-11-04 22:11:06 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
-2025-11-04 22:11:06 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
-2025-11-04 22:11:06 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 22:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, file already exists
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   Found 3 monitored episodes without files for For Heaven's Sake (2002)
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   Found 1 cached mediathek episodes for For Heaven's Sake (2002)
-2025-11-04 22:11:08 - app.services.mediathek_cacher - INFO -   Found mediathek match for S20E11, downloading...
-2025-11-04 22:11:09 - app.services.mediathek_cacher - INFO - Series uses Season folders (from Sonarr API): /app/library/For Heaven's Sake (2002)/Season 20
-2025-11-04 22:11:09 - app.services.mediathek_cacher - WARNING - Download failed: WARNING: External Downloader arguments given without specifying name. The arguments will be given to aria2c
-ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
-2025-11-04 22:11:09 - app.services.mediathek_cacher - WARNING -     ✗ Failed to download S20E11 for For Heaven's Sake (2002)
-2025-11-04 22:11:09 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
-2025-11-04 23:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
-2025-11-04 23:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
-2025-11-04 23:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
-2025-11-04 23:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
-2025-11-04 23:11:07 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-04 23:11:07 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
-2025-11-04 23:11:07 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
-2025-11-04 23:11:08 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
-2025-11-04 23:11:08 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
-2025-11-04 23:11:08 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
-2025-11-04 23:11:08 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
-2025-11-04 23:11:09 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
-2025-11-04 23:11:09 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
-2025-11-04 23:11:09 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-04 23:11:09 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
-2025-11-04 23:11:09 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
-2025-11-04 23:11:09 - app.services.mediathek_cacher - INFO -   → downloading episode
-2025-11-04 23:11:09 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
-Traceback (most recent call last):
-  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
-    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
-    ^^^^^^^^^^^
-UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
-2025-11-04 23:11:09 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
-2025-11-04 23:11:10 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-04 23:11:10 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
-2025-11-04 23:11:11 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
-2025-11-04 23:11:11 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-04 23:11:11 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
-2025-11-04 23:11:11 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-04 23:11:12 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   → ignoring, file already exists
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   Found 3 monitored episodes without files for For Heaven's Sake (2002)
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   Found 1 cached mediathek episodes for For Heaven's Sake (2002)
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO -   Found mediathek match for S20E11, downloading...
-2025-11-04 23:11:12 - app.services.mediathek_cacher - INFO - Series uses Season folders (from Sonarr API): /app/library/For Heaven's Sake (2002)/Season 20
-2025-11-04 23:11:13 - app.services.mediathek_cacher - WARNING - Download failed: WARNING: External Downloader arguments given without specifying name. The arguments will be given to aria2c
-ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
-2025-11-04 23:11:13 - app.services.mediathek_cacher - WARNING -     ✗ Failed to download S20E11 for For Heaven's Sake (2002)
-2025-11-04 23:11:13 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
-2025-11-05 00:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
-2025-11-05 00:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
-2025-11-05 00:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
-2025-11-05 00:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
-2025-11-05 00:11:02 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-05 00:11:02 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
-2025-11-05 00:11:03 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
-2025-11-05 00:11:03 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
-2025-11-05 00:11:03 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
-2025-11-05 00:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
-2025-11-05 00:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
-2025-11-05 00:11:03 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
-2025-11-05 00:11:03 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
-2025-11-05 00:11:03 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-05 00:11:03 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
-2025-11-05 00:11:03 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
-2025-11-05 00:11:03 - app.services.mediathek_cacher - INFO -   → downloading episode
-2025-11-05 00:11:03 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
-Traceback (most recent call last):
-  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
-    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
-    ^^^^^^^^^^^
-UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
-2025-11-05 00:11:03 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
-2025-11-05 00:11:04 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
-2025-11-05 00:11:04 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
-2025-11-05 00:11:04 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
-2025-11-05 00:11:04 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
-2025-11-05 00:11:04 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
-2025-11-05 00:11:04 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
-2025-11-05 00:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
-2025-11-05 00:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
-2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
-2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
-2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
-2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
-2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
-2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
-2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
-2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
-2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
 2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
 2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
-2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 00:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, file already exists
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   Found 3 monitored episodes without files for For Heaven's Sake (2002)
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   Found 1 cached mediathek episodes for For Heaven's Sake (2002)
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO -   Found mediathek match for S20E11, downloading...
+2025-11-05 00:11:05 - app.services.mediathek_cacher - INFO - Series uses Season folders (from Sonarr API): /app/library/For Heaven's Sake (2002)/Season 20
+2025-11-05 00:11:07 - app.services.mediathek_cacher - WARNING - Download failed: WARNING: External Downloader arguments given without specifying name. The arguments will be given to aria2c
+ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+2025-11-05 00:11:07 - app.services.mediathek_cacher - WARNING -     ✗ Failed to download S20E11 for For Heaven's Sake (2002)
+2025-11-05 00:11:07 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
+2025-11-05 01:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
+2025-11-05 01:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
+2025-11-05 01:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
+2025-11-05 01:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
+2025-11-05 01:11:03 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 01:11:03 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
+2025-11-05 01:11:04 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
+2025-11-05 01:11:04 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
+2025-11-05 01:11:04 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
+2025-11-05 01:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
+2025-11-05 01:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
+2025-11-05 01:11:04 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
+2025-11-05 01:11:04 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
+2025-11-05 01:11:04 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 01:11:04 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
+2025-11-05 01:11:04 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
+2025-11-05 01:11:04 - app.services.mediathek_cacher - INFO -   → downloading episode
+2025-11-05 01:11:04 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
+Traceback (most recent call last):
+  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
+    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
+2025-11-05 01:11:04 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
+2025-11-05 01:11:04 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 01:11:05 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
+2025-11-05 01:11:05 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
+2025-11-05 01:11:05 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
+2025-11-05 01:11:05 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
+2025-11-05 01:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
+2025-11-05 01:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
+2025-11-05 01:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
+2025-11-05 01:11:05 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
+2025-11-05 01:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
+2025-11-05 01:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
+2025-11-05 01:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 01:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, file already exists
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   Found 3 monitored episodes without files for For Heaven's Sake (2002)
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   Found 1 cached mediathek episodes for For Heaven's Sake (2002)
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO -   Found mediathek match for S20E11, downloading...
+2025-11-05 01:11:06 - app.services.mediathek_cacher - INFO - Series uses Season folders (from Sonarr API): /app/library/For Heaven's Sake (2002)/Season 20
+2025-11-05 01:11:09 - app.services.mediathek_cacher - WARNING - Download failed: WARNING: External Downloader arguments given without specifying name. The arguments will be given to aria2c
+ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+2025-11-05 01:11:09 - app.services.mediathek_cacher - WARNING -     ✗ Failed to download S20E11 for For Heaven's Sake (2002)
+2025-11-05 01:11:09 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
+2025-11-05 02:00:00 - app.services.mediathek_cacher - INFO - 🧹 Starting cache cleanup...
+2025-11-05 02:00:00 - app.services.mediathek_cacher - INFO - No expired entries
+2025-11-05 02:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
+2025-11-05 02:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
+2025-11-05 02:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
+2025-11-05 02:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
+2025-11-05 02:11:04 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 02:11:04 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
+2025-11-05 02:11:04 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
+2025-11-05 02:11:04 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
+2025-11-05 02:11:04 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
+2025-11-05 02:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
+2025-11-05 02:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
+2025-11-05 02:11:06 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
+2025-11-05 02:11:06 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
+2025-11-05 02:11:06 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 02:11:06 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
+2025-11-05 02:11:06 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
+2025-11-05 02:11:06 - app.services.mediathek_cacher - INFO -   → downloading episode
+2025-11-05 02:11:06 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
+Traceback (most recent call last):
+  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
+    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
+2025-11-05 02:11:06 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
+2025-11-05 02:11:06 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 02:11:06 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
+2025-11-05 02:11:07 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
+2025-11-05 02:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 02:11:08 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   → ignoring, file already exists
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   Found 3 monitored episodes without files for For Heaven's Sake (2002)
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   Found 1 cached mediathek episodes for For Heaven's Sake (2002)
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO -   Found mediathek match for S20E11, downloading...
+2025-11-05 02:11:08 - app.services.mediathek_cacher - INFO - Series uses Season folders (from Sonarr API): /app/library/For Heaven's Sake (2002)/Season 20
+2025-11-05 02:11:09 - app.services.mediathek_cacher - WARNING - Download failed: WARNING: External Downloader arguments given without specifying name. The arguments will be given to aria2c
+ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+2025-11-05 02:11:09 - app.services.mediathek_cacher - WARNING -     ✗ Failed to download S20E11 for For Heaven's Sake (2002)
+2025-11-05 02:11:09 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
+2025-11-05 03:00:00 - app.services.mediathek_cacher - INFO - 🧹 Starting cleanup of unwatched shows...
+2025-11-05 03:00:00 - app.services.mediathek_cacher - INFO - No inactive shows
+2025-11-05 03:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
+2025-11-05 03:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
+2025-11-05 03:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
+2025-11-05 03:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
+2025-11-05 03:11:03 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 03:11:03 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
+2025-11-05 03:11:03 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
+2025-11-05 03:11:03 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
+2025-11-05 03:11:03 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
+2025-11-05 03:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
+2025-11-05 03:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
+2025-11-05 03:11:04 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
+2025-11-05 03:11:04 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
+2025-11-05 03:11:04 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 03:11:04 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
+2025-11-05 03:11:04 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
+2025-11-05 03:11:04 - app.services.mediathek_cacher - INFO -   → downloading episode
+2025-11-05 03:11:04 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
+Traceback (most recent call last):
+  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
+    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
+2025-11-05 03:11:04 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
+2025-11-05 03:11:04 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 03:11:04 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
+2025-11-05 03:11:05 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
+2025-11-05 03:11:05 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:05 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 03:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, file already exists
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   Found 3 monitored episodes without files for For Heaven's Sake (2002)
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   Found 1 cached mediathek episodes for For Heaven's Sake (2002)
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO -   Found mediathek match for S20E11, downloading...
+2025-11-05 03:11:06 - app.services.mediathek_cacher - INFO - Series uses Season folders (from Sonarr API): /app/library/For Heaven's Sake (2002)/Season 20
+2025-11-05 03:11:07 - app.services.mediathek_cacher - WARNING - Download failed: WARNING: External Downloader arguments given without specifying name. The arguments will be given to aria2c
+ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+2025-11-05 03:11:07 - app.services.mediathek_cacher - WARNING -     ✗ Failed to download S20E11 for For Heaven's Sake (2002)
+2025-11-05 03:11:07 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
+2025-11-05 04:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
+2025-11-05 04:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
+2025-11-05 04:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
+2025-11-05 04:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
+2025-11-05 04:11:05 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 04:11:05 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
+2025-11-05 04:11:06 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
+2025-11-05 04:11:06 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
+2025-11-05 04:11:06 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
+2025-11-05 04:11:06 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
+2025-11-05 04:11:06 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
+2025-11-05 04:11:08 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
+2025-11-05 04:11:08 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
+2025-11-05 04:11:08 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 04:11:08 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
+2025-11-05 04:11:08 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
+2025-11-05 04:11:08 - app.services.mediathek_cacher - INFO -   → downloading episode
+2025-11-05 04:11:08 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
+Traceback (most recent call last):
+  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
+    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
+2025-11-05 04:11:08 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
+2025-11-05 04:11:09 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 04:11:09 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
+2025-11-05 04:11:10 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
+2025-11-05 04:11:10 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
+2025-11-05 04:11:10 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
+2025-11-05 04:11:10 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
+2025-11-05 04:11:10 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
+2025-11-05 04:11:10 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
+2025-11-05 04:11:25 - app.services.mediathek_cacher - WARNING -     Feed fetch error for 'Um Himmels Willen': 
+2025-11-05 04:11:25 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
+2025-11-05 04:11:25 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
+2025-11-05 04:11:25 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
+2025-11-05 04:11:26 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
+2025-11-05 04:11:26 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 0 (from 2 title variants)
+2025-11-05 04:11:26 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 04:11:26 - app.services.mediathek_cacher - INFO -   No results for For Heaven's Sake (2002)
+2025-11-05 04:11:26 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
+2025-11-05 05:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
+2025-11-05 05:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
+2025-11-05 05:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
+2025-11-05 05:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
+2025-11-05 05:11:02 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 05:11:02 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
+2025-11-05 05:11:03 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
+2025-11-05 05:11:03 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
+2025-11-05 05:11:03 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
+2025-11-05 05:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
+2025-11-05 05:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
+2025-11-05 05:11:03 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
+2025-11-05 05:11:03 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
+2025-11-05 05:11:03 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 05:11:03 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
+2025-11-05 05:11:03 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
+2025-11-05 05:11:03 - app.services.mediathek_cacher - INFO -   → downloading episode
+2025-11-05 05:11:03 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
+Traceback (most recent call last):
+  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
+    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
+2025-11-05 05:11:03 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
+2025-11-05 05:11:04 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 05:11:04 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
+2025-11-05 05:11:04 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
+2025-11-05 05:11:04 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
+2025-11-05 05:11:04 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
+2025-11-05 05:11:04 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
+2025-11-05 05:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
+2025-11-05 05:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
+2025-11-05 05:11:20 - app.services.mediathek_cacher - WARNING -     Feed fetch error for 'Um Himmels Willen': 
+2025-11-05 05:11:20 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
+2025-11-05 05:11:20 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
+2025-11-05 05:11:20 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
+2025-11-05 05:11:21 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
+2025-11-05 05:11:21 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 0 (from 2 title variants)
+2025-11-05 05:11:21 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 05:11:21 - app.services.mediathek_cacher - INFO -   No results for For Heaven's Sake (2002)
+2025-11-05 05:11:21 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
+2025-11-05 06:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
+2025-11-05 06:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
+2025-11-05 06:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
+2025-11-05 06:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
+2025-11-05 06:11:02 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 06:11:02 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
+2025-11-05 06:11:03 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
+2025-11-05 06:11:03 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
+2025-11-05 06:11:03 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
+2025-11-05 06:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
+2025-11-05 06:11:03 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
+2025-11-05 06:11:03 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Wer weiß denn sowas?'
+2025-11-05 06:11:03 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 1 title variants)
+2025-11-05 06:11:03 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 06:11:03 - app.services.episode_matcher - INFO - ✓ EXACT DATE MATCH: S11E16
+2025-11-05 06:11:03 - app.services.episode_matcher - INFO - Created MatchResult: S11E16
+2025-11-05 06:11:03 - app.services.mediathek_cacher - INFO -   → downloading episode
+2025-11-05 06:11:03 - app.services.mediathek_cacher - ERROR -   Cache error for Wer weiß denn sowas?: cannot access local variable 'cache_entry' where it is not associated with a value
+Traceback (most recent call last):
+  File "/app/app/services/mediathek_cacher.py", line 317, in _cache_show
+    cache_entry, match_result.season, match_result.episode, watchlist_entry.sonarr_series_id, db
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'cache_entry' where it is not associated with a value
+2025-11-05 06:11:03 - app.services.mediathek_cacher - INFO -   Caching: For Heaven's Sake (2002) (TVDB 93221)
+2025-11-05 06:11:04 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 06:11:04 - app.services.tvdb_client - INFO - ✓ Show name: Um Himmels Willen
+2025-11-05 06:11:04 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 93221: ['Um Himmels Willen']
+2025-11-05 06:11:05 - app.services.mediathek_cacher - INFO -   ✓ Added Sonarr title: For Heaven's Sake (2002)
+2025-11-05 06:11:05 - app.services.mediathek_cacher - INFO -   Searching with 2 title variants: ['Um Himmels Willen', "For Heaven's Sake (2002)"]
+2025-11-05 06:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Um Himmels Willen'
+2025-11-05 06:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Um Himmels Willen
+2025-11-05 06:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Um%20Himmels%20Willen&future=false
+2025-11-05 06:11:05 - app.services.mediathek_cacher - INFO -     Found 50 results for 'Um Himmels Willen'
+2025-11-05 06:11:05 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'For Heaven's Sake (2002)'
+2025-11-05 06:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: For Heaven's Sake (2002)
+2025-11-05 06:11:05 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=For%20Heaven%27s%20Sake%20%282002%29&future=false
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -     Found 0 results for 'For Heaven's Sake (2002)'
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 50 (from 2 title variants)
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Doppelleben (258)' → S20E11 ('Doppelleben')
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gefährliche Liebe (257)' → S20E10 ('Gefährliche Liebe')
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Späte Wahrheit (256)' → S20E09 ('Späte Wahrheit')
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Pechvogel (255)' → S20E08 ('Pechvogel')
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Positiv (254)' → S20E07 ('Positiv')
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Liebe kennt kein Alter (252)' → S20E05 ('Liebe kennt kein Alter')
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Gerüchte (251)' → S20E04 ('Gerüchte')
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Abflug (250)' → S20E03 ('Abflug')
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Bühnenreif (249)' → S20E02 ('Bühnenreif')
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Plötzlich reich (248)' → S20E01 ('Plötzlich reich')
+2025-11-05 06:11:06 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:06 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Ausgekocht (247)' → S19E13 ('Ausgekocht')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Spieglein, Spieglein (246)' → S19E12 ('Spieglein, Spieglein')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Letzte Chance (245)' → S19E11 ('Letzte Chance')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Familienkrise (244)' → S19E10 ('Familienkrise')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweiter Frühling (243)' → S19E09 ('Zweiter Frühling')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Wunschkind (242)' → S19E08 ('Wunschkind')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Loslassen (241)' → S19E07 ('Loslassen')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Utas Erbe (240)' → S19E06 ('Utas Erbe')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Überraschungen (239)' → S19E05 ('Überraschungen')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Rückschläge (238)' → S19E04 ('Rückschläge')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Nervensäge (237)' → S19E03 ('Nervensäge')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Handicaps (236)' → S19E02 ('Handicaps')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Hochzeitswahn (235)' → S19E01 ('Hochzeitswahn')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, episode not monitored in Sonarr
+2025-11-05 06:11:07 - app.services.episode_matcher - INFO - ✓ FUZZY TITLE MATCH: 'Zweite Chance (234)' → S18E13 ('Zweite Chance')
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   → ignoring, file already exists
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   Found 3 monitored episodes without files for For Heaven's Sake (2002)
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   Found 1 cached mediathek episodes for For Heaven's Sake (2002)
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO -   Found mediathek match for S20E11, downloading...
+2025-11-05 06:11:07 - app.services.mediathek_cacher - INFO - Series uses Season folders (from Sonarr API): /app/library/For Heaven's Sake (2002)/Season 20
+2025-11-05 06:11:10 - app.services.mediathek_cacher - WARNING - Download failed: WARNING: External Downloader arguments given without specifying name. The arguments will be given to aria2c
+ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+2025-11-05 06:11:10 - app.services.mediathek_cacher - WARNING -     ✗ Failed to download S20E11 for For Heaven's Sake (2002)
+2025-11-05 06:11:10 - app.services.mediathek_cacher - INFO - ✅ Cached 0 episodes total for tagged shows
+2025-11-05 07:11:02 - app.services.mediathek_cacher - INFO - 🔄 Starting Mediathek cache sync for tagged shows...
+2025-11-05 07:11:02 - app.services.mediathek_cacher - INFO - Found 2 manually tagged shows to cache
+2025-11-05 07:11:02 - app.services.mediathek_cacher - INFO - 🔍 Checking for episode monitoring changes...
+2025-11-05 07:11:02 - app.services.mediathek_cacher - INFO -   Caching: Wer weiß denn sowas? (TVDB 298954)
+2025-11-05 07:11:04 - app.services.tvdb_client - INFO - ✓ TVDB token acquired
+2025-11-05 07:11:04 - app.services.tvdb_client - INFO - ✓ Show name: Wer weiß denn sowas?
+2025-11-05 07:11:04 - app.services.tvdb_client - INFO - ✓ Found 1 title variants for TVDB 298954: ['Wer weiß denn sowas?']
+2025-11-05 07:11:04 - app.services.mediathek_cacher - INFO -   Searching with 1 title variants: ['Wer weiß denn sowas?']
+2025-11-05 07:11:04 - app.services.mediathek_cacher - INFO -   🔍 Searching Mediathek for: 'Wer weiß denn sowas?'
+2025-11-05 07:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb Query: Wer weiß denn sowas?
+2025-11-05 07:11:04 - app.services.mediathek_cacher - INFO -     MediathekViewWeb URL: https://mediathekviewweb.de/feed?query=Wer%20wei%C3%9F%20denn%20sowas%3F&future=false
+2025-11-05 07:11:05 - app.services.mediathek_cacher - WARNING -     Feed fetch error for 'Wer weiß denn sowas?': Cannot connect to host mediathekviewweb.de:443 ssl:default [None]
+2025-11-05 07:11:05 - app.services.mediathek_cacher - INFO -   Total unique Mediathek results: 0 (from 1 title variants)
+2025-11-05 07:11:05 - app.services.mediathek_cacher - INFO -   Filter - Duration: >0<360, Senders: '', Exclude: 'klare Sprache,Audiodeskription,Gebärdensprache' (filtered in matcher)

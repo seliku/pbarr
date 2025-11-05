@@ -7,8 +7,6 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     git \
     curl \
-    redsocks \
-    iptables \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
