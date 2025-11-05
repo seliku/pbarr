@@ -15,6 +15,8 @@ import socket
 from concurrent.futures import ThreadPoolExecutor
 import atexit
 
+from app.models.config import Config
+
 logger = logging.getLogger(__name__)
 
 # Cache for proxy settings (TTL: 5 minutes)
@@ -55,20 +57,19 @@ async def load_trusted_hostnames_from_db():
         return
 
     try:
-        # Load service URLs from config table
-        service_configs = _db_reference.query(Config).filter(
-            Config.key.in_(['sonarr_url', 'radarr_url', 'plex_url', 'ombi_url'])
-        ).all()
+        # Load service URLs from config table - using the same pattern as the rest of the codebase
+        service_keys = ['sonarr_url', 'radarr_url', 'plex_url', 'ombi_url']
 
-        for config in service_configs:
-            if config.value and config.value.strip():
+        for key in service_keys:
+            config = _db_reference.query(Config).filter_by(key=key).first()
+            if config and config.value and config.value.strip():
                 hostname = urlparse(config.value.strip()).hostname
                 if hostname and hostname.lower() not in _TRUSTED_LOCAL_HOSTNAMES:
                     _TRUSTED_LOCAL_HOSTNAMES.add(hostname.lower())
                     logger.info(f"✓ Loaded trusted hostname from DB: {hostname}")
 
     except Exception as e:
-        logger.error(f"Failed to load trusted hostnames from DB: {e}")
+        logger.exception(f"Failed to load trusted hostnames from DB")
 
 
 def register_trusted_hostname(hostname: str) -> None:
