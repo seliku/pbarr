@@ -36,6 +36,12 @@ class SonarrWebhookManager:
         Returns: {"success": bool, "message": str, "webhook_id": int}
         """
         try:
+            # CRITICAL: Register hostname BEFORE any HTTP requests to prevent SOCKS5 proxy timeouts
+            from app.utils.network import register_trusted_hostname
+            sonarr_hostname = urlparse(self.sonarr_url).hostname
+            if sonarr_hostname:
+                register_trusted_hostname(sonarr_hostname)
+
             # Check if webhook already exists
             existing_webhook = await self._get_existing_webhook()
             if existing_webhook:
