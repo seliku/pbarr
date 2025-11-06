@@ -35,7 +35,7 @@ version: '3.8'
 
 services:
   pbarr:
-    image: ghcr.io/seliku/pbarr:latest
+    image: ghcr.io/seliku/pbarr:stable
     container_name: pbarr
     restart: unless-stopped
 
