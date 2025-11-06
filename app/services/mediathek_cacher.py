@@ -1032,10 +1032,12 @@ class MediathekCacher:
                 episode_title_normalized = normalize_filename(episode_title)
                 filename = f"{series_title_normalized} - S{season:02d}E{episode:02d} - {episode_title_normalized}.mkv"
 
-                # Download to temp location
-                temp_dir = Path("/tmp/pbarr_downloads")
-                temp_dir.mkdir(exist_ok=True)
-                temp_file = temp_dir / filename
+                # Get the correct final library path from Sonarr
+                final_dir = await self._get_series_structure(sonarr_series_path, season, sonarr_series_id, db)
+                final_path = Path(final_dir) / filename
+
+                # Download directly to final location
+                temp_file = final_path
 
                 # Download with curl (direct MP4 links from Mediathek)
                 cmd = [
@@ -1057,6 +1059,9 @@ class MediathekCacher:
                 logger.info(f"Target directory: {final_dir}")
                 logger.info(f"Target filename: {final_path}")
 
+                # Ensure target directory exists
+                Path(final_dir).mkdir(parents=True, exist_ok=True)
+
                 result = await asyncio.to_thread(
                     subprocess.run,
                     cmd,
@@ -1072,16 +1077,13 @@ class MediathekCacher:
                     return False
 
                 logger.info("Curl download successful")
-                logger.info(f"Temp file exists: {temp_file.exists()}")
-                logger.info(f"Temp file size: {temp_file.stat().st_size if temp_file.exists() else 'N/A'} bytes")
+                logger.info(f"File exists: {final_path.exists()}")
+                logger.info(f"File size: {final_path.stat().st_size if final_path.exists() else 'N/A'} bytes")
 
-                if not temp_file.exists():
-                    logger.error(f"Download failed or temp file doesn't exist")
+                if not final_path.exists():
+                    logger.error(f"Download failed or file doesn't exist")
                     return False
 
-                # Move file directly to Sonarr library (final_dir was already determined above)
-                Path(final_dir).mkdir(parents=True, exist_ok=True)
-                shutil.move(str(temp_file), str(final_path))
                 logger.info(f"✅ Episode downloaded to Sonarr library: {final_path}")
 
                 # Trigger Sonarr rescan
