@@ -247,12 +247,35 @@ async def trigger_import_scan(db: Session = Depends(get_db)):
         if not sonarr_api_config or not sonarr_api_config.value:
             raise HTTPException(status_code=400, detail="Sonarr API key not configured")
 
-        sonarr_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
+        # Start the import scan in the background (don't await)
+        import asyncio
+        asyncio.create_task(_perform_import_scan(sonarr_url_config.value, sonarr_api_config.value, db))
+
+        logger.info("✅ Import scan started in background")
+
+        return {
+            "success": True,
+            "message": "Import scan started in background. Check logs for progress.",
+            "background_task": True
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Import scan error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def _perform_import_scan(sonarr_url: str, sonarr_api_key: str, db: Session):
+    """Perform the actual import scan in background"""
+    try:
+        sonarr_manager = SonarrWebhookManager(sonarr_url, sonarr_api_key)
 
         # Step 1: Get PBArr tag ID
         pbarr_tag_id = await sonarr_manager._get_or_create_pbarr_tag()
         if not pbarr_tag_id:
-            raise HTTPException(status_code=500, detail="Could not get/create PBArr tag in Sonarr")
+            logger.error("Could not get/create PBArr tag in Sonarr")
+            return
 
         logger.info(f"PBArr tag ID: {pbarr_tag_id}")
 
@@ -264,7 +287,8 @@ async def trigger_import_scan(db: Session = Depends(get_db)):
             )
 
             if resp.status_code != 200:
-                raise HTTPException(status_code=500, detail=f"Failed to get series from Sonarr: HTTP {resp.status_code}")
+                logger.error(f"Failed to get series from Sonarr: HTTP {resp.status_code}")
+                return
 
             sonarr_series = resp.json()
 
@@ -390,25 +414,8 @@ async def trigger_import_scan(db: Session = Depends(get_db)):
 
         logger.info(f"✅ {summary}")
 
-        return {
-            "success": True,
-            "message": summary,
-            "statistics": {
-                "total_sonarr_series": len(sonarr_series),
-                "series_with_tag": len(series_with_tag),
-                "series_without_tag": len(series_without_tag),
-                "added_to_watchlist": added_count,
-                "updated_in_watchlist": updated_count,
-                "removed_from_watchlist": removed_count
-            },
-            "cache_sync_triggered": True
-        }
-
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"❌ Import scan error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Background import scan error: {e}", exc_info=True)
 
 
 @router.post("/sync-tvdb")
