@@ -815,7 +815,7 @@ class MediathekCacher:
             # Get all episodes for this series
             async with create_httpx_client(timeout=10.0) as client:
                 resp = await client.get(
-                    f"{sonarr_manager.url}/api/v3/episode?seriesId={watchlist_entry.sonarr_series_id}",
+                    f"{sonarr_manager.sonarr_url}/api/v3/episode?seriesId={watchlist_entry.sonarr_series_id}",
                     headers=sonarr_manager.headers
                 )
 
