@@ -448,7 +448,7 @@ async def get_logs(lines: int = Query(100, ge=1, le=1000)):
         from datetime import datetime
 
         # Get all log files (pbarr.log, pbarr.log.1, pbarr.log.2, etc.)
-        log_pattern = "/app/logs/pbarr.log*"
+        log_pattern = "/app/app/pbarr.log*"
         log_files = sorted(glob.glob(log_pattern), reverse=True)  # Most recent first
 
         if not log_files:
@@ -501,7 +501,7 @@ async def stream_logs():
 
     async def log_generator():
         # Monitor the main log file for new entries
-        log_file = "/app/logs/pbarr.log"
+        log_file = "/app/app/pbarr.log"
 
         last_size = 0
         last_rotation_check = 0
