@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -19,24 +21,11 @@ jobs:
         with:
           fetch-depth: 0  # Full git history for setuptools-scm
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
       - name: Get version
         id: version
         run: |
-          # Try setuptools-scm first
-          if command -v python &> /dev/null; then
-            pip install setuptools-scm &> /dev/null
-            VERSION=$(python -c 'from setuptools_scm import get_version; print(get_version())' 2>/dev/null || echo "")
-          fi
-
-          # Fallback to git describe
-          if [ -z "$VERSION" ]; then
-            VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "0.0.0-dev")
-          fi
+          # Use git describe for reliable versioning
+          VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "0.0.0-dev")
 
           # Clean version for Docker tags (replace + and other invalid chars)
           CLEAN_VERSION=$(echo "$VERSION" | sed 's/+/-/g' | sed 's/[^a-zA-Z0-9._-]//g')
@@ -65,13 +54,7 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ env.CLEAN_VERSION }}
+            ${{ startsWith(github.ref, 'refs/tags/v') && format('ghcr.io/{0}:stable', github.repository) || '' }}
             ghcr.io/${{ github.repository }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Tag as stable (only on releases)
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          # Tag the release version as stable
-          docker tag ghcr.io/${{ github.repository }}:${{ env.CLEAN_VERSION }} ghcr.io/${{ github.repository }}:stable
-          docker push ghcr.io/${{ github.repository }}:stable
