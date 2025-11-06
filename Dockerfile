@@ -1,5 +1,8 @@
 FROM python:3.11-slim
 
+# Build argument for version
+ARG VERSION=0.0.0-dev
+
 WORKDIR /app
 
 # System dependencies
@@ -25,8 +28,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY pyproject.toml .
 COPY app/__init__.py app/__init__.py
 
-# Generate version file
-RUN python -c "import setuptools_scm; setuptools_scm.get_version(write_to='app/_version.py')" 2>/dev/null || echo "version = '0.0.0-dev'" > app/_version.py
+# Generate version file from build argument
+RUN echo "version = '${VERSION}'" > app/_version.py
 
 # App code and migrations
 COPY app/ app/

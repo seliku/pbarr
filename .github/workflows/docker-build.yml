@@ -25,12 +25,16 @@ jobs:
         id: version
         run: |
           # Use git describe for reliable versioning
-          VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "0.0.0-dev")
+          GIT_VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "0.0.0-dev")
+
+          # Remove 'v' prefix for Python version
+          VERSION=$(echo "$GIT_VERSION" | sed 's/^v//')
 
           # Clean version for Docker tags (replace + and other invalid chars)
-          CLEAN_VERSION=$(echo "$VERSION" | sed 's/+/-/g' | sed 's/[^a-zA-Z0-9._-]//g')
+          CLEAN_VERSION=$(echo "$GIT_VERSION" | sed 's/+/-/g' | sed 's/[^a-zA-Z0-9._-]//g')
 
-          echo "Calculated version: $VERSION"
+          echo "Git version: $GIT_VERSION"
+          echo "Python version: $VERSION"
           echo "Clean version: $CLEAN_VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "CLEAN_VERSION=$CLEAN_VERSION" >> $GITHUB_ENV

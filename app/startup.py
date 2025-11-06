@@ -1,5 +1,7 @@
 import logging
 import os
+import subprocess
+import sys
 from pathlib import Path
 from app.database import SessionLocal
 from app.models.config import Config
@@ -127,3 +129,55 @@ def init_download_directory():
     except Exception as e:
         logger.error(f"❌ Failed to initialize download directory: {e}")
         raise
+
+
+def run_migrations():
+    """Run all pending database migrations automatically"""
+    try:
+        logger.info("🔄 Checking for pending database migrations...")
+
+        # Find all migration scripts in the app directory (where this file is located)
+        app_dir = Path(__file__).parent
+        migration_files = []
+
+        # Look for files starting with 'migrate_'
+        for file_path in app_dir.glob("migrate_*.py"):
+            migration_files.append(file_path)
+
+        if not migration_files:
+            logger.info("✅ No migration scripts found")
+            return
+
+        logger.info(f"📋 Found {len(migration_files)} migration script(s)")
+
+        # Run each migration script
+        for migration_file in sorted(migration_files):
+            script_name = migration_file.name
+            logger.info(f"🚀 Running migration: {script_name}")
+
+            try:
+                # Run the migration script as a subprocess
+                result = subprocess.run([
+                    sys.executable, str(migration_file)
+                ], capture_output=True, text=True, cwd=app_dir)
+
+                if result.returncode == 0:
+                    logger.info(f"✅ Migration {script_name} completed successfully")
+                    if result.stdout.strip():
+                        logger.debug(f"Migration output: {result.stdout.strip()}")
+                else:
+                    logger.error(f"❌ Migration {script_name} failed with exit code {result.returncode}")
+                    if result.stderr:
+                        logger.error(f"Migration error: {result.stderr.strip()}")
+                    # Continue with other migrations even if one fails
+                    continue
+
+            except Exception as e:
+                logger.error(f"❌ Failed to run migration {script_name}: {e}")
+                continue
+
+        logger.info("✅ Database migration check completed")
+
+    except Exception as e:
+        logger.error(f"❌ Database migration check failed: {e}")
+        # Don't raise exception - allow app to continue even if migrations fail

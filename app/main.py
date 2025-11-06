@@ -40,7 +40,7 @@ logging.getLogger('httpx').setLevel(logging.WARNING)
 # Services
 from app.database import init_db, get_db
 from app.services.mediathek_cacher import cacher
-from app.startup import init_config, load_enabled_modules, init_download_directory
+from app.startup import init_config, load_enabled_modules, init_download_directory, run_migrations
 
 
 # API Routes
@@ -66,6 +66,12 @@ async def lifespan(app: FastAPI):
         logger.error(f"✗ Database init failed: {e}")
         # Don't continue if database init fails
         raise
+
+    try:
+        run_migrations()
+    except Exception as e:
+        logger.error(f"✗ Migration check failed: {e}")
+        # Continue anyway - app should still work
 
     try:
         init_config()
