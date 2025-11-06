@@ -7,14 +7,13 @@ Automatischer Download-Manager für deutsche Mediatheken (ARD, ZDF, 3SAT, BR, et
 ## 🏗️ Architektur
 
 ```
-MediathekViewWeb API → PBArr Cache → TVDB Matching → Filter → Download Queue → yt-dlp
+MediathekViewWeb API → PBArr Cache → TVDB Matching → Filter → Download
 ```
 
 1. **MediathekViewWeb**: Zentrales Verzeichnis aller deutschen Mediathek-Inhalte
 2. **PBArr Cache**: Stündliche Synchronisation und lokale Speicherung
 3. **TVDB Matching**: Automatische Episode-Erkennung via TheTVDB API
 4. **Filter-System**: Dauer, Keywords, Sender-basierte Filterung
-5. **Download Queue**: Asynchrone Verarbeitung mit yt-dlp
 
 ## 🎯 Features
 
@@ -22,7 +21,6 @@ MediathekViewWeb API → PBArr Cache → TVDB Matching → Filter → Download Q
 - ✅ Intelligentes Episode-Matching (MediathekViewWeb ↔ TVDB)
 - ✅ Min/Max Dauer-Filter (z.B. nur Episoden 20-120 Min)
 - ✅ Ausschluss von Audiodeskription, Gebärdensprache, etc.
-- ✅ Automatische Downloads mit yt-dlp
 - ✅ Sonarr-Integration für Library-Management (einfach pbarr als tag in der Serie)
 - ✅ PostgreSQL-Datenbank für persistente Speicherung
 
@@ -40,24 +38,21 @@ services:
     image: ghcr.io/seliku/pbarr:latest
     container_name: pbarr
     restart: unless-stopped
-    
+
     ports:
       - "8070:8000"
-    
+
     environment:
       DATABASE_URL: postgresql://pbuser:pbpass@postgres:5432/pbarr
       LOG_LEVEL: INFO
-    
-    depends_on:
-      - postgres
-    
+
     volumes:
-      - ./downloads:/app/downloads
       - ./logs:/app/logs
       - ./data:/app/data
+      - ./library:/app/library
 
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: pbarr-postgres
     restart: unless-stopped
 
@@ -69,6 +64,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+    ports:
+      - "5432:5432"
+
 volumes:
   postgres_data:
 ```
@@ -79,24 +77,26 @@ volumes:
 docker compose up -d
 ```
 
-Öffne im Browser: **http://[deine-server-ip]:[dein-port]/admin**
+Öffne im Browser: **http://[deine-docker-ip]:[dein-port]/admin**
 
 ### Schritt 3: Konfiguration im Admin-Panel
 
-1. Gehe zu **http://[deine-server-ip]:[dein-port]/admin**
+1. Gehe zu **http://[deine-docker-ip]:[dein-port]/admin**
 2. Konfiguriere die API-Keys:
    - **TVDB API Key:** Dein TheTVDB API-Key
-   - **Sonarr URL:** `http://sonarr:8989` (oder deine Sonarr-Adresse)
+   - **Sonarr URL:** `http://sonarr:8989` (oder deine Sonarr-IP-Adresse:Port)
    - **Sonarr API Key:** Dein Sonarr API-Key
+   - **PBArr URL:** `http://pbarr:8989` (oder deine Docker-IP-Adresse:Port)
 
 ## 🎬 Erste Schritte
 
-1. Serie hinzufügen (z.B. "Tatort")
-2. Filter einstellen:
+1. Serie hinzufügen in Sonarr und Tag pbarr eingeben (z.B. "Tatort") und Fertig
+
+OPTIONAL
+2. Im PBArr Admin Panel Filter einstellen:
    - Minimale Dauer: 0 Min
    - Maximale Dauer: 360 Min
-   - Ausschlüsse: "klare Sprache, Audiodeskription, Gebärdensprache"
-3. Dashboard zeigt verfügbare Episoden
+   - Ausschlüsse: "klare Sprache, Audiodeskription, Gebärdensprache" (Standard aktiviert)
 
 ## 🔄 Updates einspielen
 

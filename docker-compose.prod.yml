@@ -1,22 +1,6 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: pbarr-postgres
-    restart: unless-stopped
-
-    environment:
-      POSTGRES_USER: pbuser
-      POSTGRES_PASSWORD: pbpass
-      POSTGRES_DB: pbarr
-
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-    ports:
-      - "5432:5432"
-
   pbarr:
     image: ghcr.io/seliku/pbarr:latest
     container_name: pbarr
@@ -33,6 +17,22 @@ services:
       - ./logs:/app/logs
       - ./data:/app/data
       - ./library:/app/library
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: pbarr-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: pbuser
+      POSTGRES_PASSWORD: pbpass
+      POSTGRES_DB: pbarr
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    ports:
+      - "5432:5432"
 
 volumes:
   postgres_data:
