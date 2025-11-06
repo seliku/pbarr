@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class MediathekViewWebModule:
     name = "MediathekViewWeb"
     description = "Unified search for ARD, ZDF, 3Sat, Arte, etc."
-    version = "0.1.0"
+    from app import __version__ as version
     
     BASE_URL = "https://mediathekviewweb.de/feed"
     

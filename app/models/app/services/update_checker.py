@@ -7,7 +7,7 @@ from app.models.version import AppVersion, UpdateCheck
 
 class UpdateChecker:
     GITHUB_API = "https://api.github.com/repos/YOUR_USERNAME/pbarr/releases"
-    CURRENT_VERSION = "0.1.0"  # In Umgebung oder als Constant
+    from app import __version__ as CURRENT_VERSION
     
     def __init__(self, db: Session):
         self.db = db
