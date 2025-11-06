@@ -1080,7 +1080,7 @@ class MediathekCacher:
                     return False
 
                 # Move file directly to Sonarr library (final_dir was already determined above)
-                final_dir.mkdir(parents=True, exist_ok=True)
+                Path(final_dir).mkdir(parents=True, exist_ok=True)
                 shutil.move(str(temp_file), str(final_path))
                 logger.info(f"✅ Episode downloaded to Sonarr library: {final_path}")
 
