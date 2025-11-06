@@ -25,3 +25,7 @@ class WatchList(Base):
     max_duration = Column(Integer, default=360)  # Maximum episode duration in minutes
     exclude_keywords = Column(String(1000), default="klare Sprache,Audiodeskription,Gebärdensprache")  # Comma-separated keywords to exclude
     include_senders = Column(String(1000), default="")  # Comma-separated senders to include
+
+    # Search title filtering for Mediathek searches
+    search_title_filter = Column(Boolean, default=False)  # Enable/disable search title filtering
+    custom_search_title = Column(String(255), default="")  # Custom search title (overrides auto-generated)

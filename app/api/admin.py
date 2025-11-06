@@ -94,6 +94,8 @@ class SeriesFiltersRequest(BaseModel):
     max_duration: Optional[int] = None
     exclude_keywords: Optional[str] = None
     include_senders: Optional[str] = None
+    search_title_filter: Optional[bool] = None
+    custom_search_title: Optional[str] = None
 
 
 
@@ -960,7 +962,9 @@ async def get_series_list(db: Session = Depends(get_db)):
                 "min_duration": series.min_duration,
                 "max_duration": series.max_duration,
                 "exclude_keywords": series.exclude_keywords,
-                "include_senders": series.include_senders
+                "include_senders": series.include_senders,
+                "search_title_filter": series.search_title_filter,
+                "custom_search_title": series.custom_search_title
             })
 
         return {"series": result}
@@ -984,6 +988,8 @@ async def update_series_filters(tvdb_id: str, filters: SeriesFiltersRequest, db:
         series.max_duration = filters.max_duration
         series.exclude_keywords = filters.exclude_keywords
         series.include_senders = filters.include_senders
+        series.search_title_filter = filters.search_title_filter
+        series.custom_search_title = filters.custom_search_title
 
         # Update last_accessed timestamp
         series.last_accessed = datetime.utcnow()

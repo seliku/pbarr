@@ -484,8 +484,6 @@
                 <button class="btn btn-danger" onclick="restartContainer()" title="Container neu starten">🔄 Container neu starten</button>
             </div>
             <h1>🎬 PBArr Admin Panel</h1>
-            <p class="version">Version: <span id="version">-</span></p>
-            <p class="version" style="margin-top: 5px;">Status: <span id="status" style="color: #28a745; font-weight: bold;">✓ Online</span></p>
         </header>
         
 
@@ -706,6 +704,18 @@
                     <label for="include-senders">Einzuschließende Sender:</label>
                     <textarea id="include-senders" placeholder="" rows="3"></textarea>
                     <small style="color: #666; font-size: 12px;">Kommagetrennte Sender. Nur Episoden von diesen Sendern werden eingeschlossen (leer lassen für alle)</small>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="search-title-filter" onchange="toggleCustomSearchTitle()">
+                        Suchtitel-Filter aktivieren
+                    </label>
+                    <small style="color: #666; font-size: 12px;">Entfernt Stoppwörter wie "und", "ohne" aus Serientiteln für bessere Suchergebnisse</small>
+                </div>
+                <div class="form-group" id="custom-search-title-group" style="display: none;">
+                    <label for="custom-search-title">Benutzerdefinierter Suchtitel:</label>
+                    <input type="text" id="custom-search-title" placeholder="z.B. Breaking Bad">
+                    <small style="color: #666; font-size: 12px;">Leer lassen für automatische Generierung aus Serientitel (empfohlen)</small>
                 </div>
                 <button class="btn btn-success" onclick="saveSeriesFilters()">Filter speichern</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editSeriesFiltersModal')">Abbrechen</button>
@@ -1637,7 +1647,7 @@
                                     ${filtersActive ? `Filters: ${filtersSummary.join(' • ')}` : 'Keine Filter konfiguriert'}
                                 </div>
                                 <div class="action-buttons">
-                                    <button class="btn btn-small" onclick="openEditSeriesFiltersModal('${series.tvdb_id}', '${series.title.replace(/'/g, "\\'")}', ${series.min_duration || 'null'}, ${series.max_duration || 'null'}, '${(series.exclude_keywords || '').replace(/'/g, "\\'")}', '${(series.include_senders || '').replace(/'/g, "\\'")}')">🎛️ Filter bearbeiten</button>
+                                    <button class="btn btn-small" onclick="openEditSeriesFiltersModal('${series.tvdb_id}', '${series.title.replace(/'/g, "\\'")}', ${series.min_duration || 'null'}, ${series.max_duration || 'null'}, '${(series.exclude_keywords || '').replace(/'/g, "\\'")}', '${(series.include_senders || '').replace(/'/g, "\\'")}', ${series.search_title_filter || 'false'}, '${(series.custom_search_title || '').replace(/'/g, "\\'")}')">🎛️ Filter bearbeiten</button>
                                 </div>
                             </div>
                         `;
@@ -1651,7 +1661,7 @@
             }
         }
 
-        function openEditSeriesFiltersModal(tvdbId, title, minDuration, maxDuration, excludeKeywords, includeSenders) {
+        function openEditSeriesFiltersModal(tvdbId, title, minDuration, maxDuration, excludeKeywords, includeSenders, searchTitleFilter, customSearchTitle) {
             // Store current series info
             window.currentSeriesTvdbId = tvdbId;
 
@@ -1661,6 +1671,11 @@
             document.getElementById('max-duration').value = maxDuration || '';
             document.getElementById('exclude-keywords').value = excludeKeywords || '';
             document.getElementById('include-senders').value = includeSenders || '';
+            document.getElementById('search-title-filter').checked = searchTitleFilter || false;
+            document.getElementById('custom-search-title').value = customSearchTitle || '';
+
+            // Toggle custom search title field visibility
+            toggleCustomSearchTitle();
 
             // Show modal
             document.getElementById('editSeriesFiltersModal').style.display = 'block';
@@ -1672,13 +1687,17 @@
             const maxDuration = document.getElementById('max-duration').value.trim();
             const excludeKeywords = document.getElementById('exclude-keywords').value.trim();
             const includeSenders = document.getElementById('include-senders').value.trim();
+            const searchTitleFilter = document.getElementById('search-title-filter').checked;
+            const customSearchTitle = document.getElementById('custom-search-title').value.trim();
 
             try {
                 const filters = {
                     min_duration: minDuration ? parseInt(minDuration) : null,
                     max_duration: maxDuration ? parseInt(maxDuration) : null,
                     exclude_keywords: excludeKeywords || null,
-                    include_senders: includeSenders || null
+                    include_senders: includeSenders || null,
+                    search_title_filter: searchTitleFilter,
+                    custom_search_title: customSearchTitle || null
                 };
 
                 const response = await fetch(`${API_URL}/admin/series/${tvdbId}/filters`, {
@@ -1749,6 +1768,19 @@
             document.getElementById('series-loading').style.display = 'block';
             document.getElementById('series-list').innerHTML = '';
             loadSeries();
+        }
+
+        function toggleCustomSearchTitle() {
+            const checkbox = document.getElementById('search-title-filter');
+            const customTitleGroup = document.getElementById('custom-search-title-group');
+
+            if (checkbox.checked) {
+                customTitleGroup.style.display = 'block';
+            } else {
+                customTitleGroup.style.display = 'none';
+                // Clear the custom title field when disabled
+                document.getElementById('custom-search-title').value = '';
+            }
         }
 
         function refreshAll() {

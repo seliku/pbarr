@@ -156,8 +156,30 @@ class MediathekCacher:
                     logger.warning(f"  Failed to get alternate titles from TVDB: {e}")
                     show_titles = [show_name]  # Fallback
 
-            # Step 3.1: Fallback - Hole Titel aus Sonarr falls verfügbar
-            if watchlist_entry and watchlist_entry.sonarr_series_id:
+            # Step 3.1: Apply search title filtering
+            # Priority: custom_search_title > automatic filtering > original titles
+
+            # Check if custom search title is set (highest priority)
+            if watchlist_entry.custom_search_title and watchlist_entry.custom_search_title.strip():
+                show_titles = [watchlist_entry.custom_search_title.strip()]
+                logger.info(f"  Using custom search title: '{watchlist_entry.custom_search_title}'")
+            elif watchlist_entry.search_title_filter:
+                # Apply automatic stopword filtering
+                filtered_titles = []
+                for title in show_titles:
+                    filtered = self._filter_search_title(title)
+                    if filtered and filtered not in filtered_titles:
+                        filtered_titles.append(filtered)
+                if filtered_titles:
+                    show_titles = filtered_titles
+                    logger.info(f"  Applied stopword filtering: {show_titles}")
+                else:
+                    logger.warning("  Stopword filtering removed all titles, using original titles")
+            else:
+                logger.info(f"  Using original titles: {show_titles}")
+
+            # Step 3.1: Fallback - Hole Titel aus Sonarr falls verfügbar (nur wenn kein custom_search_title gesetzt)
+            if watchlist_entry and watchlist_entry.sonarr_series_id and not watchlist_entry.custom_search_title:
                 try:
                     sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
                     sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
@@ -203,33 +225,33 @@ class MediathekCacher:
                 if min_duration > 0 or max_duration < 360:
                     query_parts.append(f">{min_duration} <{max_duration}")
 
-                # Sender Filter: !ard !zdf !3sat (aus include_senders, leer=alle)
-                if include_senders and include_senders.strip():
-                    senders = [s.strip() for s in include_senders.split(',') if s.strip()]
-                    for sender in senders:
-                        query_parts.append(f"!{sender}")
+            # Sender Filter: !ard !zdf !3sat (aus include_senders, leer=alle)
+            if include_senders and include_senders.strip():
+                senders = [s.strip() for s in include_senders.split(',') if s.strip()]
+                for sender in senders:
+                    query_parts.append(f"!{sender}")
 
-                # KEINE exclude_keywords in der URL! Diese werden später im Matcher gefiltert
+            # KEINE exclude_keywords in der URL! Diese werden später im Matcher gefiltert
 
-                # Konstruiere finale Query
-                query = " ".join(query_parts)
-                # URL-kodiere die Query für die URL (nur einmal!)
-                from urllib.parse import quote
-                encoded_query = quote(query)
-                feed_url = f"https://mediathekviewweb.de/feed?query={encoded_query}&future=false"
+            # Konstruiere finale Query
+            query = " ".join(query_parts)
+            # URL-kodiere die Query für die URL (nur einmal!)
+            from urllib.parse import quote
+            encoded_query = quote(query)
+            feed_url = f"https://mediathekviewweb.de/feed?query={encoded_query}&future=false"
 
-                # Logge die finale Query und alle verwendeten Filter
-                logger.info(f"    MediathekViewWeb Query: {query}")
-                logger.info(f"    MediathekViewWeb URL: {feed_url}")
+            # Logge die finale Query und alle verwendeten Filter
+            logger.info(f"    MediathekViewWeb Query: {query}")
+            logger.info(f"    MediathekViewWeb URL: {feed_url}")
 
-                mediathek_results = []
-                async with create_aiohttp_session() as session:
-                    try:
-                        async with session.get(feed_url, timeout=15) as resp:
-                            if resp.status != 200:
-                                logger.warning(f"    Feed failed: {resp.status}")
-                                continue
-
+            mediathek_results = []
+            async with create_aiohttp_session() as session:
+                try:
+                    async with session.get(feed_url, timeout=15) as resp:
+                        if resp.status != 200:
+                            logger.warning(f"    Feed failed: {resp.status}")
+                            mediathek_results = []  # Empty results on failure
+                        else:
                             content = await resp.text()
                             root = ET.fromstring(content)
 
@@ -249,12 +271,11 @@ class MediathekCacher:
                                     'description': description,
                                     'searched_with': search_title  # Markiere mit welchem Titel gesucht wurde
                                 })
-                    except Exception as e:
-                        logger.warning(f"    Feed fetch error for '{search_title}': {e}")
-                        continue
+                except Exception as e:
+                    logger.warning(f"    Feed fetch error for '{search_title}': {e}")
 
-                logger.info(f"    Found {len(mediathek_results)} results for '{search_title}'")
-                all_mediathek_results.extend(mediathek_results)
+            logger.info(f"    Found {len(mediathek_results)} results for '{search_title}'")
+            all_mediathek_results.extend(mediathek_results)
 
             # Entferne Duplikate (gleiche Links)
             unique_results = []
@@ -321,6 +342,13 @@ class MediathekCacher:
 
                         if download_decision == "download":
                             logger.info(f"  → downloading episode")
+
+                            # DOPPELTE PRÜFUNG: Nochmal prüfen vor dem Download (wegen Race Conditions)
+                            final_check = await self._decide_download_action(match_result.season, match_result.episode, watchlist_entry, db)
+                            if final_check != "download":
+                                logger.info(f"  → cancelled during final check: {final_check}")
+                                continue
+
                             # Erstelle Cache-Eintrag für Download
                             cache_entry = MediathekCache(
                                 tvdb_id=tvdb_id,
@@ -446,6 +474,95 @@ class MediathekCacher:
                     return hours * 60 + minutes + (seconds // 60)  # Round seconds to minutes
 
         return None
+
+    def _filter_search_title(self, title: str) -> str:
+        """
+        Filter search title by removing German stopwords and common filler words.
+        This improves search results by focusing on the core series name.
+        """
+        if not title:
+            return ""
+
+        # German stopwords and filler words to remove
+        german_stopwords = {
+            # Articles
+            'der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines', 'einem', 'einen',
+            # Prepositions
+            'in', 'auf', 'an', 'bei', 'von', 'zu', 'mit', 'nach', 'aus', 'vor', 'über', 'unter', 'zwischen',
+            'durch', 'gegen', 'ohne', 'um', 'für', 'gegenüber', 'entlang', 'statt', 'trotz', 'während',
+            'wegen', 'seit', 'bis', 'ab', 'außer', 'innerhalb', 'längs', 'oberhalb', 'unterhalb',
+            # Conjunctions
+            'und', 'oder', 'aber', 'denn', 'weil', 'daß', 'dass', 'obwohl', 'obgleich', 'wenn', 'als',
+            'wie', 'da', 'dort', 'hier', 'wo', 'wann', 'warum', 'weshalb', 'weswegen',
+            # Pronouns
+            'ich', 'du', 'er', 'sie', 'es', 'wir', 'ihr', 'sie', 'mein', 'dein', 'sein', 'ihr', 'unser',
+            # Other common words
+            'ist', 'sind', 'war', 'waren', 'wird', 'werden', 'hat', 'haben', 'hatte', 'hatten',
+            'kann', 'können', 'soll', 'sollen', 'will', 'wollen', 'muß', 'muss', 'müssen', 'darf', 'dürfen',
+            'sollte', 'sollten', 'könnte', 'könnten', 'würde', 'würden', 'möchte', 'möchten',
+            # TV/Media specific
+            'staffel', 'episode', 'folge', 'teil', 'serie', 'sendung', 'show', 'tv', 'ard', 'zdf', 'rtl',
+            'sat1', 'pro7', 'pro7', 'kabel1', 'rtl2', 'vox', 'super', 'rtl', 'n-tv', 'phoenix', 'tagesschau',
+            'heute', 'journal', 'nachrichten', 'wetter', 'sport', 'talk', 'show', 'quiz', 'game', 'spiel',
+            # Numbers as words (keep actual numbers)
+            'eins', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn',
+            'elf', 'zwölf', 'zwanzig', 'dreißig', 'vierzig', 'fünfzig', 'sechzig', 'siebzig', 'achtzig', 'neunzig',
+            # Time related
+            'heute', 'gestern', 'morgen', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag', 'sonntag',
+            'woche', 'monat', 'jahr', 'stunde', 'minute', 'sekunde', 'uhr', 'zeit',
+            # Quality/size related
+            'hd', 'full', 'high', 'low', 'small', 'large', 'big', 'mini', 'maxi', 'extra', 'super', 'ultra',
+            # Common filler words in titles
+            'jetzt', 'neu', 'live', 'direkt', 'exklusiv', 'special', 'spezial', 'extra', 'plus', 'premium',
+            'best', 'top', 'hit', 'star', 'superstar', 'idol', 'held', 'heldin', 'prinzessin', 'prinz',
+            'könig', 'königin', 'ritter', 'drache', 'zauber', 'magie', 'abenteuer', 'geschichte', 'erzählung'
+        }
+
+        # Convert to lowercase for processing
+        title_lower = title.lower()
+
+        # Split into words, keeping punctuation for reconstruction
+        import re
+        words = re.findall(r'\b\w+\b', title_lower)
+
+        # Filter out stopwords
+        filtered_words = [word for word in words if word not in german_stopwords]
+
+        # If filtering removed too much (less than 2 words), keep original
+        if len(filtered_words) < 2:
+            # Try a more conservative approach - only remove the most common words
+            conservative_stopwords = {'der', 'die', 'das', 'und', 'in', 'auf', 'mit', 'von', 'zu', 'für', 'ist', 'sind'}
+            filtered_words = [word for word in words if word not in conservative_stopwords]
+
+        # If still too short, return original
+        if len(filtered_words) < 1:
+            return title.strip()
+
+        # Reconstruct title with original casing preserved where possible
+        result_words = []
+        title_words = re.findall(r'\b\w+\b', title)  # Original case words
+
+        for filtered_word in filtered_words:
+            # Find matching word in original title (case-insensitive)
+            for original_word in title_words:
+                if original_word.lower() == filtered_word:
+                    result_words.append(original_word)
+                    break
+            else:
+                # Fallback: use lowercase word
+                result_words.append(filtered_word)
+
+        # Join with spaces
+        result = ' '.join(result_words)
+
+        # Clean up extra whitespace
+        result = re.sub(r'\s+', ' ', result).strip()
+
+        # If result is empty or too short, return original
+        if not result or len(result) < 3:
+            return title.strip()
+
+        return result
 
     def _guess_quality(self, title: str) -> str:
         """Guess quality from title"""
@@ -712,11 +829,12 @@ class MediathekCacher:
             if min_duration > 0 or max_duration < 360:
                 query_parts.append(f">{min_duration} <{max_duration}")
 
-            # Sender Filter: !ard !zdf !3sat (aus include_senders, leer=alle)
+            # Sender Filter: +ard +zdf +3sat (aus include_senders, leer=alle)
+            # MediathekViewWeb verwendet + für Einschluss
             if include_senders and include_senders.strip():
                 senders = [s.strip() for s in include_senders.split(',') if s.strip()]
                 for sender in senders:
-                    query_parts.append(f"!{sender}")
+                    query_parts.append(f"+{sender}")
 
             # KEINE exclude_keywords in der URL! Diese werden später im Matcher gefiltert
 
@@ -1074,6 +1192,12 @@ class MediathekCacher:
                     error_msg = result.stderr.strip() if result.stderr else "Unknown curl error"
                     logger.error(f"Curl download failed: {error_msg}")
                     logger.error(f"Curl stdout: {result.stdout}")
+
+                    # Clean up failed download file to prevent Sonarr confusion
+                    if final_path.exists():
+                        final_path.unlink()
+                        logger.info(f"Cleaned up failed download file: {final_path}")
+
                     return False
 
                 logger.info("Curl download successful")
