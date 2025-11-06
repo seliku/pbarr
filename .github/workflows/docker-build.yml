@@ -28,7 +28,11 @@ jobs:
         run: pip install setuptools-scm
 
       - name: Get version
-        run: echo "VERSION=$(python -c 'from setuptools_scm import get_version; print(get_version())')" >> $GITHUB_ENV
+        id: version
+        run: |
+          VERSION=$(python -c 'from setuptools_scm import get_version; print(get_version())' 2>/dev/null || echo "0.0.0-dev")
+          echo "Calculated version: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
