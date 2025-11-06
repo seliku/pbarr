@@ -68,3 +68,10 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Tag as stable (only on releases)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          # Tag the release version as stable
+          docker tag ghcr.io/${{ github.repository }}:${{ env.CLEAN_VERSION }} ghcr.io/${{ github.repository }}:stable
+          docker push ghcr.io/${{ github.repository }}:stable
