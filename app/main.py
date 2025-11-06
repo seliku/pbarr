@@ -10,6 +10,7 @@ import os
 from app.utils.logger import setup_logging
 from app.database import SessionLocal
 from app.models.config import Config
+from app import __version__
 
 
 # Setup basic logging first (before DB access)
@@ -130,7 +131,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="PBArr - Public Broadcasting Archive Indexer",
     description="Mediathek-Caching und Verwaltung für deutschsprachige Mediatheken",
-    version="0.1.0",
+    version=__version__,
     lifespan=lifespan
 )
 
@@ -156,14 +157,14 @@ except Exception as e:
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok", "version": __version__}
 
 
 @app.get("/")
 async def root():
     return JSONResponse({
         "app": "PBArr",
-        "version": "0.1.0",
+        "version": __version__,
         "docs": "/docs",
         "admin": "/admin",
         "health": "/health"

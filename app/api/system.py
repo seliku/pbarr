@@ -7,11 +7,10 @@ import logging
 
 from app.database import get_db
 from app.models.version import AppVersion, UpdateCheck
+from app import __version__ as CURRENT_VERSION
 
 router = APIRouter(prefix="/api/system", tags=["system"])
 logger = logging.getLogger(__name__)
-
-CURRENT_VERSION = "0.1.0"
 GITHUB_REPO = "seliku/pbarr"  # Angepasst!
 GITHUB_API = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 

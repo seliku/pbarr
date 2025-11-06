@@ -10,6 +10,7 @@ from datetime import datetime
 from app.database import get_db
 from app.models.config import Config
 from app.models.episode import Episode
+from app import __version__
 
 
 logger = logging.getLogger(__name__)
@@ -155,7 +156,7 @@ async def grab_release(
 async def get_version():
     """Version für Sonarr"""
     return {
-        "version": "0.1.0",
+        "version": __version__,
         "name": "PBArr",
         "type": "indexer"
     }

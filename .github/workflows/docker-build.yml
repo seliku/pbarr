@@ -16,6 +16,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full git history for setuptools-scm
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install setuptools-scm
+        run: pip install setuptools-scm
+
+      - name: Get version
+        run: echo "VERSION=$(python -c 'from setuptools_scm import get_version; print(get_version())')" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -32,8 +45,10 @@ jobs:
         with:
           context: .
           push: true
+          build-args: VERSION=${{ env.VERSION }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ env.VERSION }}
             ghcr.io/${{ github.repository }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
