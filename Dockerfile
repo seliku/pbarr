@@ -21,6 +21,13 @@ ENTRYPOINT ["/entrypoint.sh"]
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy source for version generation
+COPY pyproject.toml .
+COPY app/__init__.py app/__init__.py
+
+# Generate version file
+RUN python -c "import setuptools_scm; setuptools_scm.get_version(write_to='app/_version.py')" 2>/dev/null || echo "version = '0.0.0-dev'" > app/_version.py
+
 # App code and migrations
 COPY app/ app/
 COPY migrate_*.py ./
