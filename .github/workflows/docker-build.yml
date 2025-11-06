@@ -24,13 +24,20 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install setuptools-scm
-        run: pip install setuptools-scm
-
       - name: Get version
         id: version
         run: |
-          VERSION=$(python -c 'from setuptools_scm import get_version; print(get_version())' 2>/dev/null || echo "0.0.0-dev")
+          # Try setuptools-scm first
+          if command -v python &> /dev/null; then
+            pip install setuptools-scm &> /dev/null
+            VERSION=$(python -c 'from setuptools_scm import get_version; print(get_version())' 2>/dev/null || echo "")
+          fi
+
+          # Fallback to git describe
+          if [ -z "$VERSION" ]; then
+            VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "0.0.0-dev")
+          fi
+
           echo "Calculated version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
