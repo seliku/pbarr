@@ -58,9 +58,6 @@ PYEOF
 mkdir -p /app/app
 touch /app/app/pbarr.log
 
-# Create symlink for direct download to library
-ln -sf /app/library /tmp/pbarr_downloads
-
 log_message() {
     echo "$1"
     mkdir -p /app/app
