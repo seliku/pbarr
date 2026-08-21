@@ -613,6 +613,49 @@ class SonarrWebhookManager:
             logger.error(f"Error getting series info for ID {sonarr_series_id}: {e}", exc_info=True)
             return None
 
+    async def fetch_series_state(self, sonarr_series_id: int):
+        """
+        Prueft den Zustand einer Serie in Sonarr.
+
+        Im Gegensatz zu get_series_info wird hier zwischen "existiert nicht" und
+        "nicht erreichbar" unterschieden. Das ist entscheidend fuer die Aufraeum-
+        routine: Ein kurzzeitig nicht erreichbarer Sonarr (Neustart, Timeout,
+        HTTP 5xx) darf NICHT dazu fuehren, dass die Watch-List geleert wird.
+
+        Returns:
+            ("ok", series_dict)    Serie existiert
+            ("missing", None)      Sonarr meldet ausdruecklich HTTP 404
+            ("unavailable", None)  Zustand unbekannt - nicht aufraeumen
+        """
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.get(
+                    f"{self.sonarr_url}/api/v3/series/{sonarr_series_id}",
+                    headers=self.headers
+                )
+
+            if resp.status_code == 200:
+                return "ok", resp.json()
+
+            if resp.status_code == 404:
+                logger.info(
+                    f"Series {sonarr_series_id} not found in Sonarr (HTTP 404)"
+                )
+                return "missing", None
+
+            logger.warning(
+                f"Sonarr returned HTTP {resp.status_code} for series {sonarr_series_id} - "
+                f"treating as unavailable, skipping cleanup"
+            )
+            return "unavailable", None
+
+        except Exception as e:
+            logger.warning(
+                f"Sonarr unreachable while checking series {sonarr_series_id}: {e} - "
+                f"treating as unavailable, skipping cleanup"
+            )
+            return "unavailable", None
+
     async def get_series_season_folder_setting(self, sonarr_series_id: int) -> Optional[bool]:
         """
         Get the seasonFolder setting for a series from Sonarr

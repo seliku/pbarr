@@ -1334,13 +1334,26 @@ class MediathekCacher:
             logger.info(f"Checking {len(watchlist_series)} series for existence and PBArr tag in Sonarr...")
 
             orphaned_count = 0
+            skipped_count = 0
 
             for watchlist_entry in watchlist_series:
                 try:
-                    # Check if series still exists in Sonarr
-                    series_info = await sonarr_manager.get_series_info(watchlist_entry.sonarr_series_id)
+                    # Zustand in Sonarr pruefen. Wichtig: "geloescht" und "nicht
+                    # erreichbar" muessen unterschieden werden - sonst leert ein
+                    # kurzzeitig nicht erreichbarer Sonarr die gesamte Watch-List.
+                    state, series_info = await sonarr_manager.fetch_series_state(
+                        watchlist_entry.sonarr_series_id
+                    )
 
-                    if not series_info:
+                    if state == "unavailable":
+                        logger.warning(
+                            f"⏭️ Sonarr nicht erreichbar fuer '{watchlist_entry.show_name}' "
+                            f"(Sonarr-ID {watchlist_entry.sonarr_series_id}) - Aufraeumen uebersprungen"
+                        )
+                        skipped_count += 1
+                        continue
+
+                    if state == "missing":
                         # Series no longer exists in Sonarr - clean up all related data
                         logger.info(f"🗑️ Series '{watchlist_entry.show_name}' (TVDB: {watchlist_entry.tvdb_id}) no longer exists in Sonarr, cleaning up...")
 
@@ -1414,6 +1427,12 @@ class MediathekCacher:
                 except Exception as e:
                     logger.error(f"Error checking series {watchlist_entry.show_name}: {e}")
                     continue
+
+            if skipped_count > 0:
+                logger.warning(
+                    f"⚠️ {skipped_count} Serie(n) uebersprungen - Sonarr war nicht "
+                    f"erreichbar. Es wurde nichts geloescht."
+                )
 
             if orphaned_count > 0:
                 logger.info(f"✅ Cleaned up {orphaned_count} orphaned series")
