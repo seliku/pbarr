@@ -556,6 +556,10 @@
             <div style="display: flex; align-items: center; margin-bottom: 15px;">
                 <span style="font-weight: 600; color: #333;">Version:</span>
                 <span id="system-version" style="margin-left: 10px; color: #666;">-</span>
+                <span style="margin-left: 20px; color: #666;">
+                    Quellen: <span id="modules-enabled">-</span>/<span id="modules-total">-</span>
+                    • Konfiguration: <span id="config-count">-</span> Eintraege
+                </span>
             </div>
             <button class="btn" onclick="checkUpdates()">Check for Updates</button>
             <button class="btn btn-secondary" onclick="refreshAll()" style="margin-left: 10px;">Refresh All</button>
@@ -729,7 +733,9 @@
         async function loadVersion() {
             try {
                 const data = await fetchJSON(`${API_URL}/api/system/version`);
-                document.getElementById('version').textContent = data.version;
+                // Frueher stand hier zusaetzlich ein Element 'version'. Es gibt
+                // dieses Element nicht mehr - der Zugriff warf, und die Zeile
+                // darunter lief nie: die Versionsanzeige blieb auf "-" stehen.
                 document.getElementById('system-version').textContent = data.version;
             } catch (error) {
                 console.error('Version error:', error);

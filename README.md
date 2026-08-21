@@ -115,6 +115,22 @@ volumes:
 Oberfläche unter `http://dein-host:8070`. Datenbank-Migrationen laufen beim
 Start von selbst.
 
+## Selbst bauen
+
+```bash
+./build.sh                # baut aus der letzten Git-Marke
+./build.sh --push         # veröffentlicht als :stable :latest :beta
+./build.sh --push 1.2.0   # mit ausdrücklicher Version
+```
+
+Nicht `docker build .` von Hand aufrufen. Das Dockerfile hat
+`ARG VERSION=0.0.0-dev`, und ohne `--build-arg` nennt sich das fertige Abbild
+genau so. Die Aktualisierungsprüfung vergleicht diesen Wert mit der neuesten
+Marke auf GitHub — eine Fassung, die sich `0.0.0-dev` nennt, hält sich für immer
+veraltet. `build.sh` leitet die Version aus der Git-Marke ab, prüft danach nach,
+ob das gebaute Abbild sich auch wirklich so nennt, und veröffentlicht nichts aus
+einem Arbeitsbaum mit uneingecheckten Änderungen.
+
 ## Andere Länder anbinden
 
 PBArr spricht standardmässig mit MediathekViewWeb, dem gemeinsamen Index von
