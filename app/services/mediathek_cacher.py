@@ -1463,11 +1463,17 @@ class MediathekCacher:
                 deleted = db.query(MediathekCache).filter(
                     MediathekCache.tvdb_id == watch.tvdb_id
                 ).delete()
-
-                db.delete(watch)
                 db.commit()
 
-                logger.info(f"  Deleted {deleted} cache entries for TVDB {watch.tvdb_id}")
+                logger.info(f"  Cache fuer '{watch.show_name}' geleert ({deleted} Eintraege)")
+
+            # Der Watch-List-Eintrag selbst bleibt stehen.
+            #
+            # Frueher wurde er hier mitgeloescht, sobald last_accessed aelter
+            # als 30 Tage war. Eine Serie, die einfach nur ruhig laeuft, verfiel
+            # damit stillschweigend - der Nutzer musste sie regelmaessig neu
+            # eintragen. Eine vom Nutzer gepflegte Liste darf nicht durch
+            # blosses Nichtstun verschwinden.
 
             logger.info(f"✅ Cleanup complete")
 

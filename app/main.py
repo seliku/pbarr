@@ -117,14 +117,11 @@ async def lifespan(app: FastAPI):
             name='Cleanup Expired Cache'
         )
         
-        scheduler.add_job(
-            cacher.cleanup_unwatched,
-            'cron',
-            hour=3,
-            minute=0,
-            id='cache_cleanup_unwatched',
-            name='Cleanup Unwatched Shows'
-        )
+        # cleanup_unwatched wurde aus dem Zeitplan genommen.
+        #
+        # Sie loeschte Watch-List-Eintraege nach 30 Tagen ohne Aktualisierung -
+        # zusammen mit dem Sonarr-Fehler war das der Grund, warum Serien immer
+        # wieder verschwanden. Der Cache-Ablauf (cleanup_expired) laeuft weiter.
         
         scheduler.start()
         logger.info("✓ Scheduler started (hourly cache, daily cleanup)")
