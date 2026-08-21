@@ -1621,7 +1621,11 @@
                 max_duration: parseInt(document.getElementById('max-duration').value || '360', 10),
                 exclude_keywords: document.getElementById('exclude-keywords').value.trim(),
                 include_senders: document.getElementById('include-senders').value.trim(),
-                quality: serie.quality || 'hd'
+                quality: serie.quality || 'hd',
+                // Damit die Vorschau sagen kann, was davon schon in der
+                // Bibliothek liegt - sonst zeigt sie Treffer als "passend" an,
+                // die gar nicht mehr geladen werden.
+                watch_key: window.currentSeriesTvdbId
             }, 'filter-preview');
         }
 
@@ -1635,14 +1639,16 @@
 
             box.innerHTML = '<div class="loading">Frage die Mediathek…</div>';
 
-            const q = new URLSearchParams({
+            const felder = {
                 topic: f.topic,
                 min_duration: f.min_duration,
                 max_duration: f.max_duration,
                 exclude_keywords: f.exclude_keywords,
                 include_senders: f.include_senders,
                 quality: f.quality
-            });
+            };
+            if (f.watch_key) felder.watch_key = f.watch_key;
+            const q = new URLSearchParams(felder);
 
             try {
                 const r = await fetch(`${API_URL}/admin/mediathek/preview?${q}`);

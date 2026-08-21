@@ -627,6 +627,7 @@ async def preview_mediathek_topic(
     min_duration: int = Query(0),
     max_duration: int = Query(360),
     exclude_keywords: Optional[str] = Query(None),
+    watch_key: Optional[str] = Query(None, description="Schluessel einer Sendung; dann wird der Bestand beruecksichtigt"),
     include_senders: str = Query(""),
     quality: str = Query("hd"),
     limit: int = Query(25),
@@ -655,6 +656,21 @@ async def preview_mediathek_topic(
     ausschluss = (exclude_keywords if exclude_keywords is not None
                   else _quellen_vorgabe_ausschluss(db))
 
+    # Was schon in der Bibliothek liegt, gehoert in die Vorschau.
+    #
+    # Ohne das zeigt sie "26 passend" fuer eine Sendung, von der alle 26 Folgen
+    # laengst da sind - und man haelt es fuer 26 anstehende Downloads.
+    vorhandene_nummern, vorhandene_daten = set(), set()
+    if watch_key:
+        eintrag = db.query(WatchList).filter(WatchList.tvdb_id == watch_key).first()
+        if eintrag:
+            eigener = getattr(eintrag, "library_folder", "") or ""
+            ordnername = (direct.sanitize(eigener) if eigener.strip()
+                          else direct.ordner_fuer(eintrag.show_name))
+            vorhandene_nummern, vorhandene_daten = direct.vorhandene_folgen(
+                direct.library_path / ordnername
+            )
+
     out, kept, filtered = [], 0, 0
 
     for item in items:
@@ -662,7 +678,15 @@ async def preview_mediathek_topic(
             item, min_duration, max_duration, ausschluss, include_senders
         )
         url, actual_quality = item.best_url(quality)
-        if passes and url and not is_stream(url):
+
+        staffel, folge = direct.extract_episode(item)
+        schon_da = (
+            (staffel is not None and (staffel, folge) in vorhandene_nummern)
+            or (staffel is None and item.aired
+                and item.aired.strftime("%Y-%m-%d") in vorhandene_daten)
+        )
+
+        if passes and url and not is_stream(url) and not schon_da:
             kept += 1
         else:
             filtered += 1
@@ -676,10 +700,10 @@ async def preview_mediathek_topic(
                 "duration_minutes": round((item.duration_seconds or 0) / 60),
                 "quality": actual_quality,
                 "episode": f"S{season:02d}E{episode:02d}" if season is not None else None,
-                "included": bool(passes and url and not is_stream(url)),
+                "included": bool(passes and url and not is_stream(url) and not schon_da),
                 "reason": (
-                    ""
-                    if (passes and url and not is_stream(url))
+                    "liegt bereits in der Bibliothek" if schon_da
+                    else "" if (passes and url and not is_stream(url))
                     else (reason or ("nur als HLS-Stream, keine Datei"
                                      if url and is_stream(url)
                                      else "keine Video-URL"))
