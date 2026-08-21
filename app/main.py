@@ -86,6 +86,18 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"✗ Download directory init failed: {e}")
 
+    # Quellen einmal beim Start laden.
+    #
+    # Der Lader wuerde das auch bei der ersten Suche tun, aber dann faellt ein
+    # defektes Modul erst Stunden spaeter auf. Wer eine Quelle schreibt, soll
+    # beim Neustart sofort sehen, ob sie gefunden wurde.
+    try:
+        from app.modules.sources.registry import discover_sources
+        sources = discover_sources(refresh=True)
+        logger.info(f"✓ {len(sources)} Quelle(n) verfuegbar: {', '.join(sources)}")
+    except Exception as e:
+        logger.error(f"✗ Quellen konnten nicht geladen werden: {e}")
+
     # Start Scheduler für Cache Jobs
     try:
         from apscheduler.schedulers.asyncio import AsyncIOScheduler

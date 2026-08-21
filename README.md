@@ -1,197 +1,137 @@
-# PBArr - German Public Broadcasting Archive Indexer
+# PBArr
 
-Automatischer Download-Manager für deutsche Mediatheken (ARD, ZDF, 3SAT, BR, etc.) mit intelligenter Episode-Erkennung und Sonarr-Integration.
+Holt Sendungen aus öffentlich-rechtlichen Mediatheken und legt sie so ab, dass
+Plex, Jellyfin und Emby sie erkennen.
 
-**PBArr cached Mediathek-Inhalte und ermöglicht gezielte Downloads basierend auf TVDB-Matching und flexiblen Filtern.**
-
-## 🏗️ Architektur
-
-```
-MediathekViewWeb API → PBArr Cache → TVDB Matching → Filter → Download
-```
-
-1. **MediathekViewWeb**: Zentrales Verzeichnis aller deutschen Mediathek-Inhalte
-2. **PBArr Cache**: Stündliche Synchronisation und lokale Speicherung
-3. **TVDB Matching**: Automatische Episode-Erkennung via TheTVDB API
-4. **Filter-System**: Dauer, Keywords, Sender-basierte Filterung
-
-## 🎯 Features
-
-- ✅ Dashboard zur Serie-Verwaltung mit Filter-Einstellungen
-- ✅ Intelligentes Episode-Matching (MediathekViewWeb ↔ TVDB)
-- ✅ Min/Max Dauer-Filter (z.B. nur Episoden 20-120 Min)
-- ✅ Ausschluss von Audiodeskription, Gebärdensprache, etc.
-- ✅ Sonarr-Integration für Library-Management (einfach pbarr als tag in der Serie)
-- ✅ PostgreSQL-Datenbank für persistente Speicherung
-
-## 🚀 Installation - 3 Schritte
-
-### Schritt 1: docker-compose.yml kopieren
-
-Kopiere diesen Inhalt in eine neue Datei `docker-compose.yml`:
+Du trägst ein, wie eine Sendung heisst. Den Rest macht PBArr.
 
 ```
-version: '3.8'
+Name eintragen  →  stündlich suchen  →  filtern  →  herunterladen  →  einsortieren
+```
 
+## Was es nicht braucht
+
+Keine TVDB-ID. Keinen Sonarr. Keine Episodennummern.
+
+Das war einmal anders, und es funktionierte nicht: PBArr fragte TVDB nach einer
+Episodenliste, Sonarr nach fehlenden Folgen, und lud nur herunter, wo beide sich
+auf dieselbe Staffel-/Episodennummer einigten. Sie einigten sich nie. Beide
+fragen TVDB unabhängig voneinander und kommen zu unterschiedlichen Zählungen,
+und viele Sendungen des öffentlich-rechtlichen Rundfunks stehen dort gar nicht.
+
+Gemessen an einer laufenden Instanz: Sonarr suchte S00, S02, S04 und S08,
+zwischengespeichert waren S01, S06 und S07. Keine einzige Überschneidung. Die
+tatsächlich verfügbaren Folgen kannte Sonarr überhaupt nicht.
+
+Deshalb kommt die Einordnung jetzt von dem, der die Sendung produziert hat:
+
+1. Die Quelle, wenn sie eine Nummer nennt
+2. Sonst der Titel — `Folge 104: Ausgebrannt (S07/E04)` ergibt `S07E04`
+3. Sonst das Sendedatum
+
+Alle gängigen Medienserver lesen `JJJJ-MM-TT` an der Stelle, wo sonst `SxxEyy`
+steht. Für tägliche Sendungen und Talkshows ist das ohnehin der passendere Weg.
+
+## Ablage
+
+```
+Bibliothek/
+  Das Gipfeltreffen/
+    Season 2026/
+      Das Gipfeltreffen - 2026-08-20 - Das Beste kommt noch! (58).mp4
+  Hubert und Staller/
+    Season 09/
+      Hubert und Staller - S09E06 - Folge 138 Jeder Schuss ein Treffer.mp4
+```
+
+Den Serienordner erkennt der Medienserver und holt Poster und Beschreibung
+selbst — dafür braucht PBArr keine Datenbank abzufragen.
+
+## Ein Eintrag
+
+| Feld | Bedeutung |
+|---|---|
+| **Name** | Wie die Sendung in der Mediathek heisst |
+| Anzeigename | Bestimmt den Ordnernamen, falls abweichend |
+| Qualität | `hd`, `normal` oder `low`, mit Rückfallebene |
+| Dauer | Trennt ganze Folgen von kurzen Ausschnitten |
+| Sender | Leer = alle |
+| Ausschlusswörter | Standard: Audiodeskription, Gebärdensprache, klare Sprache |
+
+**Mehrere Namen** trennst du mit `|`. Sendungen werden umbenannt: „Hubert und
+Staller" wurde zu „Hubert ohne Staller", beide liegen nebeneinander in der
+Mediathek, und den Sammelnamen kennt sie nicht.
+
+```
+Hubert und Staller|Hubert ohne Staller
+```
+
+## Vorschau statt Suche
+
+Bevor du einen Eintrag anlegst, zeigt die Vorschau, was er einbringen würde —
+und **warum** etwas aussortiert wird:
+
+```
+109 Treffer, 0 passend
+✗ 2026-05-02  10 min  ORF  Klein gegen groß: Säulenparcours…  zu kurz (10 < 60 min)
+```
+
+Damit siehst du sofort, dass der Dauerfilter danebenliegt, statt zu rätseln,
+warum nichts ankommt.
+
+## Installation
+
+```yaml
 services:
   pbarr:
     image: ghcr.io/seliku/pbarr:stable
     container_name: pbarr
     restart: unless-stopped
-
     ports:
       - "8070:8000"
-
     environment:
-      DATABASE_URL: postgresql://pbuser:pbpass@postgres:5432/pbarr
+      DATABASE_URL: postgresql://pbuser:PASSWORT@postgres:5432/pbarr
       LOG_LEVEL: INFO
-
     volumes:
-      - ./logs:/app/logs
       - ./data:/app/data
-      - ./library:/app/library
+      - ./logs:/app/logs
+      - /pfad/zu/deiner/bibliothek:/app/library
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     container_name: pbarr-postgres
     restart: unless-stopped
-
     environment:
       POSTGRES_USER: pbuser
-      POSTGRES_PASSWORD: pbpass
+      POSTGRES_PASSWORD: PASSWORT
       POSTGRES_DB: pbarr
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-    ports:
-      - "5432:5432"
 
 volumes:
   postgres_data:
 ```
 
-### Schritt 2: Starten
+Oberfläche unter `http://dein-host:8070`. Datenbank-Migrationen laufen beim
+Start von selbst.
 
-```
-docker compose up -d
-```
+## Andere Länder anbinden
 
-Öffne im Browser: **http://[deine-docker-ip]:[dein-port]/admin**
+PBArr spricht standardmässig mit MediathekViewWeb, dem gemeinsamen Index von
+ARD, ZDF, 3sat, arte, ORF, SRF und den übrigen.
 
-### Schritt 3: Konfiguration im Admin-Panel
+Wer einen Sender aus einem anderen Land anbinden will, schreibt **eine Datei**.
+Siehe [docs/module-schreiben.md](docs/module-schreiben.md).
 
-1. Gehe zu **http://[deine-docker-ip]:[dein-port]/admin**
-2. Konfiguriere die API-Keys:
-   - **TVDB API Key:** Dein TheTVDB API-Key
-   - **Sonarr URL:** `http://sonarr:8989` (oder deine Sonarr-IP-Adresse:Port)
-   - **Sonarr API Key:** Dein Sonarr API-Key
-   - **PBArr URL:** `http://pbarr:8989` (oder deine Docker-IP-Adresse:Port)
+## Was PBArr nicht tut
 
-## 🎬 Erste Schritte
+Es lädt nur, was gerade in der Mediathek liegt. Was depubliziert wurde, ist weg
+— dagegen hilft keine Software. Deshalb läuft der Abgleich stündlich statt
+täglich.
 
-1. Serie hinzufügen in Sonarr und Tag pbarr eingeben (z.B. "Tatort") und Fertig
+Ein Link, der dreimal hintereinander scheitert, wird nicht weiter versucht.
+Depublizierte Sendungen antworten dauerhaft mit 403 oder 404.
 
-OPTIONAL
-2. Im PBArr Admin Panel Filter einstellen:
-   - Minimale Dauer: 0 Min
-   - Maximale Dauer: 360 Min
-   - Ausschlüsse: "klare Sprache, Audiodeskription, Gebärdensprache" (Standard aktiviert)
+## Lizenz
 
-## 🔄 Updates einspielen
-
-```
-docker compose pull pbarr
-docker compose up -d
-```
-
-### Datenbank-Migrationen
-
-Bei Updates können Datenbank-Migrationen nötig sein:
-
-```bash
-# Migration-Scripts ausführen (befinden sich im app/ Verzeichnis)
-docker compose exec pbarr python app/migrate_watchlist.py
-docker compose exec pbarr python app/migrate_episode_monitoring.py
-
-# Oder alle Migrationen automatisch ausführen
-docker compose exec pbarr find app/ -name "migrate_*.py" -exec python {} \;
-```
-
-## 🛠 Troubleshooting
-
-### Logs anschauen
-
-```
-docker compose logs pbarr -f
-```
-
-### Container neu starten
-
-```
-docker compose restart pbarr
-```
-
-### Datenbank zurücksetzen (WARNUNG: Löscht alle Daten!)
-
-```
-docker compose down -v
-docker compose up -d
-```
-
-### Bestehende PostgreSQL-Datenbank verwenden
-
-Falls du bereits eine PostgreSQL-Datenbank hast:
-
-1. **Passe die Credentials an:**
-   ```yaml
-   environment:
-     DATABASE_URL: postgresql://[dein-user]:[dein-password]@[host]:5432/[datenbank-name]
-   ```
-
-2. **Entferne den postgres-Service** aus docker-compose.yml
-
-3. **Oder verwende eine andere Datenbank:**
-   ```yaml
-   environment:
-     DATABASE_URL: postgresql://user:pass@external-host:5432/database
-   ```
-
-### API-Port 8000 bereits in Verwendung?
-
-Ändere in `docker-compose.yml`:
-
-```
-ports:
-  - "8080:8000"  # Neuer Port: 8080
-```
-
-Dann: `docker compose up -d`
-
-## 🔧 Konfiguration
-
-### Admin-Panel Konfiguration
-
-Die Hauptkonfiguration erfolgt über das **Admin-Panel** (`/admin`):
-
-- **TVDB API Key:** Für Episode-Matching mit TheTVDB
-- **Sonarr URL:** Adresse deines Sonarr-Servers
-- **Sonarr API Key:** Für Sonarr-Integration
-
-### Filter im Dashboard
-
-- **Min-Dauer:** Mindestlänge in Minuten (0 = keine Einschränkung)
-- **Max-Dauer:** Maximale Länge (360 = 6 Stunden)
-- **Ausschlüsse:** Keywords trennen mit ", " z.B. `klare Sprache, Audiodeskription, Gebärdensprache`
-
-## 🐛 Probleme?
-
-Erstelle ein Issue: https://github.com/seliku/pbarr/issues
-
-## 📄 Lizenz
-
-MIT License
-
----
-
-**Version:** 1.0.0
+Siehe [LICENSE](LICENSE).
