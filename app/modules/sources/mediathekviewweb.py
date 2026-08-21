@@ -1,97 +1,100 @@
 """
-MediathekViewWeb Source Module
-Sucht in gemeinsamen Index: ARD, ZDF, 3Sat, etc.
+MediathekViewWeb - the shared index of the German-language public broadcasters.
+
+Covers ARD, ZDF, 3sat, arte, BR, MDR, NDR, WDR, ORF, SRF and the rest in one
+query, which is why a single module reaches almost all of them.
+
+Serves as the reference implementation of MediathekSource: a connector for
+another country needs to do exactly what this file does - ask its broadcaster
+what exists under a name, and hand the answers over as MediaItem.
 """
+
+import json
 import logging
-from typing import List, Optional
-import aiohttp
-from xml.etree import ElementTree as ET
+from datetime import datetime, timezone
+from typing import List
+
+import httpx
+
+from app.modules.sources.base import MediathekSource, MediaItem
 
 logger = logging.getLogger(__name__)
 
-class MediathekViewWebModule:
-    name = "MediathekViewWeb"
-    description = "Unified search for ARD, ZDF, 3Sat, Arte, etc."
-    from app import __version__ as version
-    
-    BASE_URL = "https://mediathekviewweb.de/feed"
-    
-    @staticmethod
-    async def search(query: str, channel: str = "ard") -> List[dict]:
-        """
-        Sucht in MediathekViewWeb
-        
-        Query Format: !ard #Show,Name >30
-        - !ard = Channel filter (ARD)
-        - #Show,Name = Show title
-        - >30 = Duration > 30 min
-        """
+
+class MediathekViewWebSource(MediathekSource):
+    name = "mediathekviewweb"
+    description = "Gemeinsamer Index der deutschsprachigen Mediatheken"
+    country = "DE"
+    version = "2.0.0"
+
+    API = "https://mediathekviewweb.de/api/query"
+
+    def __init__(self, timeout: float = 30.0, page_size: int = 150):
+        self.timeout = timeout
+        self.page_size = page_size
+
+    async def search(self, topic: str) -> List[MediaItem]:
+        body = {
+            "queries": [{"fields": ["topic"], "query": topic}],
+            "sortBy": "timestamp",
+            "sortOrder": "desc",
+            "future": False,
+            "offset": 0,
+            "size": self.page_size,
+        }
+
         try:
-            # Build feed query
-            feed_query = f"!{channel}%20%23{query.replace(' ', '%2C')}%20%3E30"
-            url = f"{MediathekViewWebModule.BASE_URL}?query={feed_query}"
-            
-            logger.info(f"Searching MediathekViewWeb: {url}")
-            
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=15) as resp:
-                    if resp.status == 200:
-                        content = await resp.text()
-                        
-                        # Parse RSS/XML
-                        root = ET.fromstring(content)
-                        
-                        episodes = []
-                        for item in root.findall('.//item'):
-                            ep = {
-                                'title': item.findtext('title', ''),
-                                'description': item.findtext('description', ''),
-                                'link': item.findtext('link', ''),
-                                'channel': item.findtext('channel', ''),
-                                'pubDate': item.findtext('pubDate', ''),
-                            }
-                            episodes.append(ep)
-                            logger.debug(f"Found: {ep['title']}")
-                        
-                        logger.info(f"✓ Found {len(episodes)} episodes")
-                        return episodes
-                    else:
-                        logger.error(f"MediathekViewWeb returned HTTP {resp.status}")
-                        return []
-        
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                resp = await client.post(
+                    self.API,
+                    content=json.dumps(body),
+                    # The API insists on text/plain despite taking JSON.
+                    headers={"Content-Type": "text/plain"},
+                )
+
+            if resp.status_code != 200:
+                logger.warning(f"MediathekViewWeb: HTTP {resp.status_code} fuer '{topic}'")
+                return []
+
+            results = (resp.json().get("result") or {}).get("results") or []
+
         except Exception as e:
-            logger.error(f"MediathekViewWeb search error: {e}")
+            logger.warning(f"MediathekViewWeb nicht erreichbar fuer '{topic}': {e}")
             return []
-    
-    @staticmethod
-    async def get_download_url(episode_link: str) -> Optional[str]:
-        """
-        Extrahiert echte Download-URL via yt-dlp
-        """
-        try:
-            import subprocess
-            import json
-            
-            logger.info(f"Extracting download URL: {episode_link}")
-            
-            # yt-dlp holt die direkten URLs
-            cmd = [
-                'yt-dlp',
-                '-f', 'best',
-                '-g',  # Print URL only
-                episode_link
-            ]
-            
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            
-            if result.returncode == 0:
-                url = result.stdout.strip().split('\n')[0]  # First line is video URL
-                logger.info(f"✓ Got download URL")
-                return url
-            else:
-                logger.error(f"yt-dlp failed: {result.stderr}")
-                return None
-        
-        except Exception as e:
-            logger.error(f"Download URL extraction error: {e}")
+
+        items = [self._to_item(raw) for raw in results]
+        items = [i for i in items if i is not None]
+        logger.info(f"  {self.name}: {len(items)} Treffer fuer '{topic}'")
+        return items
+
+    def _to_item(self, raw: dict):
+        """Turn one API result into a MediaItem, or None when unusable."""
+        urls = {
+            "hd": raw.get("url_video_hd") or "",
+            "normal": raw.get("url_video") or "",
+            "low": raw.get("url_video_low") or "",
+        }
+        urls = {k: v for k, v in urls.items() if v}
+        if not urls:
             return None
+
+        ts = raw.get("timestamp")
+        aired = datetime.fromtimestamp(ts, tz=timezone.utc) if ts else None
+
+        return MediaItem(
+            source=self.name,
+            # MediathekViewWeb has no stable id of its own, so the video URL
+            # carries the identity.
+            source_id=urls.get("normal") or urls.get("hd") or urls.get("low"),
+            topic=raw.get("topic") or "",
+            title=raw.get("title") or "",
+            description=raw.get("description") or "",
+            channel=raw.get("channel") or "",
+            aired=aired,
+            duration_seconds=raw.get("duration"),
+            urls=urls,
+            # MediathekViewWeb states no numbering. Where a broadcaster puts it
+            # into the title, the core reads it from there.
+            season=None,
+            episode=None,
+        )

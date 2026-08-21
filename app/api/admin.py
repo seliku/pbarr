@@ -1153,6 +1153,7 @@ async def preview_mediathek_topic(
     include_senders: str = Query(""),
     quality: str = Query("hd"),
     limit: int = Query(25),
+    db: Session = Depends(get_db),
 ):
     """
     Show what a topic would pull in, before committing to it.
@@ -1163,15 +1164,14 @@ async def preview_mediathek_topic(
     """
     from app.services.mediathek_direct import direct
 
-    # Mehrere Themen mit "|" trennen - siehe sync_entry. Die Vorschau muss
+    # Mehrere Namen mit "|" trennen - genau wie sync_entry. Die Vorschau muss
     # dasselbe tun wie der spaetere Abgleich, sonst zeigt sie das Falsche.
     topics = [t.strip() for t in (topic or "").split("|") if t.strip()]
     items, seen = [], set()
     for t in topics:
-        for item in await direct.search(t):
-            url = item.get("url_video") or item.get("url_video_hd") or ""
-            if url and url not in seen:
-                seen.add(url)
+        for item in await direct.search(t, db):
+            if item.source_id not in seen:
+                seen.add(item.source_id)
                 items.append(item)
 
     out, kept, filtered = [], 0, 0
@@ -1180,19 +1180,21 @@ async def preview_mediathek_topic(
         passes, reason = direct.passes_filters(
             item, min_duration, max_duration, exclude_keywords, include_senders
         )
-        url, actual_quality = direct.pick_stream(item, quality)
+        url, actual_quality = item.best_url(quality)
         if passes and url:
             kept += 1
         else:
             filtered += 1
         if len(out) < limit:
-            ts = item.get("timestamp")
+            season, episode = direct.extract_episode(item)
             out.append({
-                "title": item.get("title"),
-                "channel": item.get("channel"),
-                "aired": datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") if ts else None,
-                "duration_minutes": round((item.get("duration") or 0) / 60),
+                "title": item.title,
+                "channel": item.channel,
+                "source": item.source,
+                "aired": item.aired.strftime("%Y-%m-%d") if item.aired else None,
+                "duration_minutes": round((item.duration_seconds or 0) / 60),
                 "quality": actual_quality,
+                "episode": f"S{season:02d}E{episode:02d}" if season is not None else None,
                 "included": bool(passes and url),
                 "reason": "" if (passes and url) else (reason or "keine Video-URL"),
             })
