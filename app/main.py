@@ -45,7 +45,7 @@ from app.startup import init_config, load_enabled_modules, init_download_directo
 
 
 # API Routes
-from app.api import admin, system, matcher, matcher_admin, integration, webhooks, dashboard
+from app.api import admin, system, integration, dashboard
 
 
 logger = logging.getLogger(__name__)
@@ -145,13 +145,14 @@ app = FastAPI(
 
 
 # Routes
+# Sonarr-Webhook und TVDB-Matcher sind nicht mehr eingebunden.
+#
+# Der Abgleich laeuft direkt gegen die Mediathek: Name rein, Sendung raus.
+# Die Module liegen noch im Baum, bis die Beta sich bewaehrt hat.
 app.include_router(admin.router)
 app.include_router(system.router)
-app.include_router(matcher.router)
-app.include_router(matcher_admin.router)
 app.include_router(integration.router)
 
-app.include_router(webhooks.router)
 app.include_router(dashboard.router)
 
 
