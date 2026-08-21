@@ -142,7 +142,15 @@ class MediathekDirect:
         # Schraegstriche zuerst durch ein Leerzeichen ersetzen, nicht loeschen.
         # "Hubert und/ohne Staller" wurde sonst zu "Hubert undohne Staller" -
         # und genau so stuende der Ordner im Medienserver.
-        cleaned = _TRENNER.sub(" ", text_value or "")
+        # Bei einem Mehrfach-Thema zaehlt nur der erste Name.
+        #
+        # "Hubert und Staller|Hubert ohne Staller" ergab sonst den Ordner
+        # "Hubert und StallerHubert ohne Staller" - eine Zeichenkette, die
+        # kein Medienserver einer Serie zuordnen kann. Der erste Name ist der,
+        # unter dem die Sendung gefuehrt wird.
+        text_value = (text_value or "").split("|")[0]
+
+        cleaned = _TRENNER.sub(" ", text_value)
         cleaned = _UNSAFE.sub("", cleaned)
         cleaned = _SPACES.sub(" ", cleaned).strip(" .")
         return cleaned[:150] or "Unbenannt"

@@ -626,7 +626,7 @@ async def add_series_by_topic(request: AddByTopicRequest, db: Session = Depends(
 
     entry = WatchList(
         tvdb_id=key,
-        show_name=(request.display_name or topic).strip(),
+        show_name=(request.display_name or topic.split("|")[0]).strip(),
         search_topic=topic,
         quality=request.quality or "hd",
         min_duration=request.min_duration,
