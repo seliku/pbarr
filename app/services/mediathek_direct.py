@@ -34,7 +34,8 @@ from app.modules.sources.base import MediaItem, is_stream
 logger = logging.getLogger(__name__)
 
 # characters that are unsafe or annoying in file names
-_UNSAFE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+_TRENNER = re.compile(r'[/\\]')
+_UNSAFE = re.compile(r'[<>:"|?*\x00-\x1f]')
 _SPACES = re.compile(r"\s+")
 
 # Episode numbering as broadcasters themselves put it into the title, e.g.
@@ -138,11 +139,15 @@ class MediathekDirect:
     @classmethod
     def sanitize(cls, text_value: str) -> str:
         """Strip characters that do not belong in a file name."""
-        cleaned = _UNSAFE.sub("", text_value or "")
+        # Schraegstriche zuerst durch ein Leerzeichen ersetzen, nicht loeschen.
+        # "Hubert und/ohne Staller" wurde sonst zu "Hubert undohne Staller" -
+        # und genau so stuende der Ordner im Medienserver.
+        cleaned = _TRENNER.sub(" ", text_value or "")
+        cleaned = _UNSAFE.sub("", cleaned)
         cleaned = _SPACES.sub(" ", cleaned).strip(" .")
         return cleaned[:150] or "Unbenannt"
 
-    def build_path(self, show_name: str, item: MediaItem) -> Path:
+    def build_path(self, show_name: str, item: MediaItem, url: str = None) -> Path:
         """
         Where the file goes.
 
@@ -154,7 +159,12 @@ class MediathekDirect:
         """
         show = self.sanitize(show_name)
         title = self.sanitize(item.title or "Ohne Titel")
-        url, _ = item.best_url("normal")
+        # Die Endung muss von der Adresse kommen, die tatsaechlich geladen
+        # wird. Vorher stand hier fest "normal" - wer "hd" eingestellt hat und
+        # eine Quelle nutzt, die je Qualitaet andere Formate liefert, bekam
+        # eine Datei mit falscher Endung.
+        if url is None:
+            url, _ = item.best_url("normal")
         ext = Path((url or "").split("?")[0]).suffix or ".mp4"
 
         season, episode = self.extract_episode(item)
@@ -262,7 +272,7 @@ class MediathekDirect:
             if not url or url in known or url in given_up:
                 continue
 
-            target = self.build_path(entry.show_name, item)
+            target = self.build_path(entry.show_name, item, url)
             if target.exists():
                 # Already there from an earlier run or copied in by hand.
                 self._record(db, entry, item, url, quality, target, target.stat().st_size)
