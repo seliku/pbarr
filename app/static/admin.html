@@ -70,7 +70,9 @@
 
         .series-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            /* min() verhindert, dass die 400px auf einem schmalen Schirm
+               ueber den Rand hinausschieben. */
+            grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
             gap: 20px;
         }
 
@@ -355,6 +357,7 @@
         
         .action-buttons {
             display: flex;
+            flex-wrap: wrap;
             gap: 5px;
             margin-top: 5px;
         }
@@ -368,14 +371,19 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
+            /* Ohne diese beiden Zeilen ragt ein hohes Formular unerreichbar
+               aus dem Bild - auf dem Telefon betraf das jedes Formular. */
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 20px 10px;
         }
-        
+
         .modal-content {
             background-color: white;
-            margin: 10% auto;
+            margin: 0 auto;
             padding: 20px;
             border-radius: 8px;
-            width: 90%;
+            width: 100%;
             max-width: 500px;
         }
         
@@ -474,6 +482,78 @@
             padding: 10px;
             background: #fee;
             border-radius: 4px;
+        }
+
+        /* ------------------------------------------------------------------
+           Schmale Schirme
+
+           Bis hierher gab es keine einzige Media Query. Das Zweispaltenraster,
+           die absolut gesetzte Knopfleiste im Kopf und die 400px-Mindestbreite
+           der Serienkarten waren auf dem Telefon jeweils breiter als das Bild.
+           ------------------------------------------------------------------ */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            /* column-count stand fest auf 2 - zwei gequetschte Spalten. */
+            .grid {
+                column-count: 1;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            /* Lag absolut oben rechts und legte sich ueber die Ueberschrift. */
+            header {
+                padding: 15px;
+            }
+
+            .header-actions {
+                position: static;
+                margin-bottom: 12px;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .modal {
+                padding: 10px;
+            }
+
+            .modal-content {
+                padding: 15px;
+            }
+
+            /* Knoepfe nebeneinander werden auf 360px zur Rutschbahn. */
+            .card > .btn {
+                width: 100%;
+                margin-right: 0;
+            }
+
+            .series-grid {
+                gap: 12px;
+            }
+
+            .logs-container {
+                font-size: 11px;
+                max-height: 260px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .modal-content {
+                padding: 12px;
+            }
+
+            .btn {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
         }
     </style>
 </head>

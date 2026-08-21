@@ -182,7 +182,15 @@ async def root():
     """
     seite = os.path.join(os.path.dirname(__file__), "static", "admin.html")
     if os.path.exists(seite):
-        return FileResponse(seite, media_type="text/html")
+        # Ohne diese Angabe entscheidet der Browser selbst, wie lange er die
+        # Seite behaelt - nach einem Update sah man dann tagelang die alte
+        # Oberflaeche und hielt sie fuer die neue. "no-cache" heisst nicht
+        # "nicht speichern", sondern "vor dem Benutzen nachfragen".
+        return FileResponse(
+            seite,
+            media_type="text/html",
+            headers={"Cache-Control": "no-cache, must-revalidate"},
+        )
     return JSONResponse({"app": "PBArr", "version": __version__, "health": "/health"})
 
 
