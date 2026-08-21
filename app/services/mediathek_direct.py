@@ -43,6 +43,17 @@ QUALITY_FIELDS = {
 _UNSAFE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 _SPACES = re.compile(r"\s+")
 
+# Episode numbering as broadcasters themselves put it into the title, e.g.
+# "Folge 104: Ausgebrannt (S07/E04)". Only unambiguous forms are matched.
+#
+# Deliberately NOT matched: a bare number in brackets such as "(44)" or a part
+# marker like "(1/2)". Those are running counts or splits, not season/episode
+# pairs, and guessing at them would produce wrong file names.
+_EPISODE_PATTERNS = [
+    re.compile(r"\bS(\d{1,2})\s*[/\-_ ]?\s*E(\d{1,3})\b", re.IGNORECASE),
+    re.compile(r"\bStaffel\s*(\d{1,2})\b.*?\bFolge\s*(\d{1,3})\b", re.IGNORECASE),
+]
+
 
 class MediathekDirect:
     """Fetches items straight from MediathekViewWeb."""
@@ -146,6 +157,25 @@ class MediathekDirect:
         cleaned = _SPACES.sub(" ", cleaned).strip(" .")
         return cleaned[:150] or "Unbenannt"
 
+    @staticmethod
+    def extract_episode(item: dict):
+        """
+        Read season/episode out of the title, where the broadcaster put it there.
+
+        Returns (season, episode) or (None, None). This is the honest source for
+        numbering: it comes from whoever produced the show, not from a third
+        party database that demonstrably disagrees with itself.
+        """
+        text = f"{item.get('title', '')} {item.get('description', '')}"
+        for pattern in _EPISODE_PATTERNS:
+            m = pattern.search(text)
+            if m:
+                try:
+                    return int(m.group(1)), int(m.group(2))
+                except (TypeError, ValueError):
+                    continue
+        return None, None
+
     def build_path(self, show_name: str, item: dict) -> Path:
         """
         Build the target path in the layout Plex expects for date-based shows:
@@ -163,6 +193,14 @@ class MediathekDirect:
         url = item.get("url_video") or item.get("url_video_hd") or ""
         ext = Path(url.split("?")[0]).suffix or ".mp4"
 
+        season, episode = self.extract_episode(item)
+        if season is not None:
+            # Broadcaster numbered it - use that, so gaps become visible.
+            filename = f"{show} - S{season:02d}E{episode:02d} - {title}{ext}"
+            return self.library_path / show / f"Season {season:02d}" / filename
+
+        # No numbering anywhere: fall back to the broadcast date. Plex, Jellyfin
+        # and Emby all read YYYY-MM-DD in place of SxxEyy.
         filename = f"{show} - {aired:%Y-%m-%d} - {title}{ext}"
         return self.library_path / show / f"Season {aired:%Y}" / filename
 
@@ -205,15 +243,32 @@ class MediathekDirect:
         entry can carry a display name that differs from what the Mediathek calls
         the show.
         """
-        topic = (getattr(entry, "search_topic", "") or entry.show_name or "").strip()
-        if not topic:
+        raw = (getattr(entry, "search_topic", "") or entry.show_name or "").strip()
+        if not raw:
             logger.warning(f"  Eintrag ohne Namen (key={entry.tvdb_id}) - uebersprungen")
             return 0
 
-        items = await self.search(topic)
+        # Mehrere Themen mit "|" trennen. Manche Sendungen laufen unter mehreren
+        # Namen - "Hubert und Staller" wurde zu "Hubert ohne Staller", beide
+        # existieren nebeneinander in der Mediathek, und den Sammelnamen
+        # "Hubert und/ohne Staller" kennt sie gar nicht.
+        topics = [t.strip() for t in raw.split("|") if t.strip()]
+        topic = topics[0]
+
+        items, seen_urls = [], set()
+        for t in topics:
+            for item in await self.search(t):
+                url = item.get("url_video") or item.get("url_video_hd") or ""
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    items.append(item)
+
         if not items:
             # No hits or API unreachable. Either way: do nothing, delete nothing.
             return 0
+
+        if len(topics) > 1:
+            logger.info(f"  {len(topics)} Themen zusammengefasst: {len(items)} Treffer gesamt")
 
         from app.models.mediathek_download import MediathekDownload
 
@@ -277,6 +332,7 @@ class MediathekDirect:
         from app.models.mediathek_download import MediathekDownload
 
         ts = item.get("timestamp")
+        season, episode = MediathekDirect.extract_episode(item)
         try:
             db.add(
                 MediathekDownload(
@@ -289,6 +345,8 @@ class MediathekDirect:
                     aired=datetime.fromtimestamp(ts, tz=timezone.utc).replace(tzinfo=None) if ts else None,
                     duration_seconds=item.get("duration"),
                     quality=quality,
+                    season=season,
+                    episode=episode,
                     file_path=str(target),
                     file_size=size,
                 )

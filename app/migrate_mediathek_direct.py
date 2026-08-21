@@ -46,6 +46,11 @@ STATEMENTS = [
          UNIQUE (watch_key, source_url)
      )"""),
 
+    ("mediathek_downloads.season/episode",
+     "ALTER TABLE mediathek_downloads "
+     "ADD COLUMN IF NOT EXISTS season INTEGER, "
+     "ADD COLUMN IF NOT EXISTS episode INTEGER"),
+
     ("Index mediathek_downloads.watch_key",
      "CREATE INDEX IF NOT EXISTS ix_mediathek_downloads_watch_key "
      "ON mediathek_downloads (watch_key)"),

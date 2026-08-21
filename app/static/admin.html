@@ -725,22 +725,46 @@
 
     <!-- Add Series Modal -->
     <div id="addSeriesModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Add New Series</div>
+        <div class="modal-content" style="max-width: 760px;">
+            <div class="modal-title">Sendung hinzufügen</div>
             <form onsubmit="addNewSeries(event)">
                 <div class="form-group">
-                    <label for="new-series-tvdb-id">TVDB ID:</label>
-                    <input type="text" id="new-series-tvdb-id" placeholder="e.g. 12345" required>
-                    <small style="color: #666; font-size: 12px;">The TVDB ID of the series</small>
+                    <label for="new-series-topic">Name in der Mediathek:</label>
+                    <input type="text" id="new-series-topic" placeholder="z. B. Wer weiß denn sowas" required>
+                    <small style="color: #666; font-size: 12px;">So, wie die Sendung in der Mediathek heisst. Keine ID nötig.<br>Mehrere Namen mit <code>|</code> trennen, z.&nbsp;B. <code>Hubert und Staller|Hubert ohne Staller</code></small>
                 </div>
                 <div class="form-group">
-                    <label for="new-series-title">Series Title (optional):</label>
-                    <input type="text" id="new-series-title" placeholder="Will be fetched from TVDB if empty">
-                    <small style="color: #666; font-size: 12px;">Leave empty to auto-fetch from TVDB</small>
+                    <label for="new-series-name">Anzeigename (optional):</label>
+                    <input type="text" id="new-series-name" placeholder="leer = wie oben">
+                    <small style="color: #666; font-size: 12px;">Bestimmt den Ordnernamen. Daran erkennen Plex und Jellyfin die Sendung.</small>
                 </div>
-                <button type="submit" class="btn btn-success">Add Series</button>
-                <button type="button" class="btn btn-secondary" onclick="closeModal('addSeriesModal')">Cancel</button>
+                <div class="form-group">
+                    <label for="new-series-quality">Qualität:</label>
+                    <select id="new-series-quality">
+                        <option value="hd" selected>HD – beste verfügbare</option>
+                        <option value="normal">Normal</option>
+                        <option value="low">Niedrig – spart Platz</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dauer in Minuten (von / bis):</label>
+                    <input type="number" id="new-series-min" value="0" min="0" style="width: 90px;">
+                    <input type="number" id="new-series-max" value="360" min="0" style="width: 90px;">
+                    <small style="color: #666; font-size: 12px;">Trennt ganze Folgen von kurzen Ausschnitten.</small>
+                </div>
+                <div class="form-group">
+                    <label for="new-series-senders">Nur diese Sender (optional):</label>
+                    <input type="text" id="new-series-senders" placeholder="z. B. ARD,MDR – leer = alle">
+                </div>
+                <div class="form-group">
+                    <label for="new-series-exclude">Ausschlusswörter:</label>
+                    <input type="text" id="new-series-exclude" value="klare Sprache,Audiodeskription,Gebärdensprache">
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="previewTopic()">🔍 Vorschau</button>
+                <button type="submit" class="btn btn-success">Hinzufügen</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addSeriesModal')">Abbrechen</button>
             </form>
+            <div id="topic-preview" style="margin-top: 18px;"></div>
         </div>
     </div>
     
@@ -1726,41 +1750,105 @@
             document.getElementById('addSeriesModal').style.display = 'block';
         }
 
+        function collectTopicForm() {
+            return {
+                topic: document.getElementById('new-series-topic').value.trim(),
+                display_name: document.getElementById('new-series-name').value.trim() || null,
+                quality: document.getElementById('new-series-quality').value,
+                min_duration: parseInt(document.getElementById('new-series-min').value || '0', 10),
+                max_duration: parseInt(document.getElementById('new-series-max').value || '360', 10),
+                include_senders: document.getElementById('new-series-senders').value.trim(),
+                exclude_keywords: document.getElementById('new-series-exclude').value.trim()
+            };
+        }
+
+        // Zeigt, was ein Name einbringen wuerde - inklusive Begruendung fuer alles,
+        // was die Filter aussortieren. Das ersetzt die frueher noetige Suche nach
+        // einer TVDB-ID: man tippt, wie die Sendung heisst, und sieht sofort das
+        // Ergebnis.
+        async function previewTopic() {
+            const f = collectTopicForm();
+            const box = document.getElementById('topic-preview');
+
+            if (!f.topic) {
+                box.innerHTML = '<div style="color:#c00;">Bitte zuerst einen Namen eingeben.</div>';
+                return;
+            }
+
+            box.innerHTML = '<div class="loading">Frage die Mediathek…</div>';
+
+            const q = new URLSearchParams({
+                topic: f.topic,
+                min_duration: f.min_duration,
+                max_duration: f.max_duration,
+                exclude_keywords: f.exclude_keywords,
+                include_senders: f.include_senders,
+                quality: f.quality
+            });
+
+            try {
+                const r = await fetch(`${API_URL}/admin/mediathek/preview?${q}`);
+                const d = await r.json();
+
+                if (!d.total) {
+                    box.innerHTML = `<div style="color:#c00;">Keine Treffer für „${f.topic}". Heisst die Sendung in der Mediathek vielleicht anders?</div>`;
+                    return;
+                }
+
+                let html = `<div style="margin-bottom:8px;"><strong>${d.total} Treffer</strong> — `
+                         + `<span style="color:#2a2;">${d.included} passend</span>, `
+                         + `<span style="color:#888;">${d.filtered} gefiltert</span></div>`;
+                html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+                for (const i of d.items) {
+                    const mark = i.included ? '✓' : '✗';
+                    const colour = i.included ? '#2a2' : '#999';
+                    html += `<tr style="color:${colour};border-bottom:1px solid #eee;">`
+                          + `<td style="width:20px;">${mark}</td>`
+                          + `<td style="width:90px;">${i.aired || ''}</td>`
+                          + `<td style="width:60px;">${i.duration_minutes} min</td>`
+                          + `<td style="width:60px;">${i.channel || ''}</td>`
+                          + `<td>${(i.title || '').replace(/</g, '&lt;')}</td>`
+                          + `<td style="width:170px;font-style:italic;">${i.reason || ''}</td>`
+                          + '</tr>';
+                }
+                html += '</table>';
+                if (d.total > d.items.length) {
+                    html += `<div style="color:#888;font-size:11px;margin-top:6px;">… und ${d.total - d.items.length} weitere</div>`;
+                }
+                box.innerHTML = html;
+            } catch (e) {
+                box.innerHTML = `<div style="color:#c00;">Vorschau fehlgeschlagen: ${e.message}</div>`;
+            }
+        }
+
         async function addNewSeries(event) {
             event.preventDefault();
+            const f = collectTopicForm();
 
-            const tvdbId = document.getElementById('new-series-tvdb-id').value.trim();
-            const title = document.getElementById('new-series-title').value.trim();
-
-            if (!tvdbId) {
-                showError('❌ TVDB ID is required');
+            if (!f.topic) {
+                showError('❌ Bitte einen Namen eingeben');
                 return;
             }
 
             try {
-                const seriesData = {
-                    tvdb_id: tvdbId,
-                    title: title || null
-                };
-
-                const response = await fetch(`${API_URL}/admin/series/add`, {
+                const response = await fetch(`${API_URL}/admin/series/add-by-topic`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(seriesData)
+                    body: JSON.stringify(f)
                 });
-
                 const result = await response.json();
 
                 if (result.success) {
-                    showSuccess(`✅ Series "${result.series.title}" added to watchlist!`);
+                    showSuccess(`✅ „${result.show_name}" hinzugefügt`);
                     closeModal('addSeriesModal');
                     document.querySelector('#addSeriesModal form').reset();
+                    document.getElementById('topic-preview').innerHTML = '';
                     refreshSeries();
                 } else {
-                    showError(`❌ Failed to add series: ${result.message || 'Unknown error'}`);
+                    showError(`❌ ${result.message || 'Unbekannter Fehler'}`);
                 }
             } catch (error) {
-                showError(`❌ Error adding series: ${error.message}`);
+                showError(`❌ Fehler beim Hinzufügen: ${error.message}`);
             }
         }
 

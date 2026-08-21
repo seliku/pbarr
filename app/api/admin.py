@@ -1163,7 +1163,17 @@ async def preview_mediathek_topic(
     """
     from app.services.mediathek_direct import direct
 
-    items = await direct.search(topic)
+    # Mehrere Themen mit "|" trennen - siehe sync_entry. Die Vorschau muss
+    # dasselbe tun wie der spaetere Abgleich, sonst zeigt sie das Falsche.
+    topics = [t.strip() for t in (topic or "").split("|") if t.strip()]
+    items, seen = [], set()
+    for t in topics:
+        for item in await direct.search(t):
+            url = item.get("url_video") or item.get("url_video_hd") or ""
+            if url and url not in seen:
+                seen.add(url)
+                items.append(item)
+
     out, kept, filtered = [], 0, 0
 
     for item in items:

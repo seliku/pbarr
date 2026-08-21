@@ -27,6 +27,11 @@ class MediathekDownload(Base):
     duration_seconds = Column(Integer)
     quality = Column(String(20))
 
+    # Aus dem Titel gelesen, wo der Sender selbst nummeriert. Leer, wenn nicht -
+    # dann traegt das Sendedatum die Einordnung.
+    season = Column(Integer)
+    episode = Column(Integer)
+
     file_path = Column(Text)
     file_size = Column(BigInteger)
     downloaded_at = Column(DateTime, server_default=func.now())
