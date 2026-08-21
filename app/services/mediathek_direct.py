@@ -22,6 +22,7 @@ states it, otherwise the title, otherwise the broadcast date. Every media server
 reads YYYY-MM-DD where a season/episode pair would go.
 """
 
+import asyncio
 import logging
 import re
 import unicodedata
@@ -251,11 +252,20 @@ class MediathekDirect:
                     if resp.status_code != 200:
                         logger.warning(f"    Download fehlgeschlagen: HTTP {resp.status_code}")
                         return 0, f"HTTP {resp.status_code}"
+                    # Schreiben gehoert in einen Thread.
+                    #
+                    # fh.write() blockiert, und die Bibliothek liegt auf einer
+                    # CIFS-Freigabe. Bei 1,1 GB in 1-MB-Stuecken sind das ueber
+                    # tausend blockierende Aufrufe - solange lief die
+                    # Ereignisschleife nicht weiter und der Dienst beantwortete
+                    # keine einzige Anfrage mehr. Im Browser sah das aus wie
+                    # "Failed to fetch".
                     with open(part, "wb") as fh:
                         async for chunk in resp.aiter_bytes(chunk_size=1 << 20):
-                            fh.write(chunk)
+                            await asyncio.to_thread(fh.write, chunk)
                             written += len(chunk)
-            part.rename(target)
+            # Auch das Umbenennen liegt auf der Freigabe.
+            await asyncio.to_thread(part.rename, target)
             return written, None
         except Exception as e:
             logger.warning(f"    Download abgebrochen: {e}")
@@ -324,9 +334,12 @@ class MediathekDirect:
                 ordner=getattr(entry, "library_folder", "") or "",
                 ablage=getattr(entry, "season_layout", "flat") or "flat",
             )
-            if target.exists():
+            # Laeuft je Kandidat einmal ueber das Netz - bei einer Sendung mit
+            # achtzig Treffern summiert sich das.
+            if await asyncio.to_thread(target.exists):
                 # Already there from an earlier run or copied in by hand.
-                self._record(db, entry, item, url, quality, target, target.stat().st_size)
+                groesse = (await asyncio.to_thread(target.stat)).st_size
+                self._record(db, entry, item, url, quality, target, groesse)
                 known.add(url)
                 continue
 

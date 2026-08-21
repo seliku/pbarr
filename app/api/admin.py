@@ -390,6 +390,7 @@ async def get_series_list(db: Session = Depends(get_db)):
                 "min_duration": series.min_duration,
                 "max_duration": series.max_duration,
                 "exclude_keywords": series.exclude_keywords,
+                "search_topic": getattr(series, "search_topic", "") or "",
                 "library_folder": getattr(series, "library_folder", "") or "",
                 "season_layout": getattr(series, "season_layout", "flat") or "flat",
                 "include_senders": series.include_senders,
@@ -483,6 +484,7 @@ async def update_series_filters(tvdb_id: str, filters: SeriesFiltersRequest, db:
                 "min_duration": series.min_duration,
                 "max_duration": series.max_duration,
                 "exclude_keywords": series.exclude_keywords,
+                "search_topic": getattr(series, "search_topic", "") or "",
                 "library_folder": getattr(series, "library_folder", "") or "",
                 "season_layout": getattr(series, "season_layout", "flat") or "flat",
                 "include_senders": series.include_senders
