@@ -29,7 +29,7 @@ from pathlib import Path
 
 import httpx
 
-from app.modules.sources.base import MediaItem
+from app.modules.sources.base import MediaItem, is_stream
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +176,15 @@ class MediathekDirect:
         Writes to a .part file and renames on success, so an aborted run never
         leaves something that looks complete to a media server.
         """
+        # Abspiellisten sind keine Videos.
+        #
+        # Teile des Katalogs liegen nur als HLS vor. Wer so eine Adresse
+        # herunterlaedt, bekommt 17 KB Text - und der Medienserver zeigt eine
+        # Folge an, die sich nicht abspielen laesst. Lieber sichtbar scheitern:
+        # der Fehlversuchszaehler haelt den Grund fest.
+        if is_stream(url):
+            return 0, "nur als HLS-Stream verfuegbar, keine Datei"
+
         target.parent.mkdir(parents=True, exist_ok=True)
         part = target.with_suffix(target.suffix + ".part")
         written = 0

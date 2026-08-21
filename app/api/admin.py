@@ -14,6 +14,7 @@ from app.database import get_db
 from app.models.config import Config
 from app.models.module_state import ModuleState
 from app.models.watch_list import WatchList
+from app.modules.sources.base import is_stream
 
 
 logger = logging.getLogger(__name__)
@@ -558,7 +559,7 @@ async def preview_mediathek_topic(
             item, min_duration, max_duration, exclude_keywords, include_senders
         )
         url, actual_quality = item.best_url(quality)
-        if passes and url:
+        if passes and url and not is_stream(url):
             kept += 1
         else:
             filtered += 1
@@ -572,8 +573,14 @@ async def preview_mediathek_topic(
                 "duration_minutes": round((item.duration_seconds or 0) / 60),
                 "quality": actual_quality,
                 "episode": f"S{season:02d}E{episode:02d}" if season is not None else None,
-                "included": bool(passes and url),
-                "reason": "" if (passes and url) else (reason or "keine Video-URL"),
+                "included": bool(passes and url and not is_stream(url)),
+                "reason": (
+                    ""
+                    if (passes and url and not is_stream(url))
+                    else (reason or ("nur als HLS-Stream, keine Datei"
+                                     if url and is_stream(url)
+                                     else "keine Video-URL"))
+                ),
             })
 
     return {

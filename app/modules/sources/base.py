@@ -27,6 +27,16 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 
+def is_stream(url: str) -> bool:
+    """
+    Ist die Adresse eine HLS-Abspielliste statt einer Datei?
+
+    Teile der oeffentlich-rechtlichen Mediatheken liegen nur als Stream vor.
+    Ohne diese Pruefung landet die Abspielliste selbst in der Bibliothek.
+    """
+    return (url or "").lower().split("?")[0].endswith((".m3u8", ".mpd"))
+
+
 @dataclass
 class MediaItem:
     """One programme a source can currently deliver."""
@@ -64,6 +74,17 @@ class MediaItem:
             "low": ("low", "normal", "hd"),
         }.get((wanted or "hd").lower(), ("hd", "normal", "low"))
 
+        # Eine echte Datei schlaegt eine Stream-Abspielliste, auch bei
+        # geringerer Qualitaet. Wer eine .m3u8 speichert, legt eine 17 KB
+        # grosse Textdatei unter einem Episodennamen ab - der Medienserver
+        # zeigt eine Folge an, die sich nicht abspielen laesst.
+        for quality in order:
+            adresse = self.urls.get(quality)
+            if adresse and not is_stream(adresse):
+                return adresse, quality
+
+        # Nur noch Streams uebrig. Wird zurueckgegeben, damit die Vorschau den
+        # Grund nennen kann; der Download verweigert sie.
         for quality in order:
             if self.urls.get(quality):
                 return self.urls[quality], quality
