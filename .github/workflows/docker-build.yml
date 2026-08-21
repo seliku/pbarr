@@ -1,11 +1,13 @@
 name: Build and Push Docker Image
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*'
+  # Automatischer Build abgeschaltet.
+  #
+  # Images werden lokal im Deploy-Container (CT 666) gebaut und direkt nach
+  # ghcr.io geschoben - das ist schneller und braucht keine Actions-Minuten.
+  # Dieser Weg bleibt als Rueckfallebene erhalten und laesst sich in der
+  # Actions-Oberflaeche von Hand starten ("Run workflow").
+  workflow_dispatch:
 
 jobs:
   build:
