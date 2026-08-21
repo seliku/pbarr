@@ -99,6 +99,21 @@ class MediathekSource(ABC):
     country: str = ""          # ISO code, purely informational
     version: str = "1.0.0"
 
+    # Woran dieser Sender seine Barrierefreiheits-Fassungen erkennt.
+    #
+    # Im deutschen Sprachraum sind das "Audiodeskription", "Gebaerdensprache"
+    # und "klare Sprache" - anderswo heisst das anders. Der Kern kennt diese
+    # Woerter nicht; er fragt hier nach und schlaegt sie beim Anlegen einer
+    # Sendung als Ausschlussliste vor.
+    default_exclude: str = ""
+
+    # Zeichen, die beim Bilden des internen Schluessels ersetzt werden muessen.
+    #
+    # Der Kern faltet Akzente selbst (é wird e, ñ wird n) - das genuegt fuer die
+    # meisten Sprachen. Zeichen ohne solche Zerlegung gehoeren hierher: im
+    # Deutschen ae/oe/ue/ss, im Daenischen ae/oe/aa, und so fort.
+    key_translit: dict = {}
+
     @abstractmethod
     async def search(self, topic: str) -> List[MediaItem]:
         """
@@ -108,5 +123,13 @@ class MediathekSource(ABC):
         treats it as "this show no longer exists" and never deletes anything on
         the strength of it. Sources should log their own failures and return an
         empty list rather than raising.
+
+        Reading season and episode numbers is the source's job, not the core's.
+        Where a broadcaster puts them, and in which language, is a local matter:
+        German broadcasters write "Folge 104: Ausgebrannt (S07/E04)", others put
+        the number first, or use a word the core has never heard of. Fill
+        MediaItem.season and MediaItem.episode where you can determine them, and
+        leave them at None where you cannot - the core then files the episode by
+        its broadcast date, which works everywhere.
         """
         raise NotImplementedError

@@ -618,7 +618,7 @@
                 </div>
                 <div class="form-group">
                     <label for="exclude-keywords">Auszuschließende Schlüsselwörter:</label>
-                    <textarea id="exclude-keywords" rows="3">klare Sprache,Audiodeskription,Gebärdensprache</textarea>
+                    <textarea id="exclude-keywords" rows="3"></textarea>
                     <small style="color: #666; font-size: 12px;">Kommagetrennte Schlüsselwörter. Episoden mit diesen Wörtern werden ausgeschlossen</small>
                 </div>
                 <div class="form-group">
@@ -679,7 +679,7 @@
                 </div>
                 <div class="form-group">
                     <label for="new-series-exclude">Ausschlusswörter:</label>
-                    <input type="text" id="new-series-exclude" value="klare Sprache,Audiodeskription,Gebärdensprache">
+                    <input type="text" id="new-series-exclude" placeholder="wird von der Quelle vorgeschlagen">
                 </div>
                 <button type="button" class="btn btn-secondary" onclick="previewTopic()">🔍 Vorschau</button>
                 <button type="submit" class="btn btn-success">Hinzufügen</button>
@@ -1371,8 +1371,31 @@
 
 
 
+        async function fuelleAusschlussVorgabe() {
+            // Welche Woerter ausgeschlossen gehoeren, weiss die Quelle, nicht die
+            // Oberflaeche. Im deutschsprachigen Raum sind das die Fassungen mit
+            // Audiodeskription und Gebaerdensprache - ein Modul fuer ein anderes
+            // Land meldet andere an.
+            const feld = document.getElementById('new-series-exclude');
+            if (!feld || feld.value.trim()) return;
+            try {
+                const module = await fetchJSON(`${API_URL}/admin/modules`);
+                const woerter = [];
+                (module || []).filter(m => m.enabled).forEach(m => {
+                    (m.default_exclude || '').split(',').forEach(w => {
+                        w = w.trim();
+                        if (w && !woerter.includes(w)) woerter.push(w);
+                    });
+                });
+                feld.value = woerter.join(',');
+            } catch (error) {
+                console.error('Ausschluss-Vorgabe:', error);
+            }
+        }
+
         function openAddSeriesModal() {
             document.getElementById('addSeriesModal').style.display = 'block';
+            fuelleAusschlussVorgabe();
         }
 
         function collectTopicForm() {

@@ -24,12 +24,48 @@ class MeinSender(MediathekSource):
     country = "FR"               # nur zur Information
     version = "1.0.0"
 
+    # Woran dein Sender seine Barrierefreiheits-Fassungen erkennt.
+    # Wird beim Anlegen einer Sendung als Ausschlussliste vorgeschlagen.
+    default_exclude = "audiodescription,langue des signes"
+
+    # Zeichen, die der Kern nicht selbst falten kann. Akzente erledigt er
+    # (é wird e, ñ wird n) - hier gehört nur hinein, was keine solche
+    # Zerlegung hat: im Deutschen ä→ae und ß→ss, im Dänischen å→aa.
+    key_translit = {"œ": "oe"}
+
     async def search(self, topic: str) -> list[MediaItem]:
         ...
 ```
 
 Datei ablegen unter `app/modules/sources/meinsender.py`. Beim nächsten Start
 wird sie gefunden.
+
+## Was dein Modul entscheidet — und was der Kern
+
+Das ist die wichtigste Grenze in diesem Programm. Der Kern weiß **nichts** über
+dein Land, deine Sprache oder die Gewohnheiten deines Senders. Er kann nur, was
+überall gleich ist.
+
+| Der Kern | Dein Modul |
+|---|---|
+| legt die Datei ab: `Serie/Season 07/Serie - S07E04 - Titel.mp4` | liest **Staffel und Folge** aus dem, was dein Sender liefert |
+| entfernt unerlaubte Zeichen aus Dateinamen | meldet Sonderzeichen für den Schlüssel an (`key_translit`) |
+| verweigert Streams, die keine Datei sind (`.m3u8`, `.mpd`) | wählt aus, welche Adressen es überhaupt anbietet |
+| filtert nach Dauer und Ausschlusswörtern | schlägt die Ausschlusswörter vor (`default_exclude`) |
+| zählt Fehlversuche und gibt nach dreien auf | fängt eigene Fehler ab und gibt `[]` zurück |
+| legt nach Sendedatum ab, wenn keine Nummer da ist | — |
+
+Ein Beispiel für die Grenze: die deutschsprachigen Sender schreiben ihre
+Nummerierung als `Folge 104: Ausgebrannt (S07/E04)` in den Titel. Diese Muster
+standen früher im Kern und wären für ein spanisches oder dänisches Modul
+sinnlos gewesen — vielleicht steht die Nummer bei dir am Anfang, vielleicht in
+einem eigenen Feld, vielleicht gar nicht. Deshalb liest **dein Modul** sie und
+schreibt sie in `MediaItem.season` und `MediaItem.episode`.
+
+Findest du keine Nummer, lass beide auf `None`. Der Kern legt die Sendung dann
+nach Sendedatum ab (`Season 2026/Serie - 2026-08-20 - Titel.mp4`) — eine Form,
+die Plex, Jellyfin und Emby ebenso lesen. Das ist kein Notbehelf, sondern für
+tägliche Sendungen und Magazine ohnehin die richtige Ablage.
 
 ## MediaItem
 

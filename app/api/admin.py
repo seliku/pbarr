@@ -15,6 +15,7 @@ from app.models.config import Config
 from app.models.module_state import ModuleState
 from app.models.watch_list import WatchList
 from app.modules.sources.base import is_stream
+from app.modules.sources.registry import enabled_sources
 
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,12 @@ class ModuleResponse(BaseModel):
     version: str
     last_updated: datetime
 
+    # Was die Quelle selbst ueber sich sagt. Leer, wenn zu der Zeile in der
+    # Datenbank kein geladenes Modul gehoert.
+    country: str = ""
+    description: str = ""
+    default_exclude: str = ""
+
     class Config:
         from_attributes = True
 
@@ -76,7 +83,7 @@ class AddByTopicRequest(BaseModel):
     quality: str = "hd"
     min_duration: int = 0
     max_duration: int = 360
-    exclude_keywords: str = "klare Sprache,Audiodeskription,Gebärdensprache"
+    exclude_keywords: Optional[str] = None   # None = Vorgabe der aktiven Quellen
     include_senders: str = ""
 
 
@@ -175,8 +182,24 @@ async def delete_config(key: str, db: Session = Depends(get_db)):
 @router.get("/modules", response_model=List[ModuleResponse])
 async def get_modules(db: Session = Depends(get_db)):
     """Alle Module abrufen"""
-    modules = db.query(ModuleState).all()
-    return modules
+    # Die angemeldeten Eigenheiten der Quelle mitliefern, damit die Oberflaeche
+    # ihre Vorgaben nicht selbst kennen muss.
+    gefunden = {q.name: q for q in enabled_sources(db)}
+    ergebnis = []
+    for zeile in db.query(ModuleState).all():
+        quelle = gefunden.get(zeile.module_name)
+        ergebnis.append({
+            "id": zeile.id,
+            "last_updated": zeile.last_updated,
+            "module_name": zeile.module_name,
+            "module_type": zeile.module_type,
+            "version": zeile.version,
+            "enabled": zeile.enabled,
+            "country": getattr(quelle, "country", "") if quelle else "",
+            "description": getattr(quelle, "description", "") if quelle else "",
+            "default_exclude": getattr(quelle, "default_exclude", "") if quelle else "",
+        })
+    return ergebnis
 
 
 @router.put("/modules/{module_name}/toggle")
@@ -511,14 +534,58 @@ async def restart_container():
 
 # German characters would otherwise be dropped entirely, turning "Groß" into
 # "gro" and losing the difference to a hypothetical "Gros".
-_TRANSLIT = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"})
+def _quellen_vorgabe_ausschluss(db) -> str:
+    """
+    Die Ausschlusswoerter der aktiven Quellen, zusammengefasst.
+
+    Frueher stand hier fest "klare Sprache,Audiodeskription,Gebaerdensprache".
+    Das sind die Bezeichnungen der deutschsprachigen Sender - ein Modul fuer ein
+    anderes Land bringt seine eigenen mit und meldet sie ueber default_exclude an.
+    """
+    woerter = []
+    for quelle in enabled_sources(db):
+        for w in (getattr(quelle, "default_exclude", "") or "").split(","):
+            w = w.strip()
+            if w and w.lower() not in [x.lower() for x in woerter]:
+                woerter.append(w)
+    return ",".join(woerter)
 
 
-def _topic_key(topic: str) -> str:
-    """Build a stable synthetic watchlist key from a topic name."""
+def _umschrift(db) -> dict:
+    """Sonderzeichen, die die aktiven Quellen ersetzt haben wollen."""
+    tabelle = {}
+    for quelle in enabled_sources(db):
+        tabelle.update(getattr(quelle, "key_translit", {}) or {})
+    return tabelle
+
+
+def _topic_key(topic: str, umschrift: dict = None) -> str:
+    """
+    Einen stabilen internen Schluessel aus einem Sendungsnamen bilden.
+
+    Akzente faltet der Kern selbst - é wird e, ñ wird n, å wird a. Das trifft
+    fast jede europaeische Sprache. Zeichen ohne solche Zerlegung meldet die
+    Quelle ueber key_translit an; im Deutschen sind das ae/oe/ue/ss, denn "Groß"
+    wuerde sonst zu "gro" zusammenschrumpfen.
+
+    Das Praefix "mvw:" ist historisch und bleibt, weil bestehende Merklisten
+    darauf verweisen - es benennt keine Quelle mehr.
+    """
     import re as _re
-    slug = (topic or "").lower().translate(_TRANSLIT)
-    slug = _re.sub(r"[^a-z0-9]+", "-", slug).strip("-")
+    import unicodedata
+
+    text = (topic or "").lower()
+
+    for zeichen, ersatz in (umschrift or {}).items():
+        text = text.replace(zeichen.lower(), ersatz.lower())
+
+    # Akzente abtrennen und verwerfen, den Grundbuchstaben behalten.
+    text = "".join(
+        z for z in unicodedata.normalize("NFKD", text)
+        if not unicodedata.combining(z)
+    )
+
+    slug = _re.sub(r"[^a-z0-9]+", "-", text).strip("-")
     return f"mvw:{slug}"[:50]
 
 
@@ -527,7 +594,7 @@ async def preview_mediathek_topic(
     topic: str = Query(..., description="Thema, wie es in der Mediathek heisst"),
     min_duration: int = Query(0),
     max_duration: int = Query(360),
-    exclude_keywords: str = Query("klare Sprache,Audiodeskription,Gebärdensprache"),
+    exclude_keywords: Optional[str] = Query(None),
     include_senders: str = Query(""),
     quality: str = Query("hd"),
     limit: int = Query(25),
@@ -552,11 +619,15 @@ async def preview_mediathek_topic(
                 seen.add(item.source_id)
                 items.append(item)
 
+    # Nicht angegeben heisst: was die aktiven Quellen vorschlagen.
+    ausschluss = (exclude_keywords if exclude_keywords is not None
+                  else _quellen_vorgabe_ausschluss(db))
+
     out, kept, filtered = [], 0, 0
 
     for item in items:
         passes, reason = direct.passes_filters(
-            item, min_duration, max_duration, exclude_keywords, include_senders
+            item, min_duration, max_duration, ausschluss, include_senders
         )
         url, actual_quality = item.best_url(quality)
         if passes and url and not is_stream(url):
@@ -605,7 +676,8 @@ async def add_series_by_topic(request: AddByTopicRequest, db: Session = Depends(
     if not topic:
         raise HTTPException(status_code=400, detail="Ein Thema wird benoetigt")
 
-    key = _topic_key(topic)
+    umschrift = _umschrift(db)
+    key = _topic_key(topic, umschrift)
     if db.query(WatchList).filter(WatchList.tvdb_id == key).first():
         return {"success": False, "message": f"'{topic}' steht bereits auf der Liste"}
 
@@ -618,7 +690,7 @@ async def add_series_by_topic(request: AddByTopicRequest, db: Session = Depends(
     for vorhanden in db.query(WatchList).all():
         namen = [vorhanden.show_name or ""]
         namen += (getattr(vorhanden, "search_topic", "") or "").split("|")
-        if any(_topic_key(n) == key for n in namen if n.strip()):
+        if any(_topic_key(n, umschrift) == key for n in namen if n.strip()):
             return {
                 "success": False,
                 "message": f"'{topic}' steht bereits als '{vorhanden.show_name}' auf der Liste",
@@ -631,7 +703,9 @@ async def add_series_by_topic(request: AddByTopicRequest, db: Session = Depends(
         quality=request.quality or "hd",
         min_duration=request.min_duration,
         max_duration=request.max_duration,
-        exclude_keywords=request.exclude_keywords,
+        exclude_keywords=(request.exclude_keywords
+                          if request.exclude_keywords is not None
+                          else _quellen_vorgabe_ausschluss(db)),
         include_senders=request.include_senders,
         import_source="mediathek",
         tagged_in_sonarr=False,

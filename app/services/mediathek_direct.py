@@ -38,21 +38,9 @@ _TRENNER = re.compile(r'[/\\]')
 _UNSAFE = re.compile(r'[<>:"|?*\x00-\x1f]')
 _SPACES = re.compile(r"\s+")
 
-# Episode numbering as broadcasters themselves put it into the title, e.g.
-# "Folge 104: Ausgebrannt (S07/E04)". Only unambiguous forms are matched.
-#
-# Deliberately NOT matched: a bare number in brackets such as "(44)" or a part
-# marker like "(1/2)". Those are running counts or splits, not season/episode
-# pairs, and guessing at them would produce wrong file names.
 # A depublished link answers 403 or 404 for good. Without a limit it would be
 # retried on every hourly run, forever.
 MAX_ATTEMPTS = 3
-
-_EPISODE_PATTERNS = [
-    re.compile(r"\bS(\d{1,2})\s*[/\-_ ]?\s*E(\d{1,3})\b", re.IGNORECASE),
-    re.compile(r"\bStaffel\s*(\d{1,2})\b.*?\bFolge\s*(\d{1,3})\b", re.IGNORECASE),
-    re.compile(r"\bSeason\s*(\d{1,2})\b.*?\bEpisode\s*(\d{1,3})\b", re.IGNORECASE),
-]
 
 
 class MediathekDirect:
@@ -119,21 +107,14 @@ class MediathekDirect:
         """
         Determine season/episode, or (None, None).
 
-        The source wins when it states a number itself - it spoke to the
-        broadcaster. Otherwise the title is read, which is where German
-        broadcasters put it.
+        Reading a number out of a title is the source's job. Where a broadcaster
+        writes it, and in which language, differs from country to country - the
+        German patterns used to sit here and would have been meaningless to a
+        Spanish or Danish connector. A source fills MediaItem.season and
+        MediaItem.episode where it can; everything else is filed by date.
         """
         if item.season is not None and item.episode is not None:
             return item.season, item.episode
-
-        text = f"{item.title} {item.description or ''}"
-        for pattern in _EPISODE_PATTERNS:
-            m = pattern.search(text)
-            if m:
-                try:
-                    return int(m.group(1)), int(m.group(2))
-                except (TypeError, ValueError):
-                    continue
         return None, None
 
     @classmethod
