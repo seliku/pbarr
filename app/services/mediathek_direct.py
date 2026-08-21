@@ -153,6 +153,27 @@ class MediathekDirect:
         cleaned = _SPACES.sub(" ", cleaned).strip(" .")
         return cleaned[:150] or "Unbenannt"
 
+    def raeume_reste(self) -> int:
+        """
+        Halbe Downloads aus einem frueheren Lauf entfernen.
+
+        Beim Start kann keine .part-Datei rechtmaessig existieren - es laedt ja
+        noch nichts. Was hier liegt, stammt aus einem Abbruch. Bei SIGKILL,
+        Stromausfall oder einem harten Neustart des Behaelters kommt die
+        Aufraeumroutine im Download gar nicht mehr zum Zug, deshalb dieser
+        zweite Weg.
+        """
+        entfernt = 0
+        try:
+            for rest in self.library_path.rglob("*.part"):
+                groesse = rest.stat().st_size
+                rest.unlink(missing_ok=True)
+                entfernt += 1
+                logger.info(f"  Rest entfernt ({groesse / 1048576:.0f} MB): {rest.name}")
+        except OSError as e:
+            logger.debug(f"Reste nicht aufraeumbar ({e})")
+        return entfernt
+
     def bekannte_ordner(self) -> dict:
         """Die Ordner der Bibliothek, nach Vergleichsnamen abgelegt."""
         if self._ordner_verzeichnis is None:
@@ -267,6 +288,15 @@ class MediathekDirect:
             # Auch das Umbenennen liegt auf der Freigabe.
             await asyncio.to_thread(part.rename, target)
             return written, None
+        except asyncio.CancelledError:
+            # Der Dienst wird beendet, waehrend geladen wird - etwa bei einem
+            # Update. CancelledError erbt seit Python 3.8 von BaseException und
+            # ginge an "except Exception" vorbei; die halbe Datei bliebe liegen.
+            # Gemessen: ein Update mitten im Download hinterliess eine
+            # verwaiste .part-Datei von 1,08 GB.
+            logger.info(f"    Abgebrochen, {written / 1048576:.0f} MB verworfen: {target.name}")
+            part.unlink(missing_ok=True)
+            raise
         except Exception as e:
             logger.warning(f"    Download abgebrochen: {e}")
             part.unlink(missing_ok=True)

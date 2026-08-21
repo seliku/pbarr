@@ -86,6 +86,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"✗ Download directory init failed: {e}")
 
+    # Halbe Downloads aus einem Abbruch entfernen.
+    try:
+        reste = direct.raeume_reste()
+        if reste:
+            logger.info(f"✓ {reste} angefangene(r) Download(s) aus einem Abbruch entfernt")
+    except Exception as e:
+        logger.warning(f"Reste nicht aufgeraeumt: {e}")
+
     # Quellen einmal beim Start laden.
     #
     # Der Lader wuerde das auch bei der ersten Suche tun, aber dann faellt ein
