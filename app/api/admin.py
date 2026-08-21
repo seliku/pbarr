@@ -81,7 +81,8 @@ class AddByTopicRequest(BaseModel):
     topic: str
     display_name: Optional[str] = None
     quality: str = "hd"
-    min_duration: int = 0
+    # Fuenf Minuten trennt ganze Folgen von Ausschnitten; 0 waere "alles".
+    min_duration: int = 5
     max_duration: int = 360
     exclude_keywords: Optional[str] = None   # None = Vorgabe der aktiven Quellen
     library_folder: Optional[str] = None     # leer = vorhandener Ordner bzw. Name
@@ -720,9 +721,13 @@ async def add_series_by_topic(request: AddByTopicRequest, db: Session = Depends(
         quality=request.quality or "hd",
         min_duration=request.min_duration,
         max_duration=request.max_duration,
-        exclude_keywords=(request.exclude_keywords
-                          if request.exclude_keywords is not None
-                          else _quellen_vorgabe_ausschluss(db)),
+        # Leer heisst hier "nicht ausgefuellt", nicht "ausdruecklich nichts
+        # ausschliessen". Die Oberflaeche sendet einen leeren Text, wenn das
+        # Feld nicht gefuellt wurde - geprueft wurde aber nur auf None, und so
+        # entstanden Eintraege ohne jeden Ausschluss. Die luden dann auch
+        # Audiodeskriptions-Fassungen und einminuetige Ausschnitte.
+        exclude_keywords=((request.exclude_keywords or "").strip()
+                          or _quellen_vorgabe_ausschluss(db)),
         include_senders=request.include_senders,
         library_folder=(request.library_folder or "").strip(),
         season_layout=(request.season_layout or "flat").strip().lower(),
