@@ -173,7 +173,7 @@ class MediathekDirect:
         Programm er stammt: "S07E04" in jeder Schreibweise, sonst das
         Sendedatum.
         """
-        nummern, daten = set(), set()
+        nummern, daten = set(), {}
         try:
             for datei in ordner.rglob("*"):
                 if not datei.is_file() or datei.suffix == ".part":
@@ -183,10 +183,37 @@ class MediathekDirect:
                     nummern.add((int(treffer.group(1)), int(treffer.group(2))))
                 treffer = _DATEI_DATUM.search(datei.name)
                 if treffer:
-                    daten.add(treffer.group(1))
+                    # Das Datum allein genuegt nicht.
+                    #
+                    # Sendungen veroeffentlichen mehrere Beitraege am selben
+                    # Tag. Wuerde nur das Datum verglichen, gaelte alles von
+                    # diesem Tag als vorhanden, sobald ein einziger Beitrag da
+                    # ist - und die uebrigen wuerden nie geholt. Deshalb wird
+                    # zusaetzlich der Dateiname aufbewahrt.
+                    daten.setdefault(treffer.group(1), set()).add(
+                        vergleichsname(datei.stem)
+                    )
         except OSError as e:
             logger.debug(f"Ordner nicht lesbar ({e}): {ordner}")
         return nummern, daten
+
+    @staticmethod
+    def datum_belegt(daten: dict, aired, titel: str) -> bool:
+        """
+        Liegt ein Beitrag dieses Datums mit diesem Titel schon vor?
+
+        Verglichen wird, ob der Titel im Namen einer vorhandenen Datei desselben
+        Tages steckt - unabhaengig davon, wie das Programm sie sonst benannt hat.
+        """
+        if not aired:
+            return False
+        vorhanden = daten.get(aired.strftime("%Y-%m-%d"))
+        if not vorhanden:
+            return False
+        gesucht = vergleichsname(titel or "")
+        if not gesucht:
+            return False
+        return any(gesucht in name for name in vorhanden)
 
     def raeume_reste(self) -> int:
         """
@@ -425,8 +452,8 @@ class MediathekDirect:
                 logger.debug(f"    ⊘ S{staffel:02d}E{folge:02d} liegt bereits vor")
                 skipped += 1
                 continue
-            if staffel is None and item.aired and \
-                    item.aired.strftime("%Y-%m-%d") in vorhandene_daten:
+            if staffel is None and self.datum_belegt(
+                    vorhandene_daten, item.aired, item.title):
                 logger.debug(f"    ⊘ Sendung vom {item.aired:%Y-%m-%d} liegt bereits vor")
                 skipped += 1
                 continue

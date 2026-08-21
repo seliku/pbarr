@@ -660,7 +660,7 @@ async def preview_mediathek_topic(
     #
     # Ohne das zeigt sie "26 passend" fuer eine Sendung, von der alle 26 Folgen
     # laengst da sind - und man haelt es fuer 26 anstehende Downloads.
-    vorhandene_nummern, vorhandene_daten = set(), set()
+    vorhandene_nummern, vorhandene_daten = set(), {}
     if watch_key:
         eintrag = db.query(WatchList).filter(WatchList.tvdb_id == watch_key).first()
         if eintrag:
@@ -682,8 +682,8 @@ async def preview_mediathek_topic(
         staffel, folge = direct.extract_episode(item)
         schon_da = (
             (staffel is not None and (staffel, folge) in vorhandene_nummern)
-            or (staffel is None and item.aired
-                and item.aired.strftime("%Y-%m-%d") in vorhandene_daten)
+            or (staffel is None and direct.datum_belegt(
+                vorhandene_daten, item.aired, item.title))
         )
 
         if passes and url and not is_stream(url) and not schon_da:
