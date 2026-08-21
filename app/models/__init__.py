@@ -4,6 +4,7 @@ from app.models.show import Show
 from app.models.episode import Episode
 from app.models.module_state import ModuleState
 from app.models.episode_monitoring_state import EpisodeMonitoringState
+from app.models.mediathek_download import MediathekDownload
 
 __all__ = [
     "Config",
@@ -12,5 +13,6 @@ __all__ = [
     "Show",
     "Episode",
     "ModuleState",
-    "EpisodeMonitoringState"
+    "EpisodeMonitoringState",
+    "MediathekDownload"
 ]

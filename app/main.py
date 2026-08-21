@@ -40,6 +40,7 @@ logging.getLogger('httpx').setLevel(logging.WARNING)
 # Services
 from app.database import init_db, get_db
 from app.services.mediathek_cacher import cacher
+from app.services.mediathek_direct import direct
 from app.startup import init_config, load_enabled_modules, init_download_directory, run_migrations
 
 
@@ -93,13 +94,17 @@ async def lifespan(app: FastAPI):
         
         scheduler = AsyncIOScheduler()
         
-        # Hourly: Cache Sync
+        # Stuendlich: direkter Mediathek-Abgleich.
+        #
+        # Loest den alten Weg ab, der Sonarr und TVDB brauchte und deshalb
+        # nie etwas heruntergeladen hat - beide Nummerierungen liefen
+        # auseinander. Siehe mediathek_direct.py.
         scheduler.add_job(
-            cacher.sync_watched_shows,
+            direct.sync_watchlist,
             'interval',
             hours=1,
             id='mediathek_sync',
-            name='Mediathek Cache Sync (Hourly)'
+            name='Mediathek Sync (stuendlich)'
         )
         
         # Daily: Cleanup

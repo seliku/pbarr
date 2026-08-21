@@ -194,3 +194,137 @@ class MediathekDirect:
             logger.warning(f"    Download abgebrochen: {e}")
             part.unlink(missing_ok=True)
             return 0
+
+    # -------------------------------------------------------------------- sync
+
+    async def sync_entry(self, entry, db) -> int:
+        """
+        Bring one watchlist entry up to date. Returns how many items were fetched.
+
+        The topic searched is search_topic when set, otherwise show_name - so an
+        entry can carry a display name that differs from what the Mediathek calls
+        the show.
+        """
+        topic = (getattr(entry, "search_topic", "") or entry.show_name or "").strip()
+        if not topic:
+            logger.warning(f"  Eintrag ohne Namen (key={entry.tvdb_id}) - uebersprungen")
+            return 0
+
+        items = await self.search(topic)
+        if not items:
+            # No hits or API unreachable. Either way: do nothing, delete nothing.
+            return 0
+
+        from app.models.mediathek_download import MediathekDownload
+
+        known = {
+            row[0]
+            for row in db.query(MediathekDownload.source_url)
+            .filter(MediathekDownload.watch_key == entry.tvdb_id)
+            .all()
+        }
+
+        wanted_quality = getattr(entry, "quality", None) or "hd"
+        fetched = 0
+        skipped = 0
+
+        for item in items:
+            passes, reason = self.passes_filters(
+                item,
+                entry.min_duration or 0,
+                entry.max_duration or 0,
+                entry.exclude_keywords or "",
+                entry.include_senders or "",
+            )
+            if not passes:
+                logger.debug(f"    ⊘ {item.get('title','')[:50]} - {reason}")
+                skipped += 1
+                continue
+
+            url, quality = self.pick_stream(item, wanted_quality)
+            if not url:
+                logger.debug(f"    ⊘ {item.get('title','')[:50]} - keine Video-URL")
+                skipped += 1
+                continue
+            if url in known:
+                continue
+
+            target = self.build_path(entry.show_name, item)
+            if target.exists():
+                # Already on disk from an earlier run or a manual copy - remember
+                # it so we stop re-checking, but do not fetch it again.
+                self._record(db, entry, item, url, quality, target, target.stat().st_size)
+                known.add(url)
+                continue
+
+            logger.info(f"    ↓ {item.get('title','')[:60]} [{quality}]")
+            size = await self.download(url, target)
+            if size:
+                self._record(db, entry, item, url, quality, target, size)
+                known.add(url)
+                fetched += 1
+                logger.info(f"      ✓ {size / 1048576:.0f} MB → {target.name}")
+            else:
+                logger.warning(f"      ✗ fehlgeschlagen: {item.get('title','')[:50]}")
+
+        if fetched or skipped:
+            logger.info(f"  '{topic}': {fetched} geholt, {skipped} gefiltert, {len(known)} bekannt")
+        return fetched
+
+    @staticmethod
+    def _record(db, entry, item, url, quality, target, size):
+        """Write one download into the ledger. Duplicates are ignored."""
+        from app.models.mediathek_download import MediathekDownload
+
+        ts = item.get("timestamp")
+        try:
+            db.add(
+                MediathekDownload(
+                    watch_key=entry.tvdb_id,
+                    show_name=entry.show_name,
+                    source_url=url,
+                    channel=item.get("channel"),
+                    topic=item.get("topic"),
+                    title=item.get("title"),
+                    aired=datetime.fromtimestamp(ts, tz=timezone.utc).replace(tzinfo=None) if ts else None,
+                    duration_seconds=item.get("duration"),
+                    quality=quality,
+                    file_path=str(target),
+                    file_size=size,
+                )
+            )
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logger.debug(f"      (nicht vermerkt: {e})")
+
+    async def sync_watchlist(self):
+        """
+        Hourly entry point. Walks the whole watchlist and fetches what is new.
+
+        Opens its own session because the scheduler calls this without arguments.
+        """
+        from app.database import SessionLocal
+        from app.models.watch_list import WatchList
+
+        db = SessionLocal()
+        try:
+            entries = db.query(WatchList).all()
+            if not entries:
+                logger.info("🔄 Mediathek-Abgleich: Watch-List ist leer")
+                return
+
+            logger.info(f"🔄 Mediathek-Abgleich fuer {len(entries)} Eintrag/Eintraege...")
+            total = 0
+            for entry in entries:
+                try:
+                    total += await self.sync_entry(entry, db)
+                except Exception as e:
+                    logger.error(f"  Fehler bei '{entry.show_name}': {e}", exc_info=True)
+            logger.info(f"✅ Mediathek-Abgleich fertig: {total} neue Sendung(en)")
+        finally:
+            db.close()
+
+
+# Modul-weite Instanz, analog zum alten `cacher`
+direct = MediathekDirect()

@@ -29,3 +29,7 @@ class WatchList(Base):
     # Search title filtering for Mediathek searches
     search_title_filter = Column(Boolean, default=False)  # Enable/disable search title filtering
     custom_search_title = Column(String(255), default="")  # Custom search title (overrides auto-generated)
+
+    # Direkter Mediathek-Weg (ohne Sonarr/TVDB)
+    search_topic = Column(String(255), default="")   # Thema wie in der Mediathek; leer = show_name
+    quality = Column(String(20), default="hd")       # hd | normal | low
