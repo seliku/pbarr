@@ -51,6 +51,12 @@ STATEMENTS = [
      "ADD COLUMN IF NOT EXISTS season INTEGER, "
      "ADD COLUMN IF NOT EXISTS episode INTEGER"),
 
+    ("mediathek_downloads.failed_attempts/last_error",
+     "ALTER TABLE mediathek_downloads "
+     "ADD COLUMN IF NOT EXISTS failed_attempts INTEGER DEFAULT 0, "
+     "ADD COLUMN IF NOT EXISTS last_error TEXT, "
+     "ADD COLUMN IF NOT EXISTS last_attempt TIMESTAMP"),
+
     ("Index mediathek_downloads.watch_key",
      "CREATE INDEX IF NOT EXISTS ix_mediathek_downloads_watch_key "
      "ON mediathek_downloads (watch_key)"),

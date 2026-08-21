@@ -32,6 +32,13 @@ class MediathekDownload(Base):
     season = Column(Integer)
     episode = Column(Integer)
 
+    # Gescheiterte Versuche stehen ebenfalls hier, mit file_path = NULL.
+    # Ein depublizierter Link antwortet dauerhaft mit 403 oder 404; ohne
+    # Zaehler wuerde er bei jedem Lauf erneut versucht.
+    failed_attempts = Column(Integer, default=0)
+    last_error = Column(Text)
+    last_attempt = Column(DateTime)
+
     file_path = Column(Text)
     file_size = Column(BigInteger)
     downloaded_at = Column(DateTime, server_default=func.now())

@@ -43,6 +43,10 @@ _SPACES = re.compile(r"\s+")
 # Deliberately NOT matched: a bare number in brackets such as "(44)" or a part
 # marker like "(1/2)". Those are running counts or splits, not season/episode
 # pairs, and guessing at them would produce wrong file names.
+# A depublished link answers 403 or 404 for good. Without a limit it would be
+# retried on every hourly run, forever.
+MAX_ATTEMPTS = 3
+
 _EPISODE_PATTERNS = [
     re.compile(r"\bS(\d{1,2})\s*[/\-_ ]?\s*E(\d{1,3})\b", re.IGNORECASE),
     re.compile(r"\bStaffel\s*(\d{1,2})\b.*?\bFolge\s*(\d{1,3})\b", re.IGNORECASE),
@@ -164,9 +168,10 @@ class MediathekDirect:
 
     # ---------------------------------------------------------------- download
 
-    async def download(self, url: str, target: Path) -> int:
+    async def download(self, url: str, target: Path) -> tuple:
         """
-        Stream a file to disk. Returns the byte count, or 0 on failure.
+        Stream a file to disk. Returns (bytes_written, error) - error is None
+        on success.
 
         Writes to a .part file and renames on success, so an aborted run never
         leaves something that looks complete to a media server.
@@ -179,17 +184,17 @@ class MediathekDirect:
                 async with client.stream("GET", url) as resp:
                     if resp.status_code != 200:
                         logger.warning(f"    Download fehlgeschlagen: HTTP {resp.status_code}")
-                        return 0
+                        return 0, f"HTTP {resp.status_code}"
                     with open(part, "wb") as fh:
                         async for chunk in resp.aiter_bytes(chunk_size=1 << 20):
                             fh.write(chunk)
                             written += len(chunk)
             part.rename(target)
-            return written
+            return written, None
         except Exception as e:
             logger.warning(f"    Download abgebrochen: {e}")
             part.unlink(missing_ok=True)
-            return 0
+            return 0, str(e)[:200]
 
     # -------------------------------------------------------------------- sync
 
@@ -219,11 +224,17 @@ class MediathekDirect:
 
         from app.models.mediathek_download import MediathekDownload
 
-        known = {
-            row[0]
-            for row in db.query(MediathekDownload.source_url)
-            .filter(MediathekDownload.watch_key == entry.tvdb_id).all()
-        }
+        # Erledigt ist, was geholt wurde - und was zu oft gescheitert ist.
+        known, given_up = set(), set()
+        for url, path, fails in db.query(
+            MediathekDownload.source_url,
+            MediathekDownload.file_path,
+            MediathekDownload.failed_attempts,
+        ).filter(MediathekDownload.watch_key == entry.tvdb_id).all():
+            if path:
+                known.add(url)
+            elif (fails or 0) >= MAX_ATTEMPTS:
+                given_up.add(url)
 
         wanted = getattr(entry, "quality", None) or "hd"
         fetched = skipped = 0
@@ -239,7 +250,7 @@ class MediathekDirect:
                 continue
 
             url, quality = item.best_url(wanted)
-            if not url or url in known:
+            if not url or url in known or url in given_up:
                 continue
 
             target = self.build_path(entry.show_name, item)
@@ -250,14 +261,23 @@ class MediathekDirect:
                 continue
 
             logger.info(f"    ↓ {item.title[:60]} [{quality}]")
-            size = await self.download(url, target)
+            size, error = await self.download(url, target)
             if size:
                 self._record(db, entry, item, url, quality, target, size)
                 known.add(url)
                 fetched += 1
                 logger.info(f"      ✓ {size / 1048576:.0f} MB → {target.name}")
             else:
-                logger.warning(f"      ✗ fehlgeschlagen: {item.title[:50]}")
+                attempts = self._record_failure(db, entry, item, url, quality, error)
+                if attempts >= MAX_ATTEMPTS:
+                    given_up.add(url)
+                    logger.warning(
+                        f"      ✗ nach {attempts} Versuchen aufgegeben: {item.title[:44]} ({error})"
+                    )
+                else:
+                    logger.warning(
+                        f"      ✗ Versuch {attempts}/{MAX_ATTEMPTS}: {item.title[:44]} ({error})"
+                    )
 
         if fetched or skipped:
             logger.info(f"  '{topics[0]}': {fetched} geholt, {skipped} gefiltert, {len(known)} bekannt")
@@ -290,6 +310,52 @@ class MediathekDirect:
         except Exception as e:
             db.rollback()
             logger.debug(f"      (nicht vermerkt: {e})")
+
+    @staticmethod
+    def _record_failure(db, entry, item: MediaItem, url, quality, error) -> int:
+        """
+        Note a failed attempt and return how many there have been.
+
+        Failures share the ledger with successes, distinguished by file_path
+        being empty. That keeps one place to look when asking "what happened to
+        this programme".
+        """
+        from app.models.mediathek_download import MediathekDownload
+
+        try:
+            row = db.query(MediathekDownload).filter(
+                MediathekDownload.watch_key == entry.tvdb_id,
+                MediathekDownload.source_url == url,
+            ).first()
+
+            if row is None:
+                season, episode = MediathekDirect.extract_episode(item)
+                row = MediathekDownload(
+                    watch_key=entry.tvdb_id,
+                    show_name=entry.show_name,
+                    source_url=url,
+                    channel=item.channel,
+                    topic=item.topic,
+                    title=item.title,
+                    aired=item.aired.replace(tzinfo=None) if item.aired else None,
+                    duration_seconds=item.duration_seconds,
+                    quality=quality,
+                    season=season,
+                    episode=episode,
+                    file_path=None,
+                    failed_attempts=0,
+                )
+                db.add(row)
+
+            row.failed_attempts = (row.failed_attempts or 0) + 1
+            row.last_error = (error or "")[:200]
+            row.last_attempt = datetime.now(timezone.utc).replace(tzinfo=None)
+            db.commit()
+            return row.failed_attempts
+        except Exception as e:
+            db.rollback()
+            logger.debug(f"      (Fehlversuch nicht vermerkt: {e})")
+            return 0
 
     async def sync_watchlist(self):
         """Hourly entry point. Opens its own session - the scheduler passes none."""

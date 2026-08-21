@@ -8,7 +8,6 @@ from app.database import get_db
 from app.models.watch_list import WatchList
 from app.models.mediathek_cache import MediathekCache
 from app.models.config import Config
-from app.services.sonarr_webhook import SonarrWebhookManager
 
 logger = logging.getLogger(__name__)
 
@@ -52,15 +51,10 @@ async def get_dashboard(db: Session = Depends(get_db)):
                 except Exception:
                     pass
 
-        # Get Sonarr config for episode status checks
-        sonarr_url_config = db.query(Config).filter_by(key="sonarr_url").first()
-        sonarr_api_config = db.query(Config).filter_by(key="sonarr_api_key").first()
-        sonarr_configured = (sonarr_url_config and sonarr_api_config and
-                           sonarr_url_config.value and sonarr_api_config.value)
-
+        # Sonarr ist aus dem Produkt entfernt. Die Variable bleibt vorerst,
+        # damit der Zweig weiter unten sauber ins Leere laeuft, statt eine
+        # weitere Umbaustelle in dieser Funktion aufzureissen.
         sonarr_manager = None
-        if sonarr_configured:
-            sonarr_manager = SonarrWebhookManager(sonarr_url_config.value, sonarr_api_config.value)
 
         # Build series list with current status
         series_list = []

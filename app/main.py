@@ -39,13 +39,12 @@ logging.getLogger('httpx').setLevel(logging.WARNING)
 
 # Services
 from app.database import init_db, get_db
-from app.services.mediathek_cacher import cacher
 from app.services.mediathek_direct import direct
 from app.startup import init_config, load_enabled_modules, init_download_directory, run_migrations
 
 
 # API Routes
-from app.api import admin, system, integration, dashboard
+from app.api import admin, system, dashboard
 
 
 logger = logging.getLogger(__name__)
@@ -107,15 +106,7 @@ async def lifespan(app: FastAPI):
             name='Mediathek Sync (stuendlich)'
         )
         
-        # Daily: Cleanup
-        scheduler.add_job(
-            cacher.cleanup_expired,
-            'cron',
-            hour=2,
-            minute=0,
-            id='cache_cleanup_expired',
-            name='Cleanup Expired Cache'
-        )
+        # Cache-Aufraeumen entfaellt - der direkte Weg nutzt keinen Cache.
         
         # cleanup_unwatched wurde aus dem Zeitplan genommen.
         #
@@ -151,7 +142,6 @@ app = FastAPI(
 # Die Module liegen noch im Baum, bis die Beta sich bewaehrt hat.
 app.include_router(admin.router)
 app.include_router(system.router)
-app.include_router(integration.router)
 
 app.include_router(dashboard.router)
 
