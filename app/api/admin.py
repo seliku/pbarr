@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
@@ -108,11 +108,14 @@ class SeriesFiltersRequest(BaseModel):
 # HTML Admin Panel
 @router.get("/")
 async def admin_panel():
-    """Serve admin.html"""
-    admin_html = os.path.join(os.path.dirname(__file__), "..", "static", "admin.html")
-    if os.path.exists(admin_html):
-        return FileResponse(admin_html, media_type="text/html")
-    return {"error": "Admin panel not found"}
+    """
+    Weiterleitung auf die Wurzel.
+
+    Die Oberflaeche lag frueher hier. Bestehende Lesezeichen sollen weiter
+    funktionieren, deshalb bleibt der Pfad - aber nur als Wegweiser. Die
+    Schnittstellen unter /admin/... sind davon unberuehrt.
+    """
+    return RedirectResponse(url="/", status_code=308)
 
 
 # Endpoints

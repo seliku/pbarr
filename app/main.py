@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from contextlib import asynccontextmanager
 import logging
 import os
@@ -172,13 +172,18 @@ async def health_check():
 
 @app.get("/")
 async def root():
-    return JSONResponse({
-        "app": "PBArr",
-        "version": __version__,
-        "docs": "/docs",
-        "admin": "/admin",
-        "health": "/health"
-    })
+    """
+    Die Oberflaeche liegt auf der Wurzel.
+
+    Frueher stand hier ein JSON-Stummel und die Oberflaeche unter /admin/. Es
+    gibt aber keinen zweiten Modus, von dem man das Verwalten abgrenzen muesste
+    - das Praefix war reiner Ballast. Alles, was der Stummel nannte, ist ohnehin
+    einzeln erreichbar: /docs, /health, /api/system/version.
+    """
+    seite = os.path.join(os.path.dirname(__file__), "static", "admin.html")
+    if os.path.exists(seite):
+        return FileResponse(seite, media_type="text/html")
+    return JSONResponse({"app": "PBArr", "version": __version__, "health": "/health"})
 
 
 if __name__ == "__main__":
