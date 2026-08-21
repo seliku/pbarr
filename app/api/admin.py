@@ -415,13 +415,27 @@ async def update_series_filters(tvdb_id: str, filters: SeriesFiltersRequest, db:
         if not series:
             raise HTTPException(status_code=404, detail=f"Series with TVDB ID {tvdb_id} not found")
 
-        # Update filter fields
-        series.min_duration = filters.min_duration
-        series.max_duration = filters.max_duration
-        series.exclude_keywords = filters.exclude_keywords
-        series.include_senders = filters.include_senders
-        series.search_title_filter = filters.search_title_filter
-        series.custom_search_title = filters.custom_search_title
+        # Nur uebernehmen, was auch geschickt wurde.
+        #
+        # Diese drei Zeilen wiesen frueher unbedingt zu. Schickte die
+        # Oberflaeche fuer ein leeres Feld ein null - was sie tut -, wurde ein
+        # gesetzter Wert damit geloescht. So verschwand bei einer Sendung eine
+        # eingestellte Mindestdauer von 26 Minuten, und sie lud daraufhin auch
+        # einminuetige Ausschnitte. Ein nicht geschicktes Feld darf nichts
+        # aendern; wer einen Wert loeschen will, schickt eine 0 oder einen
+        # leeren Text.
+        if filters.min_duration is not None:
+            series.min_duration = filters.min_duration
+        if filters.max_duration is not None:
+            series.max_duration = filters.max_duration
+        if filters.exclude_keywords is not None:
+            series.exclude_keywords = filters.exclude_keywords
+        if filters.include_senders is not None:
+            series.include_senders = filters.include_senders
+        if filters.search_title_filter is not None:
+            series.search_title_filter = filters.search_title_filter
+        if filters.custom_search_title is not None:
+            series.custom_search_title = filters.custom_search_title
 
         # Direkter Mediathek-Weg: nur setzen, wenn mitgeschickt. Die Felder
         # darueber werden bedingungslos ueberschrieben - ein Aufruf ohne diese

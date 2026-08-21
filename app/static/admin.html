@@ -1472,8 +1472,29 @@
             }
         }
 
-        function openEditSeriesFiltersModal(tvdbId) {
-            const serie = (window.serienListe || {})[tvdbId] || {};
+        async function openEditSeriesFiltersModal(tvdbId) {
+            // Ohne Daten kein Dialog.
+            //
+            // Frueher kamen die Werte als Parameter vom Knopf. Seit sie aus der
+            // zwischengespeicherten Liste stammen, koennte der Dialog mit
+            // leeren Feldern aufgehen, wenn die Liste noch nicht da ist - und
+            // Speichern wuerde die eingestellten Werte ueberschreiben.
+            let serie = (window.serienListe || {})[tvdbId];
+            if (!serie) {
+                try {
+                    const daten = await fetchJSON(`${API_URL}/admin/series`);
+                    window.serienListe = {};
+                    (daten.series || []).forEach(x => { window.serienListe[x.tvdb_id] = x; });
+                    serie = window.serienListe[tvdbId];
+                } catch (error) {
+                    showError(`Einstellungen konnten nicht geladen werden: ${error.message}`);
+                    return;
+                }
+            }
+            if (!serie) {
+                showError('Diese Sendung steht nicht mehr auf der Liste.');
+                return;
+            }
             window.currentSeriesTvdbId = tvdbId;
 
             document.getElementById('series-title-display').textContent = serie.title || tvdbId;
