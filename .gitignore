@@ -30,6 +30,8 @@ docker-compose.yml
 # Logs
 logs/
 *.log
+# rotierte Logs (pbarr.log.1 usw.)
+*.log.*
 pbarr.log
 
 # Downloads
