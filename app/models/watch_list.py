@@ -33,3 +33,7 @@ class WatchList(Base):
     # Direkter Mediathek-Weg (ohne Sonarr/TVDB)
     search_topic = Column(String(255), default="")   # Thema wie in der Mediathek; leer = show_name
     quality = Column(String(20), default="hd")       # hd | normal | low
+
+    # Ablage in der Bibliothek.
+    library_folder = Column(String(255), default="")   # leer = aus dem Namen / vorhandener Ordner
+    season_layout = Column(String(20), default="flat") # flat | seasons

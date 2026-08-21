@@ -24,6 +24,7 @@ reads YYYY-MM-DD where a season/episode pair would go.
 
 import logging
 import re
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -43,9 +44,24 @@ _SPACES = re.compile(r"\s+")
 MAX_ATTEMPTS = 3
 
 
+def vergleichsname(text: str) -> str:
+    """
+    Einen Namen auf seinen Kern reduzieren, um Ordner vergleichen zu koennen.
+
+    Gross-/Kleinschreibung, Akzente, Satzzeichen und Trennzeichen fallen weg.
+    "Wer weiß denn sowas?" und "Wer weiss denn sowas" ergeben dasselbe.
+    """
+    text = unicodedata.normalize("NFKD", (text or "").lower())
+    text = "".join(z for z in text if not unicodedata.combining(z))
+    text = text.replace("ß", "ss")
+    return re.sub(r"[^a-z0-9]+", "", text)
+
+
 class MediathekDirect:
     def __init__(self, library_path: str = "/app/library"):
         self.library_path = Path(library_path)
+        # Vorhandene Ordner der Bibliothek, einmal je Lauf eingelesen.
+        self._ordner_verzeichnis = None
 
     # ------------------------------------------------------------------ search
 
@@ -136,7 +152,40 @@ class MediathekDirect:
         cleaned = _SPACES.sub(" ", cleaned).strip(" .")
         return cleaned[:150] or "Unbenannt"
 
-    def build_path(self, show_name: str, item: MediaItem, url: str = None) -> Path:
+    def bekannte_ordner(self) -> dict:
+        """Die Ordner der Bibliothek, nach Vergleichsnamen abgelegt."""
+        if self._ordner_verzeichnis is None:
+            verzeichnis = {}
+            try:
+                for eintrag in self.library_path.iterdir():
+                    if eintrag.is_dir():
+                        verzeichnis.setdefault(vergleichsname(eintrag.name), eintrag.name)
+            except OSError as e:
+                logger.debug(f"Bibliothek nicht lesbar ({e}) - lege neu an")
+            self._ordner_verzeichnis = verzeichnis
+        return self._ordner_verzeichnis
+
+    def ordner_fuer(self, show_name: str) -> str:
+        """
+        Der Ordnername fuer diese Sendung.
+
+        Ein bereits vorhandener Ordner hat Vorrang vor einem neu gebildeten.
+        Sonst entstuenden zwei Ordner fuer dieselbe Serie, sobald sich der Name
+        in der Mediathek auch nur in einem Satzzeichen von dem unterscheidet,
+        den ein anderes Programm einmal angelegt hat - der Medienserver zeigte
+        dann zwei Serien.
+
+        Verglichen wird ohne Gross-/Kleinschreibung, Akzente und Satzzeichen:
+        "Wer weiss denn sowas" und "Wer weiß denn sowas?" sind derselbe Ordner.
+        """
+        eigener = self.sanitize(show_name)
+        vorhanden = self.bekannte_ordner().get(vergleichsname(eigener))
+        if vorhanden and vorhanden != eigener:
+            logger.info(f"    Nutze vorhandenen Ordner '{vorhanden}' statt '{eigener}'")
+        return vorhanden or eigener
+
+    def build_path(self, show_name: str, item: MediaItem, url: str = None,
+                   ordner: str = None, ablage: str = "flat") -> Path:
         """
         Where the file goes.
 
@@ -146,7 +195,9 @@ class MediathekDirect:
         Plex, Jellyfin and Emby all read both forms, so nothing here is tied to
         one media server.
         """
-        show = self.sanitize(show_name)
+        # Vorrang: was der Nutzer bei der Sendung eingetragen hat, sonst ein
+        # vorhandener Ordner der Bibliothek, sonst der Name selbst.
+        show = self.sanitize(ordner) if (ordner or "").strip() else self.ordner_fuer(show_name)
         title = self.sanitize(item.title or "Ohne Titel")
         # Die Endung muss von der Adresse kommen, die tatsaechlich geladen
         # wird. Vorher stand hier fest "normal" - wer "hd" eingestellt hat und
@@ -157,13 +208,20 @@ class MediathekDirect:
         ext = Path((url or "").split("?")[0]).suffix or ".mp4"
 
         season, episode = self.extract_episode(item)
+        aired = item.aired or datetime.now(timezone.utc)
+
         if season is not None:
             filename = f"{show} - S{season:02d}E{episode:02d} - {title}{ext}"
-            return self.library_path / show / f"Season {season:02d}" / filename
+            unterordner = f"Season {season:02d}"
+        else:
+            filename = f"{show} - {aired:%Y-%m-%d} - {title}{ext}"
+            unterordner = f"Season {aired:%Y}"
 
-        aired = item.aired or datetime.now(timezone.utc)
-        filename = f"{show} - {aired:%Y-%m-%d} - {title}{ext}"
-        return self.library_path / show / f"Season {aired:%Y}" / filename
+        # Flach ist die Vorgabe: bestehende Bibliotheken liegen meist so vor,
+        # und beide Formen liest ohnehin jeder Medienserver.
+        if (ablage or "flat").lower() == "seasons":
+            return self.library_path / show / unterordner / filename
+        return self.library_path / show / filename
 
     # ---------------------------------------------------------------- download
 
@@ -261,7 +319,11 @@ class MediathekDirect:
             if not url or url in known or url in given_up:
                 continue
 
-            target = self.build_path(entry.show_name, item, url)
+            target = self.build_path(
+                entry.show_name, item, url,
+                ordner=getattr(entry, "library_folder", "") or "",
+                ablage=getattr(entry, "season_layout", "flat") or "flat",
+            )
             if target.exists():
                 # Already there from an earlier run or copied in by hand.
                 self._record(db, entry, item, url, quality, target, target.stat().st_size)
@@ -369,6 +431,10 @@ class MediathekDirect:
         """Hourly entry point. Opens its own session - the scheduler passes none."""
         from app.database import SessionLocal
         from app.models.watch_list import WatchList
+
+        # Ordnerliste je Lauf neu einlesen - zwischen zwei Laeufen kann jemand
+        # umbenannt oder aufgeraeumt haben.
+        self._ordner_verzeichnis = None
 
         db = SessionLocal()
         try:

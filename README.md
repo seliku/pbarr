@@ -66,6 +66,29 @@ Mediathek, und den Sammelnamen kennt sie nicht.
 Hubert und Staller|Hubert ohne Staller
 ```
 
+## Wohin die Dateien kommen
+
+Standard ist flach im Serienordner:
+
+```
+Serien/Das Gipfeltreffen/Das Gipfeltreffen - 2026-08-20 - Das Beste kommt noch!.mp4
+Serien/Hubert und Staller/Hubert und Staller - S07E04 - Ausgebrannt.mp4
+```
+
+Wer Staffel-Unterordner möchte, stellt das je Sendung auf **„In Staffel-Unterordnern"**
+um; dann entsteht `Season 07/` bzw. `Season 2026/` für alles ohne Folgennummer. Beide
+Formen lesen Plex, Jellyfin und Emby.
+
+**Liegt die Serie schon in deiner Bibliothek**, benutzt PBArr den vorhandenen Ordner,
+statt einen zweiten daneben zu legen. Verglichen wird ohne Rücksicht auf Gross- und
+Kleinschreibung, Akzente und Satzzeichen — „Wer weiss denn sowas" und
+„Wer weiß denn sowas?" sind derselbe Ordner. Reicht das nicht, weil der Ordner ganz
+anders heisst, trägst du ihn bei der Sendung unter **„Ordner in der Bibliothek"** ein.
+
+Die Serie selbst erkennt der Medienserver über den Ordnernamen und holt sich Poster
+und Beschreibung von dort, wo er seine Metadaten bezieht. PBArr liefert keine
+Metadaten und braucht dafür auch keine Serien-ID.
+
 ## Vorschau statt Suche
 
 Bevor du einen Eintrag anlegst, zeigt die Vorschau, was er einbringen würde —

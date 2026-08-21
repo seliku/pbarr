@@ -28,6 +28,17 @@ STATEMENTS = [
     ("watch_list.search_topic",
      "ALTER TABLE watch_list ADD COLUMN IF NOT EXISTS search_topic VARCHAR(255) DEFAULT ''"),
 
+    # Wohin diese Sendung abgelegt wird. Leer heisst: aus dem Namen ableiten
+    # bzw. einen vorhandenen Ordner der Bibliothek benutzen.
+    ("watch_list.library_folder",
+     "ALTER TABLE watch_list ADD COLUMN IF NOT EXISTS library_folder VARCHAR(255) DEFAULT ''"),
+
+    # 'flat' legt alles unmittelbar in den Serienordner, 'seasons' in
+    # Staffel-Unterordner. Flach ist die Vorgabe, weil es die Ablage ist, die
+    # in bestehenden Bibliotheken am haeufigsten schon vorliegt.
+    ("watch_list.season_layout",
+     "ALTER TABLE watch_list ADD COLUMN IF NOT EXISTS season_layout VARCHAR(20) DEFAULT 'flat'"),
+
     ("mediathek_downloads", """
      CREATE TABLE IF NOT EXISTS mediathek_downloads (
          id SERIAL PRIMARY KEY,

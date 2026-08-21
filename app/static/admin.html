@@ -607,6 +607,19 @@
                     <div id="series-title-display" style="font-weight: bold; padding: 8px; background: #f0f0f0; border-radius: 4px;"></div>
                 </div>
                 <div class="form-group">
+                    <label for="library-folder">Ordner in der Bibliothek:</label>
+                    <input type="text" id="library-folder" placeholder="leer = vorhandener Ordner oder Name der Sendung">
+                    <small style="color: #666; font-size: 12px;">Trage hier den Ordner ein, wenn die Serie schon unter einem anderen Namen in deiner Bibliothek liegt. Leer gelassen sucht PBArr selbst nach einem passenden Ordner.</small>
+                </div>
+                <div class="form-group">
+                    <label for="season-layout">Ablage:</label>
+                    <select id="season-layout">
+                        <option value="flat">Alles im Serienordner (flach)</option>
+                        <option value="seasons">In Staffel-Unterordnern</option>
+                    </select>
+                    <small style="color: #666; font-size: 12px;">Beide Formen liest jeder Medienserver. Flach passt zu den meisten bestehenden Bibliotheken.</small>
+                </div>
+                <div class="form-group">
                     <label for="min-duration">Mindestdauer (Minuten):</label>
                     <input type="number" id="min-duration" placeholder="0" min="0">
                     <small style="color: #666; font-size: 12px;">Episoden kürzer als dieser Wert werden ignoriert (Default: 0 = alle)</small>
@@ -658,6 +671,19 @@
                     <label for="new-series-name">Anzeigename (optional):</label>
                     <input type="text" id="new-series-name" placeholder="leer = der erste Name von oben">
                     <small style="color: #666; font-size: 12px;">Bestimmt den Ordnernamen. Danach sucht der Medienserver sein Poster.<br>Bei mehreren Namen oben hier den <strong>gebräuchlichen Serientitel</strong> eintragen, unter dem die Sendung gefunden werden soll &ndash; z.&nbsp;B. <code>Hubert und Staller</code>.</small>
+                </div>
+                <div class="form-group">
+                    <label for="new-series-library-folder">Ordner in der Bibliothek:</label>
+                    <input type="text" id="new-series-library-folder" placeholder="leer = vorhandener Ordner oder Name der Sendung">
+                    <small style="color: #666; font-size: 12px;">Trage hier den Ordner ein, wenn die Serie schon unter einem anderen Namen in deiner Bibliothek liegt. Leer gelassen sucht PBArr selbst nach einem passenden Ordner.</small>
+                </div>
+                <div class="form-group">
+                    <label for="new-series-season-layout">Ablage:</label>
+                    <select id="new-series-season-layout">
+                        <option value="flat">Alles im Serienordner (flach)</option>
+                        <option value="seasons">In Staffel-Unterordnern</option>
+                    </select>
+                    <small style="color: #666; font-size: 12px;">Beide Formen liest jeder Medienserver. Flach passt zu den meisten bestehenden Bibliotheken.</small>
                 </div>
                 <div class="form-group">
                     <label for="new-series-quality">Qualität:</label>
@@ -1272,6 +1298,10 @@
 
             try {
                 const data = await fetchJSON(`${API_URL}/admin/series`);
+                // Die Liste festhalten: der Bearbeiten-Knopf braucht dann nur
+                // den Schluessel statt acht einzeln maskierter Parameter.
+                window.serienListe = {};
+                (data.series || []).forEach(x => { window.serienListe[x.tvdb_id] = x; });
                 loading.style.display = 'none';
 
                 if (data.series && data.series.length > 0) {
@@ -1296,7 +1326,7 @@
                                     ${filtersActive ? `Filters: ${filtersSummary.join(' • ')}` : 'Keine Filter konfiguriert'}
                                 </div>
                                 <div class="action-buttons">
-                                    <button class="btn btn-small" onclick="openEditSeriesFiltersModal('${series.tvdb_id}', '${series.title.replace(/'/g, "\\'")}', ${series.min_duration || 'null'}, ${series.max_duration || 'null'}, '${(series.exclude_keywords || '').replace(/'/g, "\\'")}', '${(series.include_senders || '').replace(/'/g, "\\'")}', ${series.search_title_filter || 'false'}, '${(series.custom_search_title || '').replace(/'/g, "\\'")}')">🎛️ Filter bearbeiten</button>
+                                    <button class="btn btn-small" onclick="openEditSeriesFiltersModal('${series.tvdb_id}')">🎛️ Filter bearbeiten</button>
                                 </div>
                             </div>
                         `;
@@ -1310,18 +1340,19 @@
             }
         }
 
-        function openEditSeriesFiltersModal(tvdbId, title, minDuration, maxDuration, excludeKeywords, includeSenders, searchTitleFilter, customSearchTitle) {
-            // Store current series info
+        function openEditSeriesFiltersModal(tvdbId) {
+            const serie = (window.serienListe || {})[tvdbId] || {};
             window.currentSeriesTvdbId = tvdbId;
 
-            // Fill modal
-            document.getElementById('series-title-display').textContent = title;
-            document.getElementById('min-duration').value = minDuration || '';
-            document.getElementById('max-duration').value = maxDuration || '';
-            document.getElementById('exclude-keywords').value = excludeKeywords || '';
-            document.getElementById('include-senders').value = includeSenders || '';
-            document.getElementById('search-title-filter').checked = searchTitleFilter || false;
-            document.getElementById('custom-search-title').value = customSearchTitle || '';
+            document.getElementById('series-title-display').textContent = serie.title || tvdbId;
+            document.getElementById('min-duration').value = serie.min_duration ?? '';
+            document.getElementById('max-duration').value = serie.max_duration ?? '';
+            document.getElementById('exclude-keywords').value = serie.exclude_keywords || '';
+            document.getElementById('include-senders').value = serie.include_senders || '';
+            document.getElementById('search-title-filter').checked = serie.search_title_filter || false;
+            document.getElementById('custom-search-title').value = serie.custom_search_title || '';
+            document.getElementById('library-folder').value = serie.library_folder || '';
+            document.getElementById('season-layout').value = serie.season_layout || 'flat';
 
             // Toggle custom search title field visibility
             toggleCustomSearchTitle();
@@ -1335,6 +1366,8 @@
             const minDuration = document.getElementById('min-duration').value.trim();
             const maxDuration = document.getElementById('max-duration').value.trim();
             const excludeKeywords = document.getElementById('exclude-keywords').value.trim();
+            const libraryFolder = document.getElementById('library-folder').value.trim();
+            const seasonLayout = document.getElementById('season-layout').value;
             const includeSenders = document.getElementById('include-senders').value.trim();
             const searchTitleFilter = document.getElementById('search-title-filter').checked;
             const customSearchTitle = document.getElementById('custom-search-title').value.trim();
@@ -1345,6 +1378,8 @@
                     max_duration: maxDuration ? parseInt(maxDuration) : null,
                     exclude_keywords: excludeKeywords || null,
                     include_senders: includeSenders || null,
+                    library_folder: libraryFolder,
+                    season_layout: seasonLayout,
                     search_title_filter: searchTitleFilter,
                     custom_search_title: customSearchTitle || null
                 };
@@ -1406,7 +1441,9 @@
                 min_duration: parseInt(document.getElementById('new-series-min').value || '0', 10),
                 max_duration: parseInt(document.getElementById('new-series-max').value || '360', 10),
                 include_senders: document.getElementById('new-series-senders').value.trim(),
-                exclude_keywords: document.getElementById('new-series-exclude').value.trim()
+                exclude_keywords: document.getElementById('new-series-exclude').value.trim(),
+                library_folder: document.getElementById('new-series-library-folder').value.trim(),
+                season_layout: document.getElementById('new-series-season-layout').value
             };
         }
 
