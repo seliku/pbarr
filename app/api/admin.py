@@ -89,8 +89,27 @@ class AddSeriesRequest(BaseModel):
     title: Optional[str] = None
 
 
+class AddByTopicRequest(BaseModel):
+    """
+    Add a show by the name the Mediathek uses for it.
+
+    No TVDB id, no Sonarr entry, nothing to look up first - the topic string is
+    the whole identity. Shows that Sonarr refuses to carry work through this
+    path, which is the entire point of it.
+    """
+    topic: str
+    display_name: Optional[str] = None
+    quality: str = "hd"
+    min_duration: int = 0
+    max_duration: int = 360
+    exclude_keywords: str = "klare Sprache,Audiodeskription,Gebärdensprache"
+    include_senders: str = ""
+
+
 class SeriesFiltersRequest(BaseModel):
     min_duration: Optional[int] = None
+    quality: Optional[str] = None
+    search_topic: Optional[str] = None
     max_duration: Optional[int] = None
     exclude_keywords: Optional[str] = None
     include_senders: Optional[str] = None
@@ -991,6 +1010,14 @@ async def update_series_filters(tvdb_id: str, filters: SeriesFiltersRequest, db:
         series.search_title_filter = filters.search_title_filter
         series.custom_search_title = filters.custom_search_title
 
+        # Direkter Mediathek-Weg: nur setzen, wenn mitgeschickt. Die Felder
+        # darueber werden bedingungslos ueberschrieben - ein Aufruf ohne diese
+        # beiden wuerde sonst Qualitaet und Thema loeschen.
+        if filters.quality is not None:
+            series.quality = filters.quality
+        if filters.search_topic is not None:
+            series.search_topic = filters.search_topic
+
         # Update last_accessed timestamp
         series.last_accessed = datetime.utcnow()
 
@@ -1098,3 +1125,126 @@ async def restart_container():
         "command": "docker compose restart pbarr",
         "note": "Die Anwendung wird kurzzeitig nicht verfügbar sein."
     }
+
+
+# ---------------------------------------------------------------------------
+# Direct Mediathek path - no Sonarr, no TVDB
+# ---------------------------------------------------------------------------
+
+# German characters would otherwise be dropped entirely, turning "Groß" into
+# "gro" and losing the difference to a hypothetical "Gros".
+_TRANSLIT = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"})
+
+
+def _topic_key(topic: str) -> str:
+    """Build a stable synthetic watchlist key from a topic name."""
+    import re as _re
+    slug = (topic or "").lower().translate(_TRANSLIT)
+    slug = _re.sub(r"[^a-z0-9]+", "-", slug).strip("-")
+    return f"mvw:{slug}"[:50]
+
+
+@router.get("/mediathek/preview")
+async def preview_mediathek_topic(
+    topic: str = Query(..., description="Thema, wie es in der Mediathek heisst"),
+    min_duration: int = Query(0),
+    max_duration: int = Query(360),
+    exclude_keywords: str = Query("klare Sprache,Audiodeskription,Gebärdensprache"),
+    include_senders: str = Query(""),
+    quality: str = Query("hd"),
+    limit: int = Query(25),
+):
+    """
+    Show what a topic would pull in, before committing to it.
+
+    This is the "simple search" - you type what the show is called and see what
+    the Mediathek has under that name, with the filters already applied. No
+    lookup step, no ids, no matching against a metadata source.
+    """
+    from app.services.mediathek_direct import direct
+
+    items = await direct.search(topic)
+    out, kept, filtered = [], 0, 0
+
+    for item in items:
+        passes, reason = direct.passes_filters(
+            item, min_duration, max_duration, exclude_keywords, include_senders
+        )
+        url, actual_quality = direct.pick_stream(item, quality)
+        if passes and url:
+            kept += 1
+        else:
+            filtered += 1
+        if len(out) < limit:
+            ts = item.get("timestamp")
+            out.append({
+                "title": item.get("title"),
+                "channel": item.get("channel"),
+                "aired": datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") if ts else None,
+                "duration_minutes": round((item.get("duration") or 0) / 60),
+                "quality": actual_quality,
+                "included": bool(passes and url),
+                "reason": "" if (passes and url) else (reason or "keine Video-URL"),
+            })
+
+    return {
+        "topic": topic,
+        "total": len(items),
+        "included": kept,
+        "filtered": filtered,
+        "items": out,
+    }
+
+
+@router.post("/series/add-by-topic")
+async def add_series_by_topic(request: AddByTopicRequest, db: Session = Depends(get_db)):
+    """
+    Add a show to the watchlist by its Mediathek topic name.
+
+    Deliberately does no lookups. The old add-by-tvdb-id path needed TVDB to
+    resolve a title and Sonarr to resolve a series id, which is exactly what
+    kept public broadcasting shows out of the watchlist.
+    """
+    topic = (request.topic or "").strip()
+    if not topic:
+        raise HTTPException(status_code=400, detail="Ein Thema wird benoetigt")
+
+    key = _topic_key(topic)
+    if db.query(WatchList).filter(WatchList.tvdb_id == key).first():
+        return {"success": False, "message": f"'{topic}' steht bereits auf der Liste"}
+
+    entry = WatchList(
+        tvdb_id=key,
+        show_name=(request.display_name or topic).strip(),
+        search_topic=topic,
+        quality=request.quality or "hd",
+        min_duration=request.min_duration,
+        max_duration=request.max_duration,
+        exclude_keywords=request.exclude_keywords,
+        include_senders=request.include_senders,
+        import_source="mediathek",
+        tagged_in_sonarr=False,
+    )
+    db.add(entry)
+    db.commit()
+
+    logger.info(f"➕ '{topic}' zur Watch-List hinzugefuegt (key={key})")
+    return {
+        "success": True,
+        "message": f"'{topic}' hinzugefuegt",
+        "key": key,
+        "show_name": entry.show_name,
+    }
+
+
+@router.post("/series/{watch_key:path}/sync")
+async def sync_single_series(watch_key: str, db: Session = Depends(get_db)):
+    """Fetch what is new for one watchlist entry, right now."""
+    from app.services.mediathek_direct import direct
+
+    entry = db.query(WatchList).filter(WatchList.tvdb_id == watch_key).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+
+    fetched = await direct.sync_entry(entry, db)
+    return {"success": True, "show_name": entry.show_name, "fetched": fetched}
