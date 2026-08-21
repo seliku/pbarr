@@ -45,6 +45,12 @@ _SPACES = re.compile(r"\s+")
 MAX_ATTEMPTS = 3
 
 
+# Woran sich in einem vorhandenen Dateinamen erkennen laesst, welche Folge er
+# enthaelt - unabhaengig davon, welches Programm ihn vergeben hat.
+_DATEI_SE = re.compile(r"S(\d{1,2})[._ -]?E(\d{1,3})", re.IGNORECASE)
+_DATEI_DATUM = re.compile(r"(\d{4}-\d{2}-\d{2})")
+
+
 def vergleichsname(text: str) -> str:
     """
     Einen Namen auf seinen Kern reduzieren, um Ordner vergleichen zu koennen.
@@ -152,6 +158,35 @@ class MediathekDirect:
         cleaned = _UNSAFE.sub("", cleaned)
         cleaned = _SPACES.sub(" ", cleaned).strip(" .")
         return cleaned[:150] or "Unbenannt"
+
+    def vorhandene_folgen(self, ordner: Path) -> tuple:
+        """
+        Was in diesem Ordner schon liegt - als Folgennummern und Sendedaten.
+
+        Bisher wurde nur geprueft, ob genau der Pfad existiert, den pbarr selbst
+        schreiben wuerde. Eine Folge, die ein anderes Programm unter anderem
+        Namen abgelegt hat, war damit unsichtbar und wurde erneut geladen.
+        Gemessen an einem echten Fall: 22 Folgen, 24 GB, allesamt schon
+        vorhanden - nur unter Sonarrs Benennung in einem Nachbarordner.
+
+        Gelesen wird deshalb, was im Dateinamen steht, gleich von welchem
+        Programm er stammt: "S07E04" in jeder Schreibweise, sonst das
+        Sendedatum.
+        """
+        nummern, daten = set(), set()
+        try:
+            for datei in ordner.rglob("*"):
+                if not datei.is_file() or datei.suffix == ".part":
+                    continue
+                treffer = _DATEI_SE.search(datei.name)
+                if treffer:
+                    nummern.add((int(treffer.group(1)), int(treffer.group(2))))
+                treffer = _DATEI_DATUM.search(datei.name)
+                if treffer:
+                    daten.add(treffer.group(1))
+        except OSError as e:
+            logger.debug(f"Ordner nicht lesbar ({e}): {ordner}")
+        return nummern, daten
 
     def raeume_reste(self) -> int:
         """
@@ -345,6 +380,22 @@ class MediathekDirect:
         wanted = getattr(entry, "quality", None) or "hd"
         fetched = skipped = 0
 
+        # Einmal je Sendung einlesen, nicht je Treffer.
+        #
+        # Der Serienordner, nicht der Staffelordner: bei Ablage in
+        # Staffel-Unterordnern liegen die vorhandenen Folgen eine Ebene tiefer,
+        # und rglob() muss sie alle sehen.
+        eigener = getattr(entry, "library_folder", "") or ""
+        ordnername = (self.sanitize(eigener) if eigener.strip()
+                      else self.ordner_fuer(entry.show_name))
+        zielordner = self.library_path / ordnername
+        vorhandene_nummern, vorhandene_daten = await asyncio.to_thread(
+            self.vorhandene_folgen, zielordner
+        )
+        if vorhandene_nummern or vorhandene_daten:
+            logger.info(f"    {len(vorhandene_nummern)} Folge(n) und "
+                        f"{len(vorhandene_daten)} Sendedatum/-daten liegen bereits vor")
+
         for item in items:
             passes, reason = self.passes_filters(
                 item, entry.min_duration or 0, entry.max_duration or 0,
@@ -364,6 +415,22 @@ class MediathekDirect:
                 ordner=getattr(entry, "library_folder", "") or "",
                 ablage=getattr(entry, "season_layout", "flat") or "flat",
             )
+            # Liegt die Folge schon da - gleich unter welchem Namen?
+            #
+            # Die Pruefung auf den exakten Pfad weiter unten erkennt nur, was
+            # pbarr selbst geschrieben hat. Was ein anderes Programm abgelegt
+            # hat, faellt sonst durch und wird ein zweites Mal geladen.
+            staffel, folge = self.extract_episode(item)
+            if staffel is not None and (staffel, folge) in vorhandene_nummern:
+                logger.debug(f"    ⊘ S{staffel:02d}E{folge:02d} liegt bereits vor")
+                skipped += 1
+                continue
+            if staffel is None and item.aired and \
+                    item.aired.strftime("%Y-%m-%d") in vorhandene_daten:
+                logger.debug(f"    ⊘ Sendung vom {item.aired:%Y-%m-%d} liegt bereits vor")
+                skipped += 1
+                continue
+
             # Laeuft je Kandidat einmal ueber das Netz - bei einer Sendung mit
             # achtzig Treffern summiert sich das.
             if await asyncio.to_thread(target.exists):
