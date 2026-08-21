@@ -495,20 +495,13 @@
                 <div id="series-loading" class="loading">Lade Serien...</div>
                 <div class="series-grid" id="series-list">
                 </div>
+                <button class="btn btn-secondary" onclick="refreshSeries()">🔄 Aktualisieren</button>
+                <button class="btn" onclick="openAddSeriesModal()">➕ Sendung hinzufügen</button>
+                <button class="btn btn-secondary" id="manual-cache-sync-btn" onclick="triggerManualCacheSync()">📥 Jetzt abgleichen</button>
             </div>
         </div>
 
         <div class="grid">
-            <!-- Network Configuration -->
-            <div class="card">
-                <h2>🌐 Netzwerk</h2>
-                <div id="network-loading" class="loading">Lade Netzwerk-Konfiguration...</div>
-                <div id="network-list"></div>
-                <div id="network-message" style="margin-top: 10px;"></div>
-
-
-            </div>
-
             <!-- Downloads -->
             <div class="card">
                 <h2>⬇️ Downloads</h2>
@@ -830,31 +823,6 @@
             }
         }
         
-        async function loadNetwork() {
-            const container = document.getElementById('network-list');
-            const loading = document.getElementById('network-loading');
-
-            try {
-                const configs = await fetchJSON(`${API_URL}/admin/config`);
-                loading.style.display = 'none';
-
-                container.innerHTML = `
-                    <!-- IP Check Section -->
-                    <div id="ip-check-result" style="display:none; margin-top: 15px; padding: 12px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px;">
-                        <div><strong>📍 Deine IP (direkt):</strong> <code id="direct-ip">-</code></div>
-                        <div><strong>🛡️ IP über Proxy:</strong> <code id="proxied-ip">-</code></div>
-                        <div><strong>✅ Status:</strong> <span id="proxy-status">-</span></div>
-                        <div><strong>⚡ Latenz:</strong> <span id="proxy-latency">-</span>ms</div>
-                    </div>
-                    <button onclick="checkExternalIPs()">🔍 IPs prüfen</button>
-                `;
-
-
-            } catch (error) {
-                container.innerHTML = `<div class="error">Failed to load network settings: ${error.message}</div>`;
-                loading.style.display = 'none';
-            }
-        }
 
         async function loadDownloads() {
             const container = document.getElementById('downloads-list');
@@ -937,18 +905,6 @@
                     // Add module-specific configs and descriptions
                     if (module.module_name === 'scheduler') {
                         moduleDescription = 'Automatische Tasks: Update-Checks täglich um 3 Uhr, Download-Queue jede Minute';
-                    } else if (module.module_name === 'tvdb') {
-                        const tvdbKey = configs.find(c => c.key === 'tvdb_api_key');
-                        if (tvdbKey) {
-                            configHtml = `
-                                <div style="margin-top: 10px; padding: 8px; background: #f0f0f0; border-radius: 4px;">
-                                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">TVDB API Key:</div>
-                                    <input type="text" id="tvdb-api-key-${module.module_name}" value="${tvdbKey.value || ''}" placeholder="Enter TVDB API Key"
-                                           style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
-                                    <button class="btn btn-small" style="margin-top: 5px;" onclick="saveTVDBKey('${module.module_name}')">💾 Speichern</button>
-                                </div>
-                            `;
-                        }
                     } else if (module.module_name === 'mediathekviewweb') {
                         const enabled = configs.find(c => c.key === 'mediathekviewweb_enabled');
                         if (enabled) {
@@ -1004,16 +960,6 @@
             }
         }
 
-        async function saveTVDBKey(moduleName) {
-            const input = document.getElementById(`tvdb-api-key-${moduleName}`);
-            const value = input.value.trim();
-            try {
-                await fetchWithMethod(`${API_URL}/admin/config/tvdb_api_key`, 'PUT', { value: value });
-                showSuccess(`TVDB API Key gespeichert!`);
-            } catch (error) {
-                showError(`Fehler beim Speichern: ${error.message}`);
-            }
-        }
         
         async function checkUpdates() {
             const msg = document.getElementById('system-message');
@@ -1282,7 +1228,7 @@
             }
         }
 
-        // Sonarr Webhook Integration Setup
+        // Stoesst den Abgleich aller Eintraege von Hand an.
         async function triggerManualCacheSync() {
             const btn = document.getElementById('manual-cache-sync-btn');
             const originalText = btn.textContent;
@@ -1312,37 +1258,8 @@
             }
         }
 
-        // Manual Import Scan Button
-        async function triggerManualImportScan() {
-            const btn = document.getElementById('manual-import-scan-btn');
-            const originalText = btn.textContent;
 
-            try {
-                btn.disabled = true;
-                btn.textContent = '📥 Scanne...';
-
-                const response = await fetch(`${API_URL}/admin/trigger-import-scan`, {
-                    method: 'POST'
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showSuccess('✅ Sonarr Import-Scan erfolgreich gestartet!');
-                    // Reload logs to show new activity
-                    loadLogs();
-                } else {
-                    showError(`❌ Import-Scan fehlgeschlagen: ${result.message || 'Unbekannter Fehler'}`);
-                }
-            } catch (error) {
-                showError(`❌ Import-Scan-Fehler: ${error.message}`);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = originalText;
-            }
-        }
-
-        // Check Sonarr webhook integration status
+        // Holt die Merkliste und zeichnet sie neu.
         async function loadSeries() {
             const container = document.getElementById('series-list');
             const loading = document.getElementById('series-loading');
@@ -1364,11 +1281,10 @@
                         if (series.include_senders) filtersSummary.push(`Senders: ${series.include_senders.split(',').length}`);
 
                         return `
-                            <div class="config-item" style="border-left-color: ${series.tagged_in_sonarr ? '#28a745' : '#667eea'};">
+                            <div class="config-item" style="border-left-color: #667eea;">
                                 <div class="config-key">${series.title}</div>
                                 <div class="config-description">
-                                    TVDB: ${series.tvdb_id} • Episodes: ${series.episodes_found || 0} • Mediathek: ${series.mediathek_episodes_count || 0}
-                                    ${series.sonarr_series_id ? ` • Sonarr: ${series.sonarr_series_id}` : ''}
+                                    In der Mediathek: ${series.mediathek_episodes_count || 0} • Geladen: ${series.episodes_found || 0}
                                 </div>
                                 <div style="margin-top: 5px; font-size: 12px; color: #666;">
                                     ${filtersActive ? `Filters: ${filtersSummary.join(' • ')}` : 'Keine Filter konfiguriert'}
@@ -1580,110 +1496,13 @@
             refreshConfigs();
             refreshModules();
             refreshSeries();
-            refreshNetwork();
         }
 
-        function refreshNetwork() {
-            document.getElementById('network-loading').style.display = 'block';
-            document.getElementById('network-list').innerHTML = '';
-            loadNetwork();
-        }
 
-        function editNetworkConfig(id, key) {
-            document.getElementById(`network-display-${id}`).style.display = 'none';
-            document.getElementById(`network-input-${id}`).style.display = 'block';
-            document.getElementById(`network-edit-buttons-${id}`).style.display = 'flex';
-            document.getElementById(`network-${id}`).classList.add('editing');
-        }
 
-        function cancelNetworkEdit(id) {
-            document.getElementById(`network-display-${id}`).style.display = 'block';
-            document.getElementById(`network-input-${id}`).style.display = 'none';
-            document.getElementById(`network-edit-buttons-${id}`).style.display = 'none';
-            document.getElementById(`network-${id}`).classList.remove('editing');
-        }
 
-        async function saveNetworkConfig(id, key) {
-            const newValue = document.getElementById(`network-input-${id}`).value;
-            try {
-                // Verwende den neuen /settings Endpoint für SOCKS5 Proxy
-                const response = await fetch(`${API_URL}/admin/settings`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ [key]: newValue })
-                });
 
-                const result = await response.json();
 
-                if (result.status === 'ok') {
-                    document.getElementById(`network-display-${id}`).textContent = newValue || '(nicht konfiguriert - direkte Verbindung)';
-                    cancelNetworkEdit(id);
-                    showSuccess(`Netzwerk-Konfiguration '${key}' aktualisiert!`, 'network-message');
-                    // Cache wird automatisch invalidiert
-                } else {
-                    showError(`Fehler beim Speichern: ${result.error}`, 'network-message');
-                }
-            } catch (error) {
-                showError(`Fehler beim Speichern: ${error.message}`, 'network-message');
-            }
-        }
-
-        async function testProxyConnection() {
-            const btn = document.querySelector('button[onclick="testProxyConnection()"]');
-            const originalText = btn.textContent;
-
-            try {
-                btn.disabled = true;
-                btn.textContent = '🔍 Teste...';
-
-                const response = await fetch(`${API_URL}/admin/test-proxy`, {
-                    method: 'POST'
-                });
-
-                const result = await response.json();
-
-                if (result.status === 'ok') {
-                    showSuccess(`✅ Proxy-Verbindung erfolgreich! (${result.message})`);
-                } else {
-                    showError(`❌ Proxy-Test fehlgeschlagen: ${result.message}`);
-                }
-            } catch (error) {
-                showError(`❌ Proxy-Test-Fehler: ${error.message}`);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = originalText;
-            }
-        }
-
-        async function checkExternalIPs() {
-            const resultDiv = document.getElementById('ip-check-result');
-            resultDiv.style.display = 'none';
-
-            try {
-                const response = await fetch(`${API_URL}/admin/test-proxy`, {
-                    method: 'POST'
-                });
-
-                const data = await response.json();
-
-                document.getElementById('direct-ip').textContent = data.direct_ip || 'N/A';
-                document.getElementById('proxied-ip').textContent = data.proxied_ip || 'N/A';
-                document.getElementById('proxy-latency').textContent = data.latency_ms || '-';
-
-                const status = document.getElementById('proxy-status');
-                if (data.proxy_working) {
-                    status.textContent = '✅ Proxy aktiv';
-                    status.style.color = 'green';
-                } else {
-                    status.textContent = '❌ Proxy nicht aktiv';
-                    status.style.color = 'red';
-                }
-
-                resultDiv.style.display = 'block';
-            } catch (error) {
-                showError(`❌ Fehler beim Abrufen der IPs: ${error.message}`);
-            }
-        }
 
 
 
@@ -1729,7 +1548,6 @@
             loadVersion();
             loadConfigs();
             loadDownloads();
-            loadNetwork();
             loadModules();
             loadSeries(); // Load series list
             loadCurrentLogLevel(); // Load current log level

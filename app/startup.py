@@ -56,22 +56,33 @@ def init_config():
     try:
         from app.models.module_state import ModuleState
         
-        modules = [
-            ("mediathekviewweb", "source", "1.0.0"),
-            ("tvdb", "metadata", "1.0.0"),
-        ]
-        
-        for name, mod_type, version in modules:
+        from app.modules.sources.registry import discover_sources
+
+        # Hier stand frueher eine feste Liste mit "mediathekviewweb" und "tvdb".
+        # Sie legte "tvdb" auch dann wieder an, wenn das Modul laengst geloescht
+        # war - die Oberflaeche zeigte dann ein aktives Modul samt Eingabefeld
+        # fuer einen Dienst, den es nicht mehr gibt. Wer eine Quelle hinzufuegt
+        # oder entfernt, soll an dieser Stelle nichts nachpflegen muessen.
+        gefunden = discover_sources(refresh=True)
+
+        for name, quelle in gefunden.items():
             existing = db.query(ModuleState).filter_by(module_name=name).first()
-            if not existing:
-                module_state = ModuleState(
+            if existing:
+                existing.version = quelle.version
+            else:
+                db.add(ModuleState(
                     module_name=name,
-                    module_type=mod_type,
-                    version=version,
-                    enabled=True
-                )
-                db.add(module_state)
-                logger.info(f"✓ Added module: {name}")
+                    module_type="source",
+                    version=quelle.version,
+                    enabled=True,
+                ))
+                logger.info(f"✓ Neue Quelle eingetragen: {name}")
+
+        # Zeilen von Quellen, die es nicht mehr gibt, verschwinden mit.
+        for zeile in db.query(ModuleState).all():
+            if zeile.module_name not in gefunden:
+                logger.info(f"✗ Verwaiste Quelle entfernt: {zeile.module_name}")
+                db.delete(zeile)
     except Exception as e:
         logger.warning(f"ModuleState table might not exist yet: {e}")
     

@@ -602,6 +602,21 @@ async def add_series_by_topic(request: AddByTopicRequest, db: Session = Depends(
     if db.query(WatchList).filter(WatchList.tvdb_id == key).first():
         return {"success": False, "message": f"'{topic}' steht bereits auf der Liste"}
 
+    # Auch gegen den Namen pruefen, nicht nur gegen den Schluessel.
+    #
+    # Eintraege aus der Zeit vor der Umstellung tragen eine TVDB-ID als
+    # Schluessel, nicht "mvw:...". Ohne diese Pruefung liesse sich dieselbe
+    # Sendung ein zweites Mal aufnehmen - beide Eintraege wuerden dann
+    # dieselben Folgen in denselben Ordner laden.
+    for vorhanden in db.query(WatchList).all():
+        namen = [vorhanden.show_name or ""]
+        namen += (getattr(vorhanden, "search_topic", "") or "").split("|")
+        if any(_topic_key(n) == key for n in namen if n.strip()):
+            return {
+                "success": False,
+                "message": f"'{topic}' steht bereits als '{vorhanden.show_name}' auf der Liste",
+            }
+
     entry = WatchList(
         tvdb_id=key,
         show_name=(request.display_name or topic).strip(),

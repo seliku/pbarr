@@ -44,7 +44,7 @@ from app.startup import init_config, load_enabled_modules, init_download_directo
 
 
 # API Routes
-from app.api import admin, system, dashboard
+from app.api import admin, system
 
 
 logger = logging.getLogger(__name__)
@@ -155,7 +155,6 @@ app = FastAPI(
 app.include_router(admin.router)
 app.include_router(system.router)
 
-app.include_router(dashboard.router)
 
 
 
