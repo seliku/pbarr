@@ -39,6 +39,16 @@ STATEMENTS = [
     ("watch_list.season_layout",
      "ALTER TABLE watch_list ADD COLUMN IF NOT EXISTS season_layout VARCHAR(20) DEFAULT 'flat'"),
 
+    # Wieviele der neuesten Folgen behalten werden. 0 heisst: alle behalten.
+    ("watch_list.keep_latest",
+     "ALTER TABLE watch_list ADD COLUMN IF NOT EXISTS keep_latest INTEGER DEFAULT 0"),
+
+    # Wann eine Folge im Zuge der Rotation entfernt wurde. Die Zeile bleibt
+    # bestehen, damit dieselbe Folge nicht beim naechsten Abgleich erneut
+    # geholt wird - sonst entstuende eine Endlosschleife aus Laden und Loeschen.
+    ("mediathek_downloads.rotated_at",
+     "ALTER TABLE mediathek_downloads ADD COLUMN IF NOT EXISTS rotated_at TIMESTAMP"),
+
     ("mediathek_downloads", """
      CREATE TABLE IF NOT EXISTS mediathek_downloads (
          id SERIAL PRIMARY KEY,

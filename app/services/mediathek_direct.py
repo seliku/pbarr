@@ -394,12 +394,16 @@ class MediathekDirect:
 
         # Erledigt ist, was geholt wurde - und was zu oft gescheitert ist.
         known, given_up = set(), set()
-        for url, path, fails in db.query(
+        for url, path, fails, rotiert in db.query(
             MediathekDownload.source_url,
             MediathekDownload.file_path,
             MediathekDownload.failed_attempts,
+            MediathekDownload.rotated_at,
         ).filter(MediathekDownload.watch_key == entry.tvdb_id).all():
-            if path:
+            # Rotiertes zaehlt als erledigt: die Folge war da und wurde
+            # absichtlich entfernt. Ohne diese Zeile holte der naechste
+            # Abgleich sie sofort wieder.
+            if path or rotiert:
                 known.add(url)
             elif (fails or 0) >= MAX_ATTEMPTS:
                 given_up.add(url)
@@ -488,6 +492,13 @@ class MediathekDirect:
 
         if fetched or skipped:
             logger.info(f"  '{topics[0]}': {fetched} geholt, {skipped} gefiltert, {len(known)} bekannt")
+
+        # Zum Schluss aufraeumen, falls eine Hoechstzahl eingestellt ist.
+        try:
+            await self.rotiere(entry, db)
+        except Exception as e:
+            logger.warning(f"    Rotation uebersprungen: {e}")
+
         return fetched
 
     @staticmethod
@@ -563,6 +574,65 @@ class MediathekDirect:
             db.rollback()
             logger.debug(f"      (Fehlversuch nicht vermerkt: {e})")
             return 0
+
+    async def rotiere(self, entry, db) -> int:
+        """
+        Aeltere Folgen entfernen, wenn eine Hoechstzahl eingestellt ist.
+
+        Fuer Sendungen, die man einmal sieht und dann nicht wieder - Quizshows,
+        Magazine, tagesaktuelles. Behalten werden die neuesten `keep_latest`
+        Folgen, gemessen am Sendedatum.
+
+        Angefasst wird ausschliesslich, was pbarr selbst geladen und in
+        `mediathek_downloads` vermerkt hat. Was ein anderes Programm in den
+        Ordner gelegt hat, bleibt unberuehrt - pbarr raeumt nur hinter sich
+        selbst auf.
+
+        Die Datenbankzeile bleibt stehen und bekommt `rotated_at`. Ohne das
+        waere die Folge beim naechsten Abgleich wieder unbekannt und wuerde
+        erneut geladen, nur um gleich wieder entfernt zu werden.
+        """
+        behalten = getattr(entry, "keep_latest", 0) or 0
+        if behalten <= 0:
+            return 0
+
+        from app.models.mediathek_download import MediathekDownload
+
+        zeilen = db.query(MediathekDownload).filter(
+            MediathekDownload.watch_key == entry.tvdb_id,
+            MediathekDownload.file_path.isnot(None),
+            MediathekDownload.rotated_at.is_(None),
+        ).all()
+
+        # Nur was tatsaechlich noch auf der Platte liegt.
+        vorhanden = []
+        for z in zeilen:
+            if z.file_path and await asyncio.to_thread(Path(z.file_path).exists):
+                vorhanden.append(z)
+
+        if len(vorhanden) <= behalten:
+            return 0
+
+        # Neueste zuerst; ohne Sendedatum zaehlt der Zeitpunkt des Ladens.
+        vorhanden.sort(key=lambda z: (z.aired or z.downloaded_at or datetime.min),
+                       reverse=True)
+
+        entfernt = 0
+        for z in vorhanden[behalten:]:
+            datei = Path(z.file_path)
+            try:
+                groesse = (await asyncio.to_thread(datei.stat)).st_size
+                await asyncio.to_thread(datei.unlink)
+                z.rotated_at = datetime.utcnow()
+                entfernt += 1
+                logger.info(f"    ⊖ rotiert ({groesse / 1048576:.0f} MB): {datei.name[:56]}")
+            except OSError as e:
+                logger.warning(f"    Rotation fehlgeschlagen fuer {datei.name[:40]}: {e}")
+
+        if entfernt:
+            db.commit()
+            logger.info(f"    {entfernt} aeltere Folge(n) entfernt, {behalten} behalten")
+        return entfernt
 
     async def sync_watchlist(self):
         """Hourly entry point. Opens its own session - the scheduler passes none."""

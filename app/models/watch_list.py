@@ -37,3 +37,6 @@ class WatchList(Base):
     # Ablage in der Bibliothek.
     library_folder = Column(String(255), default="")   # leer = aus dem Namen / vorhandener Ordner
     season_layout = Column(String(20), default="flat") # flat | seasons
+
+    # Rotation: wieviele der neuesten Folgen behalten werden. 0 = alle.
+    keep_latest = Column(Integer, default=0)

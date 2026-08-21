@@ -748,6 +748,11 @@
                     <small style="color: #666; font-size: 12px;">Beide Formen liest jeder Medienserver. Flach passt zu den meisten bestehenden Bibliotheken.</small>
                 </div>
                 <div class="form-group">
+                    <label for="keep-latest">Nur die neuesten Folgen behalten:</label>
+                    <input type="number" id="keep-latest" value="0" min="0" style="width: 90px;">
+                    <small style="color: #666; font-size: 12px;"><strong>0 = alle behalten.</strong> Sonst wird nach jedem Abgleich alles ausser den neuesten Folgen gelöscht &ndash; gedacht für Sendungen, die man einmal sieht.<br>Entfernt wird nur, was PBArr selbst geladen hat; alles andere im Ordner bleibt unangetastet.</small>
+                </div>
+                <div class="form-group">
                     <label for="min-duration">Mindestdauer (Minuten):</label>
                     <input type="number" id="min-duration" placeholder="0" min="0">
                     <small style="color: #666; font-size: 12px;">Episoden kürzer als dieser Wert werden ignoriert (Default: 0 = alle)</small>
@@ -816,6 +821,11 @@
                         <option value="seasons">In Staffel-Unterordnern</option>
                     </select>
                     <small style="color: #666; font-size: 12px;">Beide Formen liest jeder Medienserver. Flach passt zu den meisten bestehenden Bibliotheken.</small>
+                </div>
+                <div class="form-group">
+                    <label for="new-series-keep-latest">Nur die neuesten Folgen behalten:</label>
+                    <input type="number" id="new-series-keep-latest" value="0" min="0" style="width: 90px;">
+                    <small style="color: #666; font-size: 12px;"><strong>0 = alle behalten.</strong> Sonst wird nach jedem Abgleich alles ausser den neuesten Folgen gelöscht &ndash; gedacht für Sendungen, die man einmal sieht.<br>Entfernt wird nur, was PBArr selbst geladen hat; alles andere im Ordner bleibt unangetastet.</small>
                 </div>
                 <div class="form-group">
                     <label for="new-series-quality">Qualität:</label>
@@ -1506,6 +1516,7 @@
             document.getElementById('custom-search-title').value = serie.custom_search_title || '';
             document.getElementById('library-folder').value = serie.library_folder || '';
             document.getElementById('season-layout').value = serie.season_layout || 'flat';
+            document.getElementById('keep-latest').value = serie.keep_latest ?? 0;
             document.getElementById('filter-preview').innerHTML = '';
 
             // Toggle custom search title field visibility
@@ -1522,6 +1533,7 @@
             const excludeKeywords = document.getElementById('exclude-keywords').value.trim();
             const libraryFolder = document.getElementById('library-folder').value.trim();
             const seasonLayout = document.getElementById('season-layout').value;
+            const keepLatest = parseInt(document.getElementById('keep-latest').value || '0', 10);
             const includeSenders = document.getElementById('include-senders').value.trim();
             const searchTitleFilter = document.getElementById('search-title-filter').checked;
             const customSearchTitle = document.getElementById('custom-search-title').value.trim();
@@ -1534,6 +1546,7 @@
                     include_senders: includeSenders || null,
                     library_folder: libraryFolder,
                     season_layout: seasonLayout,
+                    keep_latest: keepLatest,
                     search_title_filter: searchTitleFilter,
                     custom_search_title: customSearchTitle || null
                 };
@@ -1597,7 +1610,8 @@
                 include_senders: document.getElementById('new-series-senders').value.trim(),
                 exclude_keywords: document.getElementById('new-series-exclude').value.trim(),
                 library_folder: document.getElementById('new-series-library-folder').value.trim(),
-                season_layout: document.getElementById('new-series-season-layout').value
+                season_layout: document.getElementById('new-series-season-layout').value,
+                keep_latest: parseInt(document.getElementById('new-series-keep-latest').value || '0', 10)
             };
         }
 

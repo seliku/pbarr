@@ -87,6 +87,7 @@ class AddByTopicRequest(BaseModel):
     exclude_keywords: Optional[str] = None   # None = Vorgabe der aktiven Quellen
     library_folder: Optional[str] = None     # leer = vorhandener Ordner bzw. Name
     season_layout: str = "flat"              # flat | seasons
+    keep_latest: int = 0                     # 0 = alle behalten
     include_senders: str = ""
 
 
@@ -101,6 +102,7 @@ class SeriesFiltersRequest(BaseModel):
     custom_search_title: Optional[str] = None
     library_folder: Optional[str] = None
     season_layout: Optional[str] = None
+    keep_latest: Optional[int] = None
 
 
 
@@ -394,6 +396,7 @@ async def get_series_list(db: Session = Depends(get_db)):
                 "search_topic": getattr(series, "search_topic", "") or "",
                 "library_folder": getattr(series, "library_folder", "") or "",
                 "season_layout": getattr(series, "season_layout", "flat") or "flat",
+                "keep_latest": getattr(series, "keep_latest", 0) or 0,
                 "include_senders": series.include_senders,
                 "search_title_filter": series.search_title_filter,
                 "custom_search_title": series.custom_search_title
@@ -448,6 +451,8 @@ async def update_series_filters(tvdb_id: str, filters: SeriesFiltersRequest, db:
             series.library_folder = filters.library_folder.strip()
         if filters.season_layout is not None:
             series.season_layout = filters.season_layout.strip().lower()
+        if filters.keep_latest is not None:
+            series.keep_latest = max(0, filters.keep_latest)
 
         # Update last_accessed timestamp
         series.last_accessed = datetime.utcnow()
@@ -502,6 +507,7 @@ async def update_series_filters(tvdb_id: str, filters: SeriesFiltersRequest, db:
                 "search_topic": getattr(series, "search_topic", "") or "",
                 "library_folder": getattr(series, "library_folder", "") or "",
                 "season_layout": getattr(series, "season_layout", "flat") or "flat",
+                "keep_latest": getattr(series, "keep_latest", 0) or 0,
                 "include_senders": series.include_senders
             },
             "cache_cleared": True,
@@ -769,6 +775,7 @@ async def add_series_by_topic(request: AddByTopicRequest, db: Session = Depends(
         include_senders=request.include_senders,
         library_folder=(request.library_folder or "").strip(),
         season_layout=(request.season_layout or "flat").strip().lower(),
+        keep_latest=max(0, request.keep_latest or 0),
         import_source="mediathek",
         tagged_in_sonarr=False,
     )

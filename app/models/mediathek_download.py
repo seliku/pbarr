@@ -43,4 +43,8 @@ class MediathekDownload(Base):
     file_size = Column(BigInteger)
     downloaded_at = Column(DateTime, server_default=func.now())
 
+    # Gesetzt, wenn die Datei durch die Rotation entfernt wurde. Die Zeile
+    # bleibt erhalten, sonst wuerde dieselbe Folge sofort wieder geholt.
+    rotated_at = Column(DateTime)
+
     __table_args__ = (UniqueConstraint("watch_key", "source_url", name="uq_watch_source"),)
