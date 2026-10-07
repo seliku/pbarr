@@ -23,6 +23,7 @@ reads YYYY-MM-DD where a season/episode pair would go.
 """
 
 import asyncio
+import dataclasses
 import logging
 import re
 import unicodedata
@@ -487,6 +488,14 @@ class MediathekDirect:
             logger.info(f"    {len(vorhandene_nummern)} Folge(n) und "
                         f"{len(vorhandene_daten)} Sendedatum/-daten liegen bereits vor")
 
+        # Fuehrt Sonarr dieselbe Sendung im selben Ordner, entscheidet der
+        # Titel ueber die Nummer - siehe services/sonarr_abgleich.py.
+        from app.services.sonarr_abgleich import SonarrAbgleich
+        abgleich = await SonarrAbgleich.fuer_ordner(db, ordnername)
+        namen = topics + [entry.show_name, ordnername]
+        if abgleich:
+            logger.info(f"    Sonarr fuehrt '{abgleich.titel}' - Nummern nach Titel")
+
         for item in items:
             passes, reason = self.passes_filters(
                 item, entry.min_duration or 0, entry.max_duration or 0,
@@ -500,6 +509,15 @@ class MediathekDirect:
             url, quality = item.best_url(wanted)
             if not url or url in known or url in given_up:
                 continue
+
+            if abgleich:
+                e = abgleich.zuordnen(item, namen)
+                if e.laden is False:
+                    logger.debug(f"    ⊘ {item.title[:50]} - {e.grund}")
+                    skipped += 1
+                    continue
+                if e.laden:
+                    item = dataclasses.replace(item, season=e.staffel, episode=e.folge)
 
             target = self.build_path(
                 entry.show_name, item, url,
@@ -552,6 +570,8 @@ class MediathekDirect:
 
         if fetched or skipped:
             logger.info(f"  '{topics[0]}': {fetched} geholt, {skipped} gefiltert, {len(known)} bekannt")
+        if fetched and abgleich:
+            await abgleich.rescan()
 
         # Zum Schluss aufraeumen, falls eine Hoechstzahl eingestellt ist.
         try:

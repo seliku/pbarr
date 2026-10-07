@@ -684,10 +684,14 @@ async def preview_mediathek_topic(
     # Ohne das zeigt sie "26 passend" fuer eine Sendung, von der alle 26 Folgen
     # laengst da sind - und man haelt es fuer 26 anstehende Downloads.
     vorhandene_nummern, vorhandene_daten = set(), {}
+    abgleich, namen = None, list(topics)
     if watch_key:
         eintrag = db.query(WatchList).filter(WatchList.tvdb_id == watch_key).first()
         if eintrag:
             ordnername = direct.ordnername_fuer_eintrag(eintrag)
+            from app.services.sonarr_abgleich import SonarrAbgleich
+            abgleich = await SonarrAbgleich.fuer_ordner(db, ordnername)
+            namen += [eintrag.show_name, ordnername]
             vorhandene_nummern, vorhandene_daten = direct.vorhandene_folgen(
                 direct.library_path / ordnername
             )
@@ -700,8 +704,16 @@ async def preview_mediathek_topic(
         )
         url, actual_quality = item.best_url(quality)
 
+        sonarr_grund, sonarr_nein = "", False
+        if abgleich:
+            e = abgleich.zuordnen(item, namen)
+            sonarr_grund, sonarr_nein = e.grund, e.laden is False
+            if e.laden:
+                import dataclasses
+                item = dataclasses.replace(item, season=e.staffel, episode=e.folge)
+
         staffel, folge = direct.extract_episode(item)
-        schon_da = (
+        schon_da = sonarr_nein or (
             (staffel is not None and (staffel, folge) in vorhandene_nummern)
             or (staffel is None and direct.datum_belegt(
                 vorhandene_daten, item.aired, item.title))
@@ -723,8 +735,9 @@ async def preview_mediathek_topic(
                 "episode": f"S{season:02d}E{episode:02d}" if season is not None else None,
                 "included": bool(passes and url and not is_stream(url) and not schon_da),
                 "reason": (
-                    "liegt bereits in der Bibliothek" if schon_da
-                    else "" if (passes and url and not is_stream(url))
+                    sonarr_grund if sonarr_nein
+                    else "liegt bereits in der Bibliothek" if schon_da
+                    else sonarr_grund if (passes and url and not is_stream(url))
                     else (reason or ("nur als HLS-Stream, keine Datei"
                                      if url and is_stream(url)
                                      else "keine Video-URL"))
