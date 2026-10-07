@@ -39,6 +39,44 @@ logger = logging.getLogger(__name__)
 _TRENNER = re.compile(r'[/\\]')
 _UNSAFE = re.compile(r'[<>:"|?*\x00-\x1f]')
 _SPACES = re.compile(r"\s+")
+# Kennungs-Anhang im Ordnernamen: "{tvdb-298954}" (Plex) oder "[tvdbid-298954]"
+# (Jellyfin). Zaehlt beim Vergleich von Ordnern nicht mit.
+_KENNUNG_IM_NAMEN = re.compile(r"\s*(\{[^}]*\}|\[[^\]]*\])")
+_KENNUNG = re.compile(r"(tvdb|tmdb)-\d+|imdb-tt\d+")
+
+
+def kennung_normalisieren(text: str) -> str:
+    """
+    Eine eingegebene Anbieter-Kennung in die Form bringen, die im Ordnernamen
+    steht: "tvdb-298954", "tmdb-63452" oder "imdb-tt5209414".
+
+    Toleriert, was man typischerweise aus einer Adresszeile kopiert:
+    nackte Zahl (= TVDB), "tt..." (= IMDb), Klammern, "tvdbid-".
+    Leer bleibt leer. Unbrauchbares wirft ValueError.
+    """
+    t = (text or "").strip().lower().strip("{}[] ")
+    if not t:
+        return ""
+    t = re.sub(r"^(tvdb|tmdb|imdb)id-", r"\1-", t)
+    if re.fullmatch(r"tt\d+", t):
+        t = "imdb-" + t
+    elif t.isdigit():
+        t = "tvdb-" + t
+    if not _KENNUNG.fullmatch(t):
+        raise ValueError(f"'{text}' ist keine Kennung - erwartet z. B. tvdb-298954")
+    return t
+
+
+def medien_kennung(entry) -> str:
+    """Die Kennung eines Eintrags: eingetragen, sonst die TVDB-Nummer aus Sonarr."""
+    eingetragen = (getattr(entry, "media_id", "") or "").strip()
+    if eingetragen:
+        try:
+            return kennung_normalisieren(eingetragen)
+        except ValueError:
+            return ""
+    nummer = str(getattr(entry, "tvdb_id", "") or "")
+    return f"tvdb-{nummer}" if nummer.isdigit() else ""
 
 # A depublished link answers 403 or 404 for good. Without a limit it would be
 # retried on every hourly run, forever.
@@ -58,7 +96,8 @@ def vergleichsname(text: str) -> str:
     Gross-/Kleinschreibung, Akzente, Satzzeichen und Trennzeichen fallen weg.
     "Wer weiß denn sowas?" und "Wer weiss denn sowas" ergeben dasselbe.
     """
-    text = unicodedata.normalize("NFKD", (text or "").lower())
+    text = _KENNUNG_IM_NAMEN.sub("", text or "")
+    text = unicodedata.normalize("NFKD", text.lower())
     text = "".join(z for z in text if not unicodedata.combining(z))
     text = text.replace("ß", "ss")
     return re.sub(r"[^a-z0-9]+", "", text)
@@ -268,6 +307,29 @@ class MediathekDirect:
             logger.info(f"    Nutze vorhandenen Ordner '{vorhanden}' statt '{eigener}'")
         return vorhanden or eigener
 
+    def ordnername_fuer_eintrag(self, entry) -> str:
+        """
+        Der Ordner einer Sendung - an EINER Stelle entschieden.
+
+        Vorher rechneten Abgleich, Vorschau und Ablage jeweils selbst; eine
+        Aenderung an der Regel haette alle drei auseinanderlaufen lassen.
+
+        1. Von Hand eingetragener Ordner: gilt unveraendert.
+        2. Vorhandener Ordner der Bibliothek (Vergleich ohne Kennungs-Anhang):
+           wird weiterbenutzt und NIE umbenannt - sonst laege die Sendung
+           ploetzlich in zwei Ordnern, und rotierte Pfade stimmten nicht mehr.
+        3. Neuer Ordner: "Name {tvdb-...}", wenn eine Kennung bekannt ist.
+        """
+        eigener = (getattr(entry, "library_folder", "") or "").strip()
+        if eigener:
+            return self.sanitize(eigener)
+        basis = self.sanitize(entry.show_name)
+        vorhanden = self.bekannte_ordner().get(vergleichsname(basis))
+        if vorhanden:
+            return vorhanden
+        kennung = medien_kennung(entry)
+        return f"{basis} {{{kennung}}}" if kennung else basis
+
     def build_path(self, show_name: str, item: MediaItem, url: str = None,
                    ordner: str = None, ablage: str = "flat") -> Path:
         """
@@ -416,9 +478,7 @@ class MediathekDirect:
         # Der Serienordner, nicht der Staffelordner: bei Ablage in
         # Staffel-Unterordnern liegen die vorhandenen Folgen eine Ebene tiefer,
         # und rglob() muss sie alle sehen.
-        eigener = getattr(entry, "library_folder", "") or ""
-        ordnername = (self.sanitize(eigener) if eigener.strip()
-                      else self.ordner_fuer(entry.show_name))
+        ordnername = self.ordnername_fuer_eintrag(entry)
         zielordner = self.library_path / ordnername
         vorhandene_nummern, vorhandene_daten = await asyncio.to_thread(
             self.vorhandene_folgen, zielordner
@@ -443,7 +503,7 @@ class MediathekDirect:
 
             target = self.build_path(
                 entry.show_name, item, url,
-                ordner=getattr(entry, "library_folder", "") or "",
+                ordner=ordnername,
                 ablage=getattr(entry, "season_layout", "flat") or "flat",
             )
             # Liegt die Folge schon da - gleich unter welchem Namen?

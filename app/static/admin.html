@@ -740,6 +740,11 @@
                     <small style="color: #666; font-size: 12px;">Trage hier den Ordner ein, wenn die Serie schon unter einem anderen Namen in deiner Bibliothek liegt. Leer gelassen sucht PBArr selbst nach einem passenden Ordner.</small>
                 </div>
                 <div class="form-group">
+                    <label for="media-id">Kennung (TVDB/TMDB/IMDb):</label>
+                    <input type="text" id="media-id" placeholder="z. B. tvdb-298954 &ndash; leer lassen, wenn unbekannt">
+                    <small style="color: #666; font-size: 12px;">Damit erkennt der Medienserver die Sendung beim ersten Einlesen sicher &ndash; mit Poster, Folgentiteln und Bildern. Zu finden auf thetvdb.com in der Adresse oder unter &bdquo;TheTVDB.com Series ID&ldquo;. Wird nur an <strong>neue</strong> Ordner angeh&auml;ngt (<code>Name {tvdb-298954}</code>), ein vorhandener Ordner bleibt, wie er ist.</small>
+                </div>
+                <div class="form-group">
                     <label for="season-layout">Ablage:</label>
                     <select id="season-layout">
                         <option value="flat">Alles im Serienordner (flach)</option>
@@ -813,6 +818,11 @@
                     <label for="new-series-library-folder">Ordner in der Bibliothek:</label>
                     <input type="text" id="new-series-library-folder" placeholder="leer = vorhandener Ordner oder Name der Sendung">
                     <small style="color: #666; font-size: 12px;">Trage hier den Ordner ein, wenn die Serie schon unter einem anderen Namen in deiner Bibliothek liegt. Leer gelassen sucht PBArr selbst nach einem passenden Ordner.</small>
+                </div>
+                <div class="form-group">
+                    <label for="new-series-media-id">Kennung (TVDB/TMDB/IMDb):</label>
+                    <input type="text" id="new-series-media-id" placeholder="z. B. tvdb-298954 &ndash; leer lassen, wenn unbekannt">
+                    <small style="color: #666; font-size: 12px;">Damit erkennt der Medienserver die Sendung beim ersten Einlesen sicher &ndash; mit Poster, Folgentiteln und Bildern. Zu finden auf thetvdb.com in der Adresse oder unter &bdquo;TheTVDB.com Series ID&ldquo;. Wird nur an <strong>neue</strong> Ordner angeh&auml;ngt (<code>Name {tvdb-298954}</code>), ein vorhandener Ordner bleibt, wie er ist.</small>
                 </div>
                 <div class="form-group">
                     <label for="new-series-season-layout">Ablage:</label>
@@ -1515,6 +1525,7 @@
             document.getElementById('search-title-filter').checked = serie.search_title_filter || false;
             document.getElementById('custom-search-title').value = serie.custom_search_title || '';
             document.getElementById('library-folder').value = serie.library_folder || '';
+            document.getElementById('media-id').value = serie.media_id || '';
             document.getElementById('season-layout').value = serie.season_layout || 'flat';
             document.getElementById('keep-latest').value = serie.keep_latest ?? 0;
             document.getElementById('filter-preview').innerHTML = '';
@@ -1545,6 +1556,7 @@
                     exclude_keywords: excludeKeywords || null,
                     include_senders: includeSenders || null,
                     library_folder: libraryFolder,
+                    media_id: document.getElementById('media-id').value.trim(),
                     season_layout: seasonLayout,
                     keep_latest: keepLatest,
                     search_title_filter: searchTitleFilter,
@@ -1610,6 +1622,7 @@
                 include_senders: document.getElementById('new-series-senders').value.trim(),
                 exclude_keywords: document.getElementById('new-series-exclude').value.trim(),
                 library_folder: document.getElementById('new-series-library-folder').value.trim(),
+                media_id: document.getElementById('new-series-media-id').value.trim() || null,
                 season_layout: document.getElementById('new-series-season-layout').value,
                 keep_latest: parseInt(document.getElementById('new-series-keep-latest').value || '0', 10)
             };

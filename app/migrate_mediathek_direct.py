@@ -39,6 +39,13 @@ STATEMENTS = [
     ("watch_list.season_layout",
      "ALTER TABLE watch_list ADD COLUMN IF NOT EXISTS season_layout VARCHAR(20) DEFAULT 'flat'"),
 
+    # Kennung beim Metadatenanbieter fuer den Ordnernamen ("tvdb-298954").
+    # Ohne sie fand Plex "Klein gegen Gross" und "Wer weiss denn sowas" nicht:
+    # Ordner ohne Jahr und mit ss statt sz. Mit {tvdb-...} im Namen gibt es
+    # nichts mehr zu raten.
+    ("watch_list.media_id",
+     "ALTER TABLE watch_list ADD COLUMN IF NOT EXISTS media_id VARCHAR(40) DEFAULT ''"),
+
     # Wieviele der neuesten Folgen behalten werden. 0 heisst: alle behalten.
     ("watch_list.keep_latest",
      "ALTER TABLE watch_list ADD COLUMN IF NOT EXISTS keep_latest INTEGER DEFAULT 0"),

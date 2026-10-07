@@ -15,6 +15,7 @@ from app.models.config import Config
 from app.models.module_state import ModuleState
 from app.models.watch_list import WatchList
 from app.modules.sources.base import is_stream
+from app.services.mediathek_direct import kennung_normalisieren
 from app.modules.sources.registry import enabled_sources
 
 
@@ -86,9 +87,17 @@ class AddByTopicRequest(BaseModel):
     max_duration: int = 360
     exclude_keywords: Optional[str] = None   # None = Vorgabe der aktiven Quellen
     library_folder: Optional[str] = None     # leer = vorhandener Ordner bzw. Name
+    media_id: Optional[str] = None           # tvdb-298954 | tmdb-... | imdb-tt...
     season_layout: str = "flat"              # flat | seasons
     keep_latest: int = 0                     # 0 = alle behalten
     include_senders: str = ""
+
+
+def _kennung_oder_400(text) -> str:
+    try:
+        return kennung_normalisieren(text)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 class SeriesFiltersRequest(BaseModel):
@@ -101,6 +110,7 @@ class SeriesFiltersRequest(BaseModel):
     search_title_filter: Optional[bool] = None
     custom_search_title: Optional[str] = None
     library_folder: Optional[str] = None
+    media_id: Optional[str] = None
     season_layout: Optional[str] = None
     keep_latest: Optional[int] = None
 
@@ -395,6 +405,7 @@ async def get_series_list(db: Session = Depends(get_db)):
                 "exclude_keywords": series.exclude_keywords,
                 "search_topic": getattr(series, "search_topic", "") or "",
                 "library_folder": getattr(series, "library_folder", "") or "",
+                "media_id": getattr(series, "media_id", "") or "",
                 "season_layout": getattr(series, "season_layout", "flat") or "flat",
                 "keep_latest": getattr(series, "keep_latest", 0) or 0,
                 "include_senders": series.include_senders,
@@ -449,6 +460,11 @@ async def update_series_filters(tvdb_id: str, filters: SeriesFiltersRequest, db:
             series.search_topic = filters.search_topic
         if filters.library_folder is not None:
             series.library_folder = filters.library_folder.strip()
+        if filters.media_id is not None:
+            try:
+                series.media_id = kennung_normalisieren(filters.media_id)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
         if filters.season_layout is not None:
             series.season_layout = filters.season_layout.strip().lower()
         if filters.keep_latest is not None:
@@ -506,6 +522,7 @@ async def update_series_filters(tvdb_id: str, filters: SeriesFiltersRequest, db:
                 "exclude_keywords": series.exclude_keywords,
                 "search_topic": getattr(series, "search_topic", "") or "",
                 "library_folder": getattr(series, "library_folder", "") or "",
+                "media_id": getattr(series, "media_id", "") or "",
                 "season_layout": getattr(series, "season_layout", "flat") or "flat",
                 "keep_latest": getattr(series, "keep_latest", 0) or 0,
                 "include_senders": series.include_senders
@@ -670,9 +687,7 @@ async def preview_mediathek_topic(
     if watch_key:
         eintrag = db.query(WatchList).filter(WatchList.tvdb_id == watch_key).first()
         if eintrag:
-            eigener = getattr(eintrag, "library_folder", "") or ""
-            ordnername = (direct.sanitize(eigener) if eigener.strip()
-                          else direct.ordner_fuer(eintrag.show_name))
+            ordnername = direct.ordnername_fuer_eintrag(eintrag)
             vorhandene_nummern, vorhandene_daten = direct.vorhandene_folgen(
                 direct.library_path / ordnername
             )
@@ -774,6 +789,7 @@ async def add_series_by_topic(request: AddByTopicRequest, db: Session = Depends(
                           or _quellen_vorgabe_ausschluss(db)),
         include_senders=request.include_senders,
         library_folder=(request.library_folder or "").strip(),
+        media_id=_kennung_oder_400(request.media_id),
         season_layout=(request.season_layout or "flat").strip().lower(),
         keep_latest=max(0, request.keep_latest or 0),
         import_source="mediathek",

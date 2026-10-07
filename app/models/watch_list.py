@@ -38,5 +38,11 @@ class WatchList(Base):
     library_folder = Column(String(255), default="")   # leer = aus dem Namen / vorhandener Ordner
     season_layout = Column(String(20), default="flat") # flat | seasons
 
+    # Kennung beim Metadatenanbieter, z. B. "tvdb-298954". Wird an NEU angelegte
+    # Ordner angehaengt ("Name {tvdb-298954}"), damit der Medienserver die
+    # Sendung beim ersten Einlesen sicher erkennt. Leer = bei Sonarr-Importen
+    # die TVDB-Nummer, sonst keine.
+    media_id = Column(String(40), default="")
+
     # Rotation: wieviele der neuesten Folgen behalten werden. 0 = alle.
     keep_latest = Column(Integer, default=0)
