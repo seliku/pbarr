@@ -71,8 +71,15 @@ class MediathekViewWebSource(MediathekSource):
         self.page_size = page_size
 
     async def search(self, topic: str) -> List[MediaItem]:
+        # "titel:<Name>" sucht im Titel statt in der Sendung. Manche Sender
+        # legen Wiederholungen unter einer Sammelrubrik ab - der RBB etwa
+        # «Wer weiß denn sowas (941)» unter «rbb Quiz». Nur auf Wunsch je
+        # Sendung, weil eine Titelsuche bei kurzen Namen Fremdes mitbringt.
+        felder = ["topic"]
+        if topic.lower().startswith("titel:"):
+            topic, felder = topic[6:].strip(), ["title"]
         body = {
-            "queries": [{"fields": ["topic"], "query": topic}],
+            "queries": [{"fields": felder, "query": topic}],
             "sortBy": "timestamp",
             "sortOrder": "desc",
             "future": False,
