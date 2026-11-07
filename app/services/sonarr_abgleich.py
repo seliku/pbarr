@@ -120,6 +120,26 @@ class SonarrAbgleich:
         except httpx.HTTPError as e:
             logger.warning(f"    Sonarr-Rescan fehlgeschlagen: {e}")
 
+    async def datei_loeschen(self, ep: dict) -> bool:
+        """
+        Folgendatei ueber Sonarr loeschen und die Folge dort nicht mehr ueberwachen.
+
+        Fuer die Hoechstzahl je Sendung (keep_latest), wenn Sonarr die Folge geholt
+        hat. Ohne das Abbestellen hielte Sonarr sie fuer fehlend und holte sie
+        gleich wieder.
+        """
+        try:
+            async with httpx.AsyncClient(timeout=30, headers={"X-Api-Key": self.key}) as c:
+                r = await c.delete(f"{self.url}/api/v3/episodefile/{ep['episodeFileId']}")
+                r.raise_for_status()
+                r = await c.put(f"{self.url}/api/v3/episode/monitor",
+                                json={"episodeIds": [ep["id"]], "monitored": False})
+                r.raise_for_status()
+            return True
+        except (httpx.HTTPError, KeyError) as e:
+            logger.warning(f"    Sonarr-Datei nicht geloescht ({e.__class__.__name__})")
+            return False
+
     # ------------------------------------------------------------ entscheiden
 
     def _per_titel(self, kern: str) -> Optional[dict]:

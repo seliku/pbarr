@@ -48,6 +48,8 @@ def init_config():
         ("arr_download_dir", "/app/downloads/arr", "arr", False, "string",
          "Ordner fuer Downloads im Auftrag von Sonarr/Radarr (muss dort unter demselben Pfad sichtbar sein)"),
         ("arr_quality", "hd", "arr", False, "string", "Qualitaet fuer Sonarr/Radarr: hd, normal oder low"),
+        ("arr_nur_luecken", "false", "arr", False, "boolean",
+         "Merkliste laedt bei Sonarr-Serien nur Folgen, die Sonarr nicht kennt (den Rest holt Sonarr ueber pbarr)"),
     ]
     
     for key, value, module, secret, data_type, description in configs:

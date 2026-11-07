@@ -497,7 +497,10 @@ class MediathekDirect:
         from app.services.sonarr_abgleich import SonarrAbgleich
         abgleich = await SonarrAbgleich.fuer_ordner(db, ordnername)
         namen = topics + [entry.show_name, ordnername]
-        if abgleich:
+        nur_luecken = bool(abgleich) and self.nur_luecken(db)
+        if nur_luecken:
+            logger.info(f"    Sonarr fuehrt '{abgleich.titel}' - pbarr laedt nur, was Sonarr nicht kennt")
+        elif abgleich:
             logger.info(f"    Sonarr fuehrt '{abgleich.titel}' - Nummern nach Titel")
 
         for item in items:
@@ -514,6 +517,17 @@ class MediathekDirect:
             if not url or url in known or url in given_up:
                 continue
 
+            if nur_luecken:
+                # Kennt Sonarr die Folge, holt Sonarr sie selbst (ueber pbarr als
+                # Indexer) - sonst kaeme sie doppelt. pbarr fuellt nur die Luecken
+                # in TVDB, abgelegt nach Sendedatum.
+                from app.services.arr_suche import folge_zuordnen
+                ep = folge_zuordnen(item, abgleich.serie, abgleich.episoden, namen)
+                if ep:
+                    logger.debug(f"    ⊘ {item.title[:50]} - Sonarr holt "
+                                 f"S{ep['seasonNumber']:02d}E{ep['episodeNumber']:02d}")
+                    skipped += 1
+                    continue
             if abgleich:
                 e = abgleich.zuordnen(item, namen)
                 if e.laden is False:
@@ -579,7 +593,7 @@ class MediathekDirect:
 
         # Zum Schluss aufraeumen, falls eine Hoechstzahl eingestellt ist.
         try:
-            await self.rotiere(entry, db)
+            await self.rotiere(entry, db, abgleich if nur_luecken else None)
         except Exception as e:
             logger.warning(f"    Rotation uebersprungen: {e}")
 
@@ -659,7 +673,13 @@ class MediathekDirect:
             logger.debug(f"      (Fehlversuch nicht vermerkt: {e})")
             return 0
 
-    async def rotiere(self, entry, db) -> int:
+    @staticmethod
+    def nur_luecken(db) -> bool:
+        from app.models.config import Config
+        c = db.query(Config).filter_by(key="arr_nur_luecken").first()
+        return bool(c and (c.value or "").strip().lower() == "true")
+
+    async def rotiere(self, entry, db, abgleich=None) -> int:
         """
         Aeltere Folgen entfernen, wenn eine Hoechstzahl eingestellt ist.
 
@@ -694,6 +714,9 @@ class MediathekDirect:
             if z.file_path and await asyncio.to_thread(Path(z.file_path).exists):
                 vorhanden.append(z)
 
+        if abgleich:
+            return await self._rotiere_mit_sonarr(entry, db, vorhanden, behalten, abgleich)
+
         if len(vorhanden) <= behalten:
             return 0
 
@@ -716,6 +739,48 @@ class MediathekDirect:
         if entfernt:
             db.commit()
             logger.info(f"    {entfernt} aeltere Folge(n) entfernt, {behalten} behalten")
+        return entfernt
+
+    async def _rotiere_mit_sonarr(self, entry, db, vorhanden, behalten, abgleich) -> int:
+        """
+        Hoechstzahl ueber beide Quellen: was pbarr geladen hat und was Sonarr geholt hat.
+
+        Sonst wuechse eine Sendung, deren neue Folgen Sonarr holt, ohne Ende - pbarr
+        raeumt nur hinter sich selbst auf. Sonarrs Dateien loescht pbarr ueber
+        Sonarr (Papierkorb, Folge abbestellt), nie am Dateisystem vorbei. Liegt fuer
+        einen Tag beides vor, zaehlt der Tag einmal.
+        """
+        nach_tag = {}
+        for z in vorhanden:
+            tag = (z.aired or z.downloaded_at or datetime.min).date()
+            nach_tag.setdefault(tag, {"pbarr": [], "sonarr": []})["pbarr"].append(z)
+        for ep in abgleich.episoden:
+            if ep.get("hasFile") and ep.get("airDate") and ep.get("episodeFileId"):
+                tag = datetime.strptime(ep["airDate"], "%Y-%m-%d").date()
+                nach_tag.setdefault(tag, {"pbarr": [], "sonarr": []})["sonarr"].append(ep)
+        tage = sorted(nach_tag, reverse=True)
+        if len(tage) <= behalten:
+            return 0
+
+        entfernt = 0
+        for tag in tage[behalten:]:
+            for ep in nach_tag[tag]["sonarr"]:
+                if await abgleich.datei_loeschen(ep):
+                    entfernt += 1
+                    logger.info(f"    ⊖ rotiert ueber Sonarr: S{ep['seasonNumber']:02d}E{ep['episodeNumber']:02d} vom {tag}")
+            for z in nach_tag[tag]["pbarr"]:
+                datei = Path(z.file_path)
+                try:
+                    if await asyncio.to_thread(datei.exists):
+                        await asyncio.to_thread(datei.unlink)
+                        entfernt += 1
+                        logger.info(f"    ⊖ rotiert: {datei.name[:56]}")
+                    z.rotated_at = datetime.utcnow()
+                except OSError as e:
+                    logger.warning(f"    Rotation fehlgeschlagen fuer {datei.name[:40]}: {e}")
+        db.commit()
+        if entfernt:
+            logger.info(f"    {entfernt} aeltere Folge(n) entfernt, {behalten} Sendetage behalten")
         return entfernt
 
     async def sync_watchlist(self):

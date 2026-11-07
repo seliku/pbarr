@@ -143,6 +143,13 @@ Sprache, Qualität, ob eine Folge schon da ist. Sie importieren aus dem
 Download-Ordner und räumen ihn danach auf. Die Qualität, die PBArr anbietet,
 steht in `arr_quality` (`hd`, `normal` oder `low`).
 
+Führt Sonarr eine Sendung, die auch auf der Merkliste steht, und ist
+`arr_nur_luecken` auf `true`, teilen sich beide die Arbeit: Was Sonarr kennt
+(über Titel, Nummer oder Sendedatum), holt Sonarr über PBArr. PBArr selbst lädt
+nur noch, was in TVDB fehlt, und legt es nach Sendedatum ab. Eine Höchstzahl
+(«nur die neuesten N behalten») zählt dann die Folgen beider Quellen. Sonarrs
+Dateien löscht PBArr dafür über Sonarr und bestellt die Folge dort ab.
+
 Findet der RSS-Abruf nichts Passendes, liefert PBArr einen Platzhalter-Eintrag
 «pbarr-Verbindungstest». Sonarr und Radarr verlangen beim Einrichten mindestens
 einen Treffer, und der Platzhalter passt zu keiner Serie und keinem Film.
