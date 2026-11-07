@@ -208,10 +208,27 @@ def _folgen_titel(serie: dict, ep: dict) -> str:
     return f"{name}.S{ep['seasonNumber']:02d}E{ep['episodeNumber']:02d}.{_punkte(ep.get('title'))}".rstrip(".")
 
 
+_SCHRAEG = re.compile(r"(\w+)\s*/\s*(\w+)")
+
+
+def _varianten(name: str) -> list:
+    """
+    "Hubert und/ohne Staller" -> ["Hubert und/ohne Staller", "Hubert und Staller", "Hubert ohne Staller"]
+
+    TVDB fasst Sendungen, die ihren Namen gewechselt haben, gern so zusammen; die
+    Mediathek fuehrt jede Fassung unter ihrem eigenen Namen.
+    """
+    m = _SCHRAEG.search(name or "")
+    if not m:
+        return [name]
+    return [name] + [name[:m.start()] + teil + name[m.end():] for teil in (m.group(1), m.group(2))]
+
+
 def _namen(serie: dict, db) -> list:
     """Unter welchen Namen die Sendung in der Mediathek stehen kann."""
-    namen = [serie.get("title") or ""]
-    namen += [a.get("title") for a in serie.get("alternateTitles") or [] if a.get("title")]
+    namen = _varianten(serie.get("title") or "")
+    for a in serie.get("alternateTitles") or []:
+        namen += _varianten(a.get("title") or "")
     # Suchnamen aus pbarrs eigener Merkliste, wenn sie in denselben Ordner laedt
     try:
         from app.models.watch_list import WatchList
@@ -227,7 +244,7 @@ def _namen(serie: dict, db) -> list:
         if n and n.lower() not in gesehen:
             gesehen.add(n.lower())
             aus.append(n)
-    return aus[:6]
+    return aus[:8]
 
 
 async def _mediathek(db, namen: list) -> list:
@@ -389,10 +406,12 @@ async def neueste(db, kategorie: int, qualitaet: str = "hd") -> list:
             items += await (neu() if kategorie == 5000 else neu(min_minuten=60))
     releases = []
     if kategorie == 5000:
-        serien = {_norm(s.get("title")): s for s in await sonarr.get(db, "series") or [] if s.get("monitored")}
-        for s in list(serien.values()):
-            for a in s.get("alternateTitles") or []:
-                serien.setdefault(_norm(a.get("title")), s)
+        serien = {}
+        for s in await sonarr.get(db, "series") or []:
+            if s.get("monitored"):
+                for t in [s.get("title")] + [a.get("title") for a in s.get("alternateTitles") or []]:
+                    for v in _varianten(t or ""):
+                        serien.setdefault(_norm(v), s)
         # Suchnamen aus pbarrs Merkliste ("Hubert ohne Staller" fuer "Hubert und/ohne Staller")
         try:
             from app.models.watch_list import WatchList
