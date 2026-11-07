@@ -11,7 +11,8 @@ Name eintragen  →  stündlich suchen  →  filtern  →  herunterladen  →  e
 
 ## Was es nicht braucht
 
-Keine TVDB-ID. Keinen Sonarr. Keine Episodennummern.
+Keine TVDB-ID. Keinen Sonarr. Keine Episodennummern. (Wer Sonarr oder Radarr
+hat, kann PBArr dort zusätzlich einbinden, siehe [Sonarr und Radarr](#sonarr-und-radarr).)
 
 Das war einmal anders, und es funktionierte nicht: PBArr fragte TVDB nach einer
 Episodenliste, Sonarr nach fehlenden Folgen, und lud nur herunter, wo beide sich
@@ -101,6 +102,50 @@ und **warum** etwas aussortiert wird:
 
 Damit siehst du sofort, dass der Dauerfilter danebenliegt, statt zu rätseln,
 warum nichts ankommt.
+
+## Sonarr und Radarr
+
+Wer Sonarr oder Radarr betreibt, kann PBArr dort zusätzlich als **Indexer** und
+**Download-Client** eintragen. Dann sucht Sonarr fehlende Folgen und Radarr
+fehlende Filme auch in den Mediatheken, ganz ohne Merkliste in PBArr. Neue
+Folgen kommen über den RSS-Abruf von selbst.
+
+PBArr fragt dafür bei Sonarr bzw. Radarr nach, wie Serie, Folgen oder Film
+heissen, sucht in der Mediathek und ordnet über den **Titel** zu, nicht über die
+Nummer des Senders (die weicht oft von TVDB ab). Tägliche Sendungen ordnet es
+über das Sendedatum zu. Was es nicht sicher zuordnen kann, meldet es gar nicht.
+Filme müssen im ganzen Titel, in der Laufzeit und, falls der Sender eines
+nennt, im Jahr passen. Die Treffer heissen so, wie Sonarr und Radarr sie lesen:
+
+```
+Hubert.und.ohne.Staller.S13E06.Zimmer.ohne.Aussicht.GERMAN.1080p.WEB.h264-MEDiATHEK
+```
+
+Einrichten:
+
+1. In PBArr unter Einstellungen `sonarr_url`/`sonarr_api_key` und
+   `radarr_url`/`radarr_api_key` setzen. `arr_api_key` steht schon da (zufällig
+   erzeugt). `arr_download_dir` ist der Ordner für diese Downloads.
+2. Den Download-Ordner so einbinden, dass **Sonarr/Radarr ihn unter demselben
+   Pfad sehen** wie PBArr, z. B. `/mnt/share/Downloads/pbarr:/mnt/share/Downloads/pbarr`.
+   Sonst braucht es dort eine «Remote Path Mapping».
+3. In Sonarr/Radarr einen **Download-Client «SABnzbd»** anlegen: Host = PBArr,
+   Port 8070, URL-Basis `/sabnzbd`, API-Schlüssel = `arr_api_key`, Kategorie
+   `tv` bzw. `movie`. Die Priorität niedriger setzen als beim echten SABnzbd.
+4. Einen **Indexer «Newznab»** anlegen: URL `http://<pbarr>:8070/newznab`,
+   API-Pfad `/api`, API-Schlüssel = `arr_api_key`, Kategorien 5000 bzw. 2000.
+   Unter «Download Client» den PBArr-Client aus Schritt 3 wählen. Ohne diese
+   Bindung schickt Sonarr die Mediathek-Treffer an den echten SABnzbd, und der
+   kann damit nichts anfangen.
+
+Sonarr und Radarr entscheiden danach wie bei jedem anderen Indexer selbst:
+Sprache, Qualität, ob eine Folge schon da ist. Sie importieren aus dem
+Download-Ordner und räumen ihn danach auf. Die Qualität, die PBArr anbietet,
+steht in `arr_quality` (`hd`, `normal` oder `low`).
+
+Findet der RSS-Abruf nichts Passendes, liefert PBArr einen Platzhalter-Eintrag
+«pbarr-Verbindungstest». Sonarr und Radarr verlangen beim Einrichten mindestens
+einen Treffer, und der Platzhalter passt zu keiner Serie und keinem Film.
 
 ## Installation
 

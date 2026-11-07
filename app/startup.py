@@ -1,5 +1,6 @@
 import logging
 import os
+import secrets
 import subprocess
 import sys
 from pathlib import Path
@@ -36,6 +37,17 @@ def init_config():
         # Sonarr Integration
         ("sonarr_url", "", "sonarr", False, "string", "Sonarr URL (z.B. http://localhost:8989)"),
         ("sonarr_api_key", "", "sonarr", True, "string", "Sonarr API Key"),
+
+        # Radarr Integration (fuer den Indexer: Filmtitel nachschlagen)
+        ("radarr_url", "", "radarr", False, "string", "Radarr URL (z.B. http://localhost:7878)"),
+        ("radarr_api_key", "", "radarr", True, "string", "Radarr API Key"),
+
+        # Sonarr/Radarr nutzen pbarr als Indexer (/newznab) und Download-Client (/sabnzbd)
+        ("arr_api_key", secrets.token_hex(16), "arr", True, "string",
+         "Schluessel, den Sonarr/Radarr fuer Indexer und Download-Client angeben"),
+        ("arr_download_dir", "/app/downloads/arr", "arr", False, "string",
+         "Ordner fuer Downloads im Auftrag von Sonarr/Radarr (muss dort unter demselben Pfad sichtbar sein)"),
+        ("arr_quality", "hd", "arr", False, "string", "Qualitaet fuer Sonarr/Radarr: hd, normal oder low"),
     ]
     
     for key, value, module, secret, data_type, description in configs:

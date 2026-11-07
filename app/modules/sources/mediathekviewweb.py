@@ -111,6 +111,34 @@ class MediathekViewWebSource(MediathekSource):
         logger.info(f"  {self.name}: {len(items)} Treffer fuer '{topic}'")
         return items
 
+    async def neueste(self, anzahl: int = 2000, min_minuten: int = 0) -> List[MediaItem]:
+        """
+        Das Neueste ueber alle Sendungen, fuer den RSS-Abruf von Sonarr und Radarr.
+
+        Die Schnittstelle liefert hoechstens einige hundert Eintraege je Abfrage,
+        deshalb seitenweise. 2000 Eintraege reichen etwa zwei bis drei Tage zurueck.
+        """
+        items, seite = [], 500
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                for offset in range(0, anzahl, seite):
+                    body = {"queries": [], "sortBy": "timestamp", "sortOrder": "desc",
+                            "future": False, "offset": offset, "size": seite}
+                    if min_minuten:
+                        body["duration_min"] = min_minuten * 60
+                    resp = await client.post(self.API, content=json.dumps(body),
+                                             headers={"Content-Type": "text/plain"})
+                    if resp.status_code != 200:
+                        logger.warning(f"MediathekViewWeb: HTTP {resp.status_code} beim Neuesten")
+                        break
+                    results = (resp.json().get("result") or {}).get("results") or []
+                    items += [i for i in (self._to_item(r) for r in results) if i is not None]
+                    if len(results) < seite:
+                        break
+        except Exception as e:
+            logger.warning(f"MediathekViewWeb nicht erreichbar (Neuestes): {e}")
+        return items
+
     def _to_item(self, raw: dict):
         """Turn one API result into a MediaItem, or None when unusable."""
         urls = {

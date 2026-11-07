@@ -44,7 +44,7 @@ from app.startup import init_config, load_enabled_modules, init_download_directo
 
 
 # API Routes
-from app.api import admin, system
+from app.api import admin, arr, system
 
 
 logger = logging.getLogger(__name__)
@@ -139,7 +139,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"✗ Scheduler init failed: {e}")
 
+    # Download-Warteschlange fuer Sonarr/Radarr (api/arr.py)
+    import asyncio
+    from app.services.arr_laden import warteschlange
+    arbeiter = asyncio.create_task(warteschlange.arbeiter())
+
     yield
+
+    arbeiter.cancel()
 
     # Shutdown
     logger.info("Shutting down PBArr...")
@@ -162,6 +169,8 @@ app = FastAPI(
 # Die Module liegen noch im Baum, bis die Beta sich bewaehrt hat.
 app.include_router(admin.router)
 app.include_router(system.router)
+# Sonarr/Radarr: pbarr als Indexer und Download-Client (api/arr.py)
+app.include_router(arr.router)
 
 
 

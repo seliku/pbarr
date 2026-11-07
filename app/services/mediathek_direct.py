@@ -372,10 +372,11 @@ class MediathekDirect:
 
     # ---------------------------------------------------------------- download
 
-    async def download(self, url: str, target: Path) -> tuple:
+    async def download(self, url: str, target: Path, fortschritt=None) -> tuple:
         """
         Stream a file to disk. Returns (bytes_written, error) - error is None
-        on success.
+        on success. fortschritt(geschrieben, gesamt) wird nach jedem Stueck
+        aufgerufen, wenn angegeben (Warteschlange fuer Sonarr/Radarr).
 
         Writes to a .part file and renames on success, so an aborted run never
         leaves something that looks complete to a media server.
@@ -406,10 +407,13 @@ class MediathekDirect:
                     # Ereignisschleife nicht weiter und der Dienst beantwortete
                     # keine einzige Anfrage mehr. Im Browser sah das aus wie
                     # "Failed to fetch".
+                    gesamt = int(resp.headers.get("content-length") or 0)
                     with open(part, "wb") as fh:
                         async for chunk in resp.aiter_bytes(chunk_size=1 << 20):
                             await asyncio.to_thread(fh.write, chunk)
                             written += len(chunk)
+                            if fortschritt:
+                                fortschritt(written, gesamt)
             # Auch das Umbenennen liegt auf der Freigabe.
             await asyncio.to_thread(part.rename, target)
             return written, None
